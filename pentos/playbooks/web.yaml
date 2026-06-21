@@ -1,0 +1,56 @@
+name: web
+title: Web-Applikation
+description: Methodik für Web-App-Tests (Recon -> Enumeration -> manuelle Analyse).
+steps:
+  - id: ports
+    title: Ports & Web-Dienste erfassen
+    kind: pentos
+    command: pentos run nmap {target}
+    why: Offene Web-Ports (80/443/8080/8443) und Versionen identifizieren.
+  - id: fingerprint
+    title: Tech-Stack fingerprinten
+    kind: pentos
+    command: pentos run whatweb http://{target}
+    why: Server, Framework, CMS erkennen – steuert die weiteren Schritte.
+  - id: dirs
+    title: Verzeichnisse/Dateien enumerieren
+    kind: pentos
+    command: pentos run feroxbuster http://{target} --wordlist /usr/share/wordlists/dirb/common.txt
+    why: Versteckte Pfade, Backups, Admin-Panels, .git, robots.txt finden.
+  - id: vulnscan
+    title: Template-basierter Schwachstellen-Scan
+    kind: pentos
+    command: pentos run nuclei http://{target}
+    why: Bekannte CVEs/Fehlkonfigurationen schnell abklopfen.
+  - id: burp
+    title: Traffic durch Burp Suite leiten, Site-Map & manuelles Fuzzing
+    kind: external
+    tool: Burp Suite
+    why: Requests/Responses inspizieren, Parameter finden, IDOR/Injection manuell testen. PentOS startet keine GUI-Tools – hier selbst übernehmen.
+  - id: zap
+    title: Aktiver Scan mit OWASP ZAP (Alternative/Ergänzung zu Burp)
+    kind: external
+    tool: OWASP ZAP
+    command: zaproxy
+    why: Automatisierte Erkennung gängiger Web-Schwachstellen.
+  - id: wpscan
+    title: Falls WordPress erkannt -> wpscan
+    kind: external
+    tool: wpscan
+    command: wpscan --url http://{target} --enumerate u,vp,vt
+    when: WordPress im Fingerprint
+    why: WP-Core-Version, verwundbare Plugins/Themes und Benutzer enumerieren.
+  - id: sqli
+    title: Verdächtige Parameter auf SQL-Injection prüfen
+    kind: pentos
+    command: pentos run sqlmap http://{target} --args "-u 'http://{target}/page?id=1' --batch"
+    why: Nur bei konkretem Verdacht/Parameter – nicht blind über die ganze Seite.
+  - id: auth
+    title: Authentifizierung & Session-Handling testen
+    kind: manual
+    why: Brute-Force-Schutz, Default-Creds, Session-Fixierung, Passwort-Reset, JWT prüfen.
+  - id: doc
+    title: Funde dokumentieren
+    kind: pentos
+    command: pentos finding add "<Titel>" --sev medium --cat vuln
+    why: Jede bestätigte Schwachstelle als Finding + Evidence festhalten.

@@ -1,0 +1,42 @@
+# PentOS – Beispielkonfiguration
+# Kopieren nach ~/.config/pentos/config.yaml
+# (oder Pfad via Umgebungsvariable PENTOS_CONFIG setzen)
+#
+# Tipp: Die KI-Werte lassen sich auch ohne Editieren setzen:
+#   pentos ai config --provider ollama --base-url http://<ip>:11434 --model llama3.1
+#   pentos ai status      # prüft Erreichbarkeit + listet Modelle
+
+# Verzeichnis, in dem alle Projekt-Workspaces liegen
+projects_dir: ~/pentos/projects
+
+language: de
+
+# Lokale KI als Mentor (analysiert nur, führt nie etwas aus)
+ai:
+  # provider: ollama | lmstudio | openai | none
+  provider: ollama
+
+  # base_url je nach Setup:
+  #   Ollama lokal:        http://localhost:11434
+  #   Ollama im Netz (VM): http://<hauptrechner-ip>:11434
+  #                        (Host: OLLAMA_HOST=0.0.0.0:11434 ollama serve, Port 11434 freigeben)
+  #   LM Studio:           http://localhost:1234
+  base_url: http://localhost:11434
+
+  # Modellname (z.B. llama3.1, qwen2.5, mistral ...)
+  model: llama3.1
+
+  # Embedding-Modell für RAG ("frag dein Projekt"): pentos ai index / ai ask
+  #   ollama pull nomic-embed-text
+  embed_model: nomic-embed-text
+
+  # Nur bei provider: openai relevant – Name der Umgebungsvariable mit dem API-Key
+  api_key_env: OPENAI_API_KEY
+
+  timeout: 60
+
+# Branding für HTML-/PDF-Reports (pentos report --html / --pdf)
+report:
+  company: ""                 # Firmenname im Report-Header (leer = ohne Branding)
+  color: "#0f766e"            # Markenfarbe (Header, Überschriften, Badges)
+  author: ""                  # optional: Name des Erstellers

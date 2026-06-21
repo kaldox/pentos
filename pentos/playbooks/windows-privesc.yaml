@@ -1,0 +1,37 @@
+name: windows-privesc
+title: Windows Privilege Escalation
+description: Checkliste für lokale Rechteausweitung auf Windows.
+steps:
+  - id: context
+    title: Kontext & Rechte erfassen
+    kind: manual
+    why: whoami /all, systeminfo, Gruppenmitgliedschaften, Privilegien.
+  - id: winpeas
+    title: Automatisierte Enumeration mit WinPEAS
+    kind: external
+    tool: WinPEAS
+    command: winpeas.exe
+    why: Breite Übersicht (Dienste, Pfade, Creds, Tokens, AlwaysInstallElevated).
+  - id: privs
+    title: Token-Privilegien prüfen
+    kind: manual
+    why: SeImpersonate/SeAssignPrimaryToken -> Potato-Familie; SeBackup/SeRestore etc.
+  - id: services
+    title: Unsichere Dienste prüfen
+    kind: manual
+    why: Unquoted Service Paths, schwache Service-/Registry-Rechte, modifizierbare Binaries.
+  - id: potato
+    title: Token-Impersonation (falls SeImpersonate)
+    kind: external
+    tool: PrintSpoofer / GodPotato
+    command: PrintSpoofer.exe -i -c cmd
+    why: SYSTEM über Named-Pipe-/Token-Abuse erlangen.
+  - id: creds
+    title: Gespeicherte Credentials suchen
+    kind: manual
+    why: cmdkey /list, Registry (Winlogon/PuTTY), unattend.xml, Browser/Configs.
+  - id: system
+    title: SYSTEM bestätigen & Loot sichern
+    kind: pentos
+    command: pentos loot add "root.txt <flag>" --type other
+    why: whoami (NT AUTHORITY\SYSTEM), Flag/Beweis sichern, Weg dokumentieren.

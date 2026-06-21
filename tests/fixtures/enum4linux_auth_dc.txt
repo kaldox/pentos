@@ -1,0 +1,77 @@
+ENUM4LINUX - next generation (v1.3.10)
+
+ ======================================
+|    Users via RPC on 192.168.56.10    |
+ ======================================
+[*] Enumerating users via 'querydispinfo'
+[+] Found 4 user(s) via 'querydispinfo'
+[*] Enumerating users via 'enumdomusers'
+[+] Found 4 user(s) via 'enumdomusers'
+[+] After merging user results we have 4 user(s) total:
+'1000':
+  username: vagrant
+  name: Vagrant
+  acb: '0x00000210'
+  description: Vagrant User
+'500':
+  username: Administrator
+  name: (null)
+  acb: '0x00000210'
+  description: Built-in account for administering the computer/domain
+'501':
+  username: Guest
+  name: (null)
+  acb: '0x00000215'
+  description: Built-in account for guest access to the computer/domain
+'502':
+  username: krbtgt
+  name: (null)
+  acb: '0x00000011'
+  description: Key Distribution Center Service Account
+
+ =======================================
+|    Groups via RPC on 192.168.56.10    |
+ =======================================
+[*] Enumerating local groups
+[+] Found 5 group(s) via 'enumalsgroups domain'
+[+] After merging groups results we have 48 group(s) total:
+'512':
+  groupname: Domain Admins
+  type: domain
+'519':
+  groupname: Enterprise Admins
+  type: domain
+'544':
+  groupname: Administrators
+  type: builtin
+
+ =======================================
+|    Shares via RPC on 192.168.56.10    |
+ =======================================
+[*] Enumerating shares
+[+] Found 5 share(s):
+ADMIN$:
+  comment: Remote Admin
+  type: Disk
+C$:
+  comment: Default share
+  type: Disk
+IPC$:
+  comment: Remote IPC
+  type: IPC
+NETLOGON:
+  comment: Logon server share
+  type: Disk
+SYSVOL:
+  comment: Logon server share
+  type: Disk
+[*] Testing share ADMIN$
+[+] Mapping: OK, Listing: OK
+[*] Testing share C$
+[+] Mapping: OK, Listing: OK
+[*] Testing share IPC$
+[+] Mapping: OK, Listing: NOT SUPPORTED
+[*] Testing share NETLOGON
+[+] Mapping: OK, Listing: OK
+[*] Testing share SYSVOL
+[+] Mapping: OK, Listing: OK

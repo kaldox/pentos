@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<report>
+<results>
+<result>
+<host>192.168.56.20</host>
+<port>443/tcp</port>
+<threat>High</threat>
+<severity>7.5</severity>
+<description>The remote service uses a weak TLS configuration.</description>
+<nvt oid="1.3.6.1.4.1.25623.1.0.10000">
+<name>SSL/TLS: Weak Cipher Suites</name>
+<cvss_base>7.5</cvss_base>
+<tags>cvss_base_vector=AV:N/AC:L/Au:N/C:P/I:N/A:N|solution=Disable weak ciphers and enable TLS 1.2+.</tags>
+</nvt>
+</result>
+<result>
+<host>192.168.56.20</host>
+<port>general/tcp</port>
+<threat>Log</threat>
+<severity>0.0</severity>
+<description>Just a log entry.</description>
+<nvt oid="x"><name>Info</name><cvss_base>0.0</cvss_base></nvt>
+</result>
+</results>
+</report>

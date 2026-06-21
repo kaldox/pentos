@@ -1,0 +1,71 @@
+ENUM4LINUX - next generation (v1.3.10)
+
+ ====================================================
+|    Domain Information via RPC for 192.168.56.10    |
+ ====================================================
+[+] Domain: SEVENKINGDOMS
+[+] Domain SID: S-1-5-21-310869615-4264155859-1587050713
+[+] Membership: domain member
+
+ ============================================================
+|    Domain Information via SMB session for 192.168.56.10    |
+ ============================================================
+NetBIOS computer name: KINGSLANDING
+NetBIOS domain name: SEVENKINGDOMS
+DNS domain: sevenkingdoms.local
+FQDN: kingslanding.sevenkingdoms.local
+
+ ==========================================
+|    SMB Dialect Check on 192.168.56.10    |
+ ==========================================
+SMB signing required: true
+
+ ==========================================
+|    RPC Session Check on 192.168.56.10    |
+ ==========================================
+[+] Server allows authentication via username '' and password ''
+[+] Server allows authentication via username 'administrator' and password 'Lab-Passw0rd!'
+
+ ======================================
+|    Users via RPC on 192.168.56.10    |
+ ======================================
+[+] After merging user results we have 4 user(s) total:
+'1000':
+  username: vagrant
+'500':
+  username: Administrator
+'501':
+  username: Guest
+'502':
+  username: krbtgt
+
+ =======================================
+|    Groups via RPC on 192.168.56.10    |
+ =======================================
+[+] Found 5 group(s) via 'enumalsgroups domain'
+[+] Found 28 group(s) via 'enumalsgroups builtin'
+[+] Found 15 group(s) via 'enumdomgroups'
+[+] After merging groups results we have 48 group(s) total:
+'512':
+  groupname: Domain Admins
+  type: domain
+'519':
+  groupname: Enterprise Admins
+  type: domain
+'518':
+  groupname: Schema Admins
+  type: domain
+
+ =======================================
+|    Shares via RPC on 192.168.56.10    |
+ =======================================
+ADMIN\$:
+  type: Disk
+C\$:
+  type: Disk
+IPC\$:
+  type: IPC
+[*] Testing share ADMIN\$
+[+] Mapping: OK, Listing: OK
+[*] Testing share IPC\$
+[+] Mapping: OK, Listing: NOT SUPPORTED

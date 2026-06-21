@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<issues burpVersion="2023.10">
+<issue>
+<serialNumber>1</serialNumber>
+<type>2097920</type>
+<name>Cross-site scripting (reflected)</name>
+<host ip="10.0.0.5">http://target.local</host>
+<path>/search</path>
+<location>/search?q=</location>
+<severity>High</severity>
+<confidence>Certain</confidence>
+<issueBackground><![CDATA[<p>Reflected XSS arises when input is <b>echoed</b> without sanitisation.</p>]]></issueBackground>
+<remediationBackground><![CDATA[<p>Validate input and HTML-encode output.</p>]]></remediationBackground>
+<issueDetail><![CDATA[The value of the <b>q</b> parameter is reflected.]]></issueDetail>
+</issue>
+<issue>
+<serialNumber>2</serialNumber>
+<name>Cacheable HTTPS response</name>
+<host ip="10.0.0.5">http://target.local</host>
+<path>/</path>
+<severity>Information</severity>
+</issue>
+</issues>

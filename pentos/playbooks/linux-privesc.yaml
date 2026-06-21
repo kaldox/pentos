@@ -1,0 +1,40 @@
+name: linux-privesc
+title: Linux Privilege Escalation
+description: Checkliste für lokale Rechteausweitung auf Linux.
+steps:
+  - id: context
+    title: Kontext & Rechte erfassen
+    kind: manual
+    why: id, hostname, uname -a, /etc/os-release, aktuelle Gruppen.
+  - id: sudo
+    title: sudo-Rechte prüfen
+    kind: manual
+    why: "sudo -l : NOPASSWD-Einträge, GTFOBins-fähige Binaries."
+  - id: suid
+    title: SUID/SGID-Binaries finden
+    kind: manual
+    why: "find / -perm -u=s -type f 2>/dev/null – relative Aufrufe (PATH-Hijack) und GTFOBins prüfen."
+  - id: linpeas
+    title: Automatisierte Enumeration mit LinPEAS
+    kind: external
+    tool: LinPEAS
+    command: ./linpeas.sh | tee linpeas.txt
+    why: Breite, priorisierte Übersicht (Cron, Caps, Kernel, Pfade, Creds).
+  - id: cron
+    title: Cronjobs & Timer prüfen
+    kind: manual
+    why: Schreibbare Skripte/Pfade in root-Cronjobs, Wildcards.
+  - id: caps
+    title: File-Capabilities prüfen
+    kind: manual
+    why: "getcap -r / 2>/dev/null – z.B. cap_setuid auf python/perl."
+  - id: kernel
+    title: Kernel-/Service-Exploits abwägen
+    kind: pentos
+    command: pentos run searchsploit --args "linux kernel <version>"
+    why: Nur als spätere Option – zuerst Fehlkonfigurationen (sudo/SUID/Cron) ausschöpfen.
+  - id: root
+    title: Root bestätigen & Loot sichern
+    kind: pentos
+    command: pentos loot add "root.txt <flag>" --type other
+    why: id (uid=0), Flag/Beweis sichern, Weg dokumentieren.

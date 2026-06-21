@@ -1,0 +1,43 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+*.egg
+
+# ── Virtuelle Umgebungen ────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Test-/Tooling-Caches ────────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── PentOS-Laufzeitdaten (NIE committen) ────────────────────────────────────
+# Echte Konfiguration kann API-Key-ENV-Namen/URLs enthalten -> nur Beispiel teilen
+config.yaml
+.config/
+# Projekt-Workspaces, Datenbanken, Scan-Ausgaben, Reports
+projects/
+*.db
+*.sqlite
+*.sqlite3
+scans/
+reports/
+*.nessus
+
+# ── Editor / OS ─────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
