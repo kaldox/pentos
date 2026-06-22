@@ -1,5 +1,7 @@
 # PentOS
 
+![CI](https://github.com/kaldox/pentos/actions/workflows/ci.yml/badge.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+
 **Knowledge-Driven Offensive Security Workspace**
 
 PentOS ist **keine Scanner-Sammlung**, sondern ein vollständiges Pentest-*Workspace*-System:
