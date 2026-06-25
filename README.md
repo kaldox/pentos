@@ -1,6 +1,8 @@
 # PentOS
 
-![CI](https://github.com/kaldox/pentos/actions/workflows/ci.yml/badge.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+**🇩🇪 Deutsch** · [🇬🇧 English](README.en.md) · [🐻 Baseldütsch](README.bl.md)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.17.0%2Brunner-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
