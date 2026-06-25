@@ -7,4 +7,4 @@ Attack-Path-Tracking, lokale KI-Unterstützung, Obsidian-Integration und
 Reporting in einer Plattform.
 
 """
-__version__ = "2.17.0+runner"
+__version__ = "2.18.0+runner"

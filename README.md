@@ -1,9 +1,5 @@
 # PentOS
 
-**🇩🇪 Deutsch** · [🇬🇧 English](README.en.md) · [🐻 Baseldütsch](README.bl.md)
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.17.0%2Brunner-informational)
-
 **Knowledge-Driven Offensive Security Workspace**
 
 PentOS ist **keine Scanner-Sammlung**, sondern ein vollständiges Pentest-*Workspace*-System:
@@ -15,33 +11,35 @@ Lern- und Analyseassistent — **sie führt niemals selbst Angriffe oder Befehle
 
 ---
 
-## Was Phase 1 schon kann
+## Was PentOS kann
 
-| Spec-Anforderung | Status |
+| Funktion | Status |
 |---|---|
 | Pentest-Workspace (vollständige Ordnerstruktur pro Projekt) | ✅ |
 | Automatische Notizen (z.B. `notes/nmap.md` beim Import) | ✅ |
 | Pentest-Journal (jede Aktion mit Zeitstempel) | ✅ |
 | Aufgabensystem (auto-generiert je Service, Offen/In Bearbeitung/Erledigt) | ✅ |
 | Intelligente nächste Schritte (Empfehlungen, **keine Ausführung**) | ✅ |
-| Automatische Findings (regelbasiert, wertet NSE-Output aus) | ✅ |
+| Geführte Recon-/Enum-Kette (`sweep`, regelbasiert, Rückfrage je Schritt) | ✅ |
+| Opt-in Runner-Layer (23 Tools, kein Shell-Eval, Scope-Guard, Timeout) | ✅ |
+| Methodik-/Playbook-Bibliothek (Web/AD/Linux-/Windows-PrivEsc) | ✅ |
+| Automatische Findings (regelbasiert) + strukturierte Parser (enum4linux-ng, nuclei) | ✅ |
 | Attack-Path-Graph (Mermaid + Graphviz-DOT) | ✅ |
 | Obsidian-Integration (Vault mit `[[Wikilinks]]`) | ✅ |
 | Loot-Management (Credentials/Hashes/Tokens/…) | ✅ |
 | Evidence-Management (Dateien/Screenshots/Outputs einem Finding zuordnen) | ✅ |
+| **Evidence/Screenshots in Reports eingebettet** (HTML inline, PDF, Markdown) | ✅ |
+| Finding-Template-Bibliothek (wiederverwendbar, CVSS, vorbefüllt + erweiterbar) | ✅ |
 | CTF/THM-Wissensdatenbank (getaggte Einträge) | ✅ |
+| „Frag dein Projekt" (RAG über eigene Projektdaten, lokale Embeddings) | ✅ |
 | KI-Mentor (Findings erklären, Enumeration-Ideen; Offline-Fallback) | ✅ |
-| Reporting (Markdown aus Findings/Journal/Tasks/Attack-Path) | ✅ |
-| nmap-XML-Import (Hosts/Services/Scripts) | ✅ |
+| Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
+| Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
 
-**Roadmap (nächste Phasen):**
-- **Opt-in Runner-Layer:** ✅ ausgeliefert — Tools werden auf Wunsch ausgeführt,
-  Ausgabe wird geparst und in den Workspace übernommen (Scope-Guard inklusive).
-- **Phase 2:** Methodik-/Playbook-Bibliothek (Web/AD/Linux/Windows/Cloud/API/Mobile als Checklisten),
-  reicheres Screenshot-Handling, Wissensdatenbank-Ausbau.
-- **Phase 3:** KI-Lernkarten & Notizen-Zusammenfassungen, Nuclei-Template-Management,
-  strukturierte Parser für mehr Tools (enum4linux-ng/ffuf JSON → User/Shares/Paths),
-  HTML-/PDF-Report.
+**Roadmap (offen):**
+- KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
+- Remediation-/Status-Historie für Findings (Retest-Tracking)
+- Reicheres Screenshot-Handling (z.B. direkte Aufnahme/Annotation)
 
 ---
 
@@ -88,6 +86,7 @@ pentos task done 12
 pentos finding status 4 confirmed
 pentos loot add "admin:Passw0rd" --type cred --host 1 --source smb
 pentos evidence add ./screenshots/smb_share.png --kind screenshot --finding 4
+#   -> einem Finding zugeordnete Screenshots/Outputs erscheinen automatisch im Report (HTML/PDF/Markdown)
 pentos note show <id>                 # vollständigen Notiz-Inhalt anzeigen
 pentos knowledge add Jenkins "Script Console RCE" --body "Groovy unter /script"
 
@@ -345,7 +344,7 @@ autorisierten Umgebungen (eigene Labs, CTF/THM, freigegebene Tests).
 ## Installation (aus diesem Repo)
 
 ```bash
-git clone https://github.com/kaldox/pentos.git
+git clone https://github.com/<DEIN-GITHUB-USERNAME>/pentos.git
 cd pentos
 python3 -m venv .venv
 source .venv/bin/activate

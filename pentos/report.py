@@ -20,6 +20,10 @@ def build_markdown(repo: Repository, project: str) -> str:
     tasks = repo.list_tasks()
     loot = repo.list_loot()
     journal = repo.journal()
+    ev_by_finding: dict[int, list] = {}
+    for ev in repo.list_evidence():
+        if ev.finding_id:
+            ev_by_finding.setdefault(ev.finding_id, []).append(ev)
 
     sev_count = {s: 0 for s in Severity}
     for f in findings:
@@ -72,6 +76,21 @@ def build_markdown(repo: Repository, project: str) -> str:
         if f.remediation:
             md.append(f"**Remediation:** {f.remediation}")
             md.append("")
+        evs = ev_by_finding.get(f.id, [])
+        if evs:
+            md.append("**Belege:**")
+            md.append("")
+            for ev in evs:
+                from pathlib import Path as _P
+                cap = ev.description or _P(ev.path).name
+                is_img = (ev.kind or "").lower() == "screenshot" or \
+                    _P(ev.path).suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+                if is_img:
+                    md.append(f"![{cap}]({ev.path})")
+                    md.append(f"*{cap}*")
+                else:
+                    md.append(f"- `[{ev.kind}]` {cap} — `{ev.path}`")
+                md.append("")
 
     # Hosts & Services
     md.append("## Hosts & Services")

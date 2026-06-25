@@ -10,10 +10,46 @@ Branding (Firmenname/Farbe) kommt aus der Config (report-Block) mit Defaults.
 """
 from __future__ import annotations
 
+import base64
 import html as _html
+import mimetypes
+from pathlib import Path
 
 from .models import SEVERITY_ORDER, Severity, TaskStatus, _now
 from .repository import Repository
+
+_IMG_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+
+
+def _is_image(ev) -> bool:
+    """Evidence als Bild behandeln? (kind=screenshot oder Bild-Endung)"""
+    if (ev.kind or "").lower() == "screenshot":
+        return True
+    return Path(ev.path or "").suffix.lower() in _IMG_EXT
+
+
+def _evidence_by_finding(repo: Repository) -> dict[int, list]:
+    """Gruppiert Evidence nach finding_id (nur das, was einem Finding zugeordnet ist)."""
+    out: dict[int, list] = {}
+    for ev in repo.list_evidence():
+        if ev.finding_id:
+            out.setdefault(ev.finding_id, []).append(ev)
+    return out
+
+
+def _img_data_uri(path: str) -> str | None:
+    """Liest ein Bild und gibt es als base64 data:-URI zurück (self-contained HTML)."""
+    p = Path(path)
+    if not p.exists() or not p.is_file():
+        return None
+    if p.stat().st_size > 4 * 1024 * 1024:   # >4 MB nicht inlinen
+        return None
+    mime = mimetypes.guess_type(str(p))[0] or "image/png"
+    try:
+        data = base64.b64encode(p.read_bytes()).decode("ascii")
+    except OSError:
+        return None
+    return f"data:{mime};base64,{data}"
 
 # Severity-Farben (für HTML-Badges und PDF)
 _SEV_COLOR = {
@@ -47,6 +83,7 @@ def _collect(repo: Repository) -> dict:
     return {
         "hosts": hosts, "services": services, "findings": findings,
         "tasks": tasks, "loot": loot, "sev_count": sev_count, "done": done,
+        "evidence_by_finding": _evidence_by_finding(repo),
     }
 
 
@@ -83,6 +120,26 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
             cvss = f' · CVSS {f.cvss_score}{vec}'
         remediation = (f'<p class="remediation"><strong>Remediation:</strong> '
                        f'{e(f.remediation)}</p>') if f.remediation else ""
+        # Evidence einbetten: Bilder inline (base64), übrige als Liste
+        ev_html = ""
+        evs = d["evidence_by_finding"].get(f.id, [])
+        if evs:
+            parts = ['<div class="evidence"><strong>Belege:</strong>']
+            for ev in evs:
+                cap = e(ev.description or Path(ev.path).name)
+                if _is_image(ev):
+                    uri = _img_data_uri(ev.path)
+                    if uri:
+                        parts.append(f'<figure><img src="{uri}" alt="{cap}"/>'
+                                     f'<figcaption>{cap}</figcaption></figure>')
+                    else:
+                        parts.append(f'<div class="ev-file">🖼️ {cap} '
+                                     f'<span class="muted">({e(ev.path)})</span></div>')
+                else:
+                    parts.append(f'<div class="ev-file">📄 {cap} '
+                                 f'<span class="muted">[{e(ev.kind)}] {e(ev.path)}</span></div>')
+            parts.append('</div>')
+            ev_html = "".join(parts)
         rows_find.append(
             f'<div class="finding">'
             f'<div class="fhead"><span class="badge" style="background:{_SEV_COLOR[f.severity]}">{e(f.severity.value)}</span>'
@@ -91,6 +148,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
             f'{"automatisch" if f.auto else "manuell"} erkannt</div>'
             f'<p>{e(f.description or "Keine Beschreibung.")}</p>'
             f'{remediation}'
+            f'{ev_html}'
             f'</div>'
         )
     find_html = "\n".join(rows_find) or '<p class="muted">Keine Findings erfasst.</p>'
@@ -142,6 +200,11 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
  .finding .fhead {{ display:flex; align-items:center; gap:10px; }}
  .finding .meta {{ font-size:.8rem; color:#6b7280; margin:6px 0; }}
  .finding .remediation {{ font-size:.9rem; background:#f0fdfa; border-radius:4px; padding:6px 10px; margin-top:6px; }}
+ .evidence {{ margin-top:10px; font-size:.85rem; }}
+ .evidence figure {{ margin:8px 0; }}
+ .evidence img {{ max-width:100%; border:1px solid #d1d5db; border-radius:4px; }}
+ .evidence figcaption {{ color:#6b7280; font-size:.8rem; margin-top:2px; }}
+ .evidence .ev-file {{ margin:4px 0; }}
  table {{ width:100%; border-collapse:collapse; margin:8px 0; font-size:.9rem; }}
  th, td {{ text-align:left; padding:6px 10px; border-bottom:1px solid #e5e7eb; }}
  th {{ background:#f3f4f6; }}
@@ -187,8 +250,9 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import cm
-        from reportlab.platypus import (HRFlowable, Paragraph, SimpleDocTemplate,
-                                        Spacer, Table, TableStyle)
+        from reportlab.platypus import (HRFlowable, Image, Paragraph,
+                                        SimpleDocTemplate, Spacer, Table, TableStyle)
+        from reportlab.lib.utils import ImageReader
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "PDF-Export benötigt 'reportlab'. Installieren mit: pip install reportlab"
@@ -263,6 +327,28 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         story.append(Paragraph(e(f.description or "Keine Beschreibung."), body))
         if f.remediation:
             story.append(Paragraph(f"<b>Remediation:</b> {e(f.remediation)}", body))
+        # Evidence: Bilder einbetten (skaliert), übrige als Referenz
+        evs = d["evidence_by_finding"].get(f.id, [])
+        if evs:
+            story.append(Paragraph("<b>Belege:</b>", styles["Meta"]))
+            for ev in evs:
+                cap = e(ev.description or Path(ev.path).name)
+                if _is_image(ev) and Path(ev.path).exists():
+                    try:
+                        iw, ih = ImageReader(ev.path).getSize()
+                        max_w = 15 * cm
+                        w = min(max_w, iw)
+                        h_ = w * ih / iw if iw else 0
+                        if h_ > 18 * cm:                 # sehr hohe Bilder deckeln
+                            h_ = 18 * cm
+                            w = h_ * iw / ih
+                        story.append(Image(ev.path, width=w, height=h_))
+                        story.append(Paragraph(cap, styles["Meta"]))
+                    except Exception:
+                        story.append(Paragraph(f"[Bild nicht einbettbar] {cap} — {e(ev.path)}",
+                                               styles["Meta"]))
+                else:
+                    story.append(Paragraph(f"[{e(ev.kind)}] {cap} — {e(ev.path)}", styles["Meta"]))
 
     # Hosts & Services
     story.append(Paragraph("Hosts & Services", styles["H2b"]))
