@@ -1,0 +1,164 @@
+/* PentOS Console — Ops-Console im tiefen Slate-Ton.
+   Marke: Teal (aus den Reports). Severity-Farben = funktionales Farbsystem. */
+:root{
+  --ink:#0a0f1a;          /* tiefster Hintergrund (Slate-Ink, nicht Schwarz) */
+  --bg:#0d1424;           /* Bühne */
+  --surface:#121b2e;      /* Karten */
+  --surface-2:#16203a;    /* erhöhte Flächen */
+  --line:#1e2b45;         /* Trennlinien */
+  --text:#dde6f4;         /* Haupttext */
+  --muted:#7d8aa6;        /* gedämpft */
+  --faint:#4a5775;        /* sehr leise */
+  --brand:#2dd4bf;        /* Teal (Marke) */
+  --brand-deep:#0f766e;
+  /* Severity */
+  --crit:#ff5d73; --high:#ff8f4d; --med:#ffc24b; --low:#5db4ff; --info:#8a97b3;
+  --radius:12px;
+  --mono:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(45,212,191,.06), transparent 60%),
+    var(--bg);
+  color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+#app{display:grid; grid-template-columns:248px 1fr; min-height:100vh}
+
+/* ── Rail / Sidebar ─────────────────────────────────────────────────── */
+.rail{
+  background:linear-gradient(180deg,var(--ink),#0a1120);
+  border-right:1px solid var(--line); display:flex; flex-direction:column;
+  padding:22px 16px; position:sticky; top:0; height:100vh;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:4px 8px 22px}
+.brand-mark{color:var(--brand); font-size:22px; transform:translateY(1px)}
+.brand-text{font-size:20px; letter-spacing:.5px; font-weight:600}
+.brand-text b{color:var(--brand); font-weight:800}
+.nav{display:flex; flex-direction:column; gap:2px}
+.nav-item{
+  display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  background:transparent; border:0; color:var(--muted); cursor:pointer;
+  padding:11px 12px; border-radius:9px; font-size:13.5px; font-family:inherit;
+  transition:background .15s,color .15s;
+}
+.nav-item:hover{background:var(--surface); color:var(--text)}
+.nav-item.active{background:var(--surface-2); color:var(--text)}
+.nav-item.active .ni-ic{color:var(--brand)}
+.ni-ic{width:18px; text-align:center; color:var(--faint); font-size:15px}
+.rail-foot{margin-top:auto; display:flex; align-items:center; gap:8px;
+  color:var(--muted); font-size:12px; padding:10px 12px}
+.dot{width:8px; height:8px; border-radius:50%; background:var(--brand);
+  box-shadow:0 0 0 3px rgba(45,212,191,.18)}
+
+/* ── Stage / Topbar ─────────────────────────────────────────────────── */
+.stage{display:flex; flex-direction:column; min-width:0}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:20px;
+  padding:18px 28px; border-bottom:1px solid var(--line);
+  background:rgba(13,20,36,.7); backdrop-filter:blur(6px); position:sticky; top:0; z-index:5;
+}
+.proj{display:flex; align-items:center; gap:10px}
+.proj label{color:var(--faint); font-size:11px; text-transform:uppercase; letter-spacing:.12em}
+#project-select{
+  background:var(--surface); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; padding:7px 12px; font-family:var(--mono); font-size:13px; cursor:pointer;
+}
+.topbar-meta{color:var(--muted); font-size:13px; display:flex; gap:10px; align-items:center}
+.topbar-meta .sep{color:var(--faint)}
+.mono{font-family:var(--mono)}
+
+.content{padding:28px; overflow:auto}
+.loading{color:var(--muted); padding:40px; text-align:center; font-family:var(--mono)}
+
+/* ── Stat-Karten ────────────────────────────────────────────────────── */
+.stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:24px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px}
+.stat .stat-label{color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.1em}
+.stat .stat-val{font-size:34px; font-weight:700; font-family:var(--mono); margin-top:6px; letter-spacing:-1px}
+.stat .stat-sub{color:var(--faint); font-size:12px; margin-top:2px}
+
+/* ── Lagebild-Grid ──────────────────────────────────────────────────── */
+.grid-2{display:grid; grid-template-columns:340px 1fr; gap:18px; align-items:start}
+@media(max-width:920px){.grid-2{grid-template-columns:1fr}}
+.panel-h{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+.panel-h h2{font-size:13px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); margin:0; font-weight:600}
+
+/* Donut */
+.donut-wrap{display:flex; gap:18px; align-items:center}
+.donut{width:148px; height:148px; flex:none}
+.legend{display:flex; flex-direction:column; gap:7px; font-size:13px; flex:1}
+.legend-row{display:flex; align-items:center; gap:9px}
+.legend-row .sw{width:10px; height:10px; border-radius:3px; flex:none}
+.legend-row .lg-name{color:var(--text); text-transform:capitalize}
+.legend-row .lg-count{margin-left:auto; font-family:var(--mono); color:var(--muted)}
+
+/* Activity feed */
+.feed{display:flex; flex-direction:column}
+.feed-item{display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line)}
+.feed-item:last-child{border-bottom:0}
+.feed-tick{color:var(--brand); font-family:var(--mono); font-size:11px; white-space:nowrap; padding-top:2px}
+.feed-body .fa{font-weight:600}
+.feed-body .fd{color:var(--muted); font-size:12.5px}
+
+/* ── Tabellen ───────────────────────────────────────────────────────── */
+.tbl{width:100%; border-collapse:collapse; font-size:13.5px}
+.tbl th{
+  text-align:left; color:var(--faint); font-weight:600; font-size:11px;
+  text-transform:uppercase; letter-spacing:.1em; padding:0 14px 10px; border-bottom:1px solid var(--line);
+}
+.tbl td{padding:13px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+.tbl tr:hover td{background:rgba(255,255,255,.015)}
+.tbl .mono{font-family:var(--mono); font-size:12.5px}
+
+/* Severity-Badge */
+.badge{display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em}
+.badge::before{content:""; width:7px; height:7px; border-radius:50%; background:currentColor}
+.sev-critical{color:var(--crit); background:rgba(255,93,115,.12)}
+.sev-high{color:var(--high); background:rgba(255,143,77,.12)}
+.sev-medium{color:var(--med); background:rgba(255,194,75,.12)}
+.sev-low{color:var(--low); background:rgba(93,180,255,.12)}
+.sev-info{color:var(--info); background:rgba(138,151,179,.12)}
+
+/* Filter-Chips */
+.filters{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap}
+.chip{background:var(--surface); border:1px solid var(--line); color:var(--muted); cursor:pointer;
+  padding:6px 13px; border-radius:999px; font-size:12.5px; font-family:inherit; transition:all .15s}
+.chip:hover{color:var(--text)}
+.chip.active{background:var(--surface-2); color:var(--text); border-color:var(--brand)}
+
+/* Host-Karten */
+.host-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:14px; overflow:hidden}
+.host-head{display:flex; align-items:center; gap:14px; padding:15px 18px; border-bottom:1px solid var(--line)}
+.host-ip{font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text)}
+.host-meta{color:var(--muted); font-size:12.5px}
+.host-status{margin-left:auto; font-size:11px; color:var(--brand); font-family:var(--mono)}
+.ports{display:flex; flex-wrap:wrap; gap:8px; padding:14px 18px}
+.port{display:flex; gap:8px; align-items:baseline; background:var(--ink); border:1px solid var(--line);
+  border-radius:8px; padding:7px 11px; font-size:12.5px}
+.port .pn{font-family:var(--mono); color:var(--brand); font-weight:600}
+.port .ps{color:var(--muted)}
+
+/* Code/Notiz */
+.note-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; margin-bottom:12px}
+.note-card h3{margin:0 0 4px; font-size:14px}
+.note-card .nmeta{color:var(--faint); font-size:11.5px; font-family:var(--mono); margin-bottom:10px}
+.note-card pre{margin:0; white-space:pre-wrap; word-break:break-word; color:var(--text);
+  font-family:var(--mono); font-size:12.5px; line-height:1.6; max-height:340px; overflow:auto}
+
+.empty{color:var(--muted); text-align:center; padding:48px; font-family:var(--mono); font-size:13px}
+.empty b{color:var(--text); display:block; margin-bottom:6px; font-family:var(--sans)}
+
+@media(max-width:680px){
+  #app{grid-template-columns:1fr}
+  .rail{position:fixed; bottom:0; top:auto; height:auto; width:100%; flex-direction:row; z-index:20; padding:8px}
+  .brand,.rail-foot{display:none}
+  .nav{flex-direction:row; width:100%; justify-content:space-around}
+  .nav-item{flex-direction:column; gap:4px; font-size:10px; padding:6px}
+  .content{padding:16px; padding-bottom:80px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}

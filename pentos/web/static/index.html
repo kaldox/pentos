@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PentOS · Console</title>
+<link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+<div id="app">
+  <aside class="rail">
+    <div class="brand">
+      <span class="brand-mark">▚</span>
+      <span class="brand-text">Pent<b>OS</b></span>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="overview"><span class="ni-ic">◉</span>Lagebild</button>
+      <button class="nav-item" data-view="findings"><span class="ni-ic">⚑</span>Findings</button>
+      <button class="nav-item" data-view="hosts"><span class="ni-ic">⊞</span>Hosts &amp; Dienste</button>
+      <button class="nav-item" data-view="loot"><span class="ni-ic">⚿</span>Loot</button>
+      <button class="nav-item" data-view="notes"><span class="ni-ic">≡</span>Notizen</button>
+    </nav>
+    <div class="rail-foot">
+      <span class="dot"></span><span id="conn">verbunden</span>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <header class="topbar">
+      <div class="proj">
+        <label>Projekt</label>
+        <select id="project-select"></select>
+      </div>
+      <div class="topbar-meta">
+        <span id="view-title">Lagebild</span>
+        <span class="sep">/</span>
+        <span id="proj-name" class="mono">—</span>
+      </div>
+    </header>
+
+    <section id="content" class="content">
+      <div class="loading">Lade Lagebild …</div>
+    </section>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

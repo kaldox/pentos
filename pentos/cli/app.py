@@ -1222,10 +1222,43 @@ def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage
     console.print(Panel(answer, title=f"KI · Nächste Schritte ({name})"))
 
 
-# ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────
-@app.command("tools")
-def tools_cmd():
-    """Listet verfügbare Tools des Runners (inkl. Installations-Check)."""
+@app.command("serve")
+def serve_cmd(
+    host: str = typer.Option("127.0.0.1", "--host", help="Bind-Adresse (Default nur lokal)"),
+    port: int = typer.Option(8787, "--port", "-p", help="Port"),
+    project: Optional[str] = typer.Option(None, "--project", help="Startprojekt (sonst aktives/erstes)"),
+):
+    """Startet das Web-Dashboard (lokal, read-only Ansicht deines Workspace).
+
+    Standardmässig nur über 127.0.0.1 erreichbar – keine offene Angriffsfläche.
+    Benötigt die Web-Extras: pip install -e ".[web]"
+    """
+    try:
+        from ..web import server as web_server
+    except ModuleNotFoundError:
+        console.print('[red]Web-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[web]"[/cyan]')
+        raise typer.Exit(1)
+    proj = project
+    if proj is None:
+        try:
+            proj = config.get_active_project()
+        except Exception:
+            proj = None
+    url = f"http://{host}:{port}"
+    console.print(Panel.fit(
+        f"[bold]PentOS Dashboard[/bold]\n"
+        f"URL:      [cyan]{url}[/cyan]\n"
+        f"Projekt:  {proj or '(erstes verfügbares)'}\n"
+        f"Bind:     {host}:{port}  ([green]nur lokal[/green])\n\n"
+        f"[dim]Stoppen mit Strg+C[/dim]",
+        title="serve"))
+    try:
+        web_server.serve(project=proj, host=host, port=port)
+    except ModuleNotFoundError:
+        console.print('[red]Web-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[web]"[/cyan]')
+        raise typer.Exit(1)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Dashboard gestoppt.[/dim]")
     import shutil
     table = Table(title="Runner – verfügbare Tools")
     for c in ["Tool", "Kategorie", "Binary", "Installiert", "Wordlist", "Parser"]:
