@@ -32,7 +32,7 @@ Lern- und Analyseassistent — **sie führt niemals selbst Angriffe oder Befehle
 | Finding-Template-Bibliothek (wiederverwendbar, CVSS, vorbefüllt + erweiterbar) | ✅ |
 | CTF/THM-Wissensdatenbank (getaggte Einträge) | ✅ |
 | „Frag dein Projekt" (RAG über eigene Projektdaten, lokale Embeddings) | ✅ |
-| KI-Mentor (Findings erklären, Enumeration-Ideen; Offline-Fallback) | ✅ |
+| KI-Mentor + **Advisor-Modus** (Scan/Log analysieren, nächste Schritte; fragt vor dem Senden; Offline-Fallback) | ✅ |
 | Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
 
@@ -112,7 +112,16 @@ pentos report --explain                        # Lern-Report: erklärt jeden Sch
 # 7) KI-Mentor (lokal; ohne Modell -> Offline-Fallback)
 pentos ai explain-finding 4
 pentos ai enum 4
+pentos ai analyze scan.txt --as nmap          # Scan/Log/Output deuten lassen + nächste Schritte
+cat nikto.txt | pentos ai analyze --as nikto   # auch per Pipe (stdin)
+pentos ai next                                 # KI schlägt nächste Schritte zum Projektstand vor
 ```
+
+Der **Advisor-Modus** (Standard an) macht die KI proaktiv: konkrete nächste Schritte
+mit Begründung und vorgeschlagenen Befehlen — die du prüfst und selbst startest. Die KI
+**führt nie selbst etwas aus**. Vor jedem Senden fragt PentOS nach; geht es an einen
+Cloud-Anbieter, warnt es ausdrücklich, dass Daten den Rechner verlassen (lokales Ollama
+bleibt dagegen privat). Umschalten: `pentos ai config --advisor / --no-advisor`.
 
 ---
 

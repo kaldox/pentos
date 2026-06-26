@@ -44,6 +44,8 @@ DEFAULT_CONFIG = {
         "embed_model": "nomic-embed-text",
         "api_key_env": "OPENAI_API_KEY",
         "timeout": 60,
+        # advisor: aktive, konkrete Vorschläge (Human-in-the-Loop). False = nur erklärend.
+        "advisor": True,
     },
     "report": {
         # Branding für HTML-/PDF-Reports

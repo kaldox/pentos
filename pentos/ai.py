@@ -234,6 +234,45 @@ class AIClient:
         answer = self._ask(prompt)
         return answer or _offline_enum(svc)
 
+    # ── Advisor: aktive, konkrete Vorschläge (Human-in-the-Loop) ──────────────
+    def _advisor_system(self, advisor: bool) -> str:
+        """System-Prompt für den Berater-Modus. Die KI SCHLÄGT VOR, führt NIE aus."""
+        base_de = (
+            "Du bist ein erfahrener Pentest-Mentor für ein autorisiertes Projekt "
+            "(CTF/Lab/freigegebene Tests). Du analysierst und EMPFIEHLST – du führst "
+            "selbst NICHTS aus. Vorgeschlagene Befehle sind Vorschläge, die der Mensch "
+            "prüft und selbst startet. Erfinde keine Fakten; wenn etwas unklar ist, sag es."
+        )
+        if advisor:
+            return base_de + (
+                " Sei konkret und taktisch: Nenne die nächsten 2–3 sinnvollsten Schritte, "
+                "jeweils mit (a) kurzer Begründung und (b) einem konkreten Befehl als "
+                "`pentos run …`- oder Shell-Vorschlag. Priorisiere nach Erfolgswahrscheinlichkeit."
+            )
+        return base_de + " Halte dich knapp und erklärend, ohne zu drängen."
+
+    def next_steps(self, state_text: str, advisor: bool = True) -> Optional[str]:
+        """Schlägt auf Basis des Projektstands die nächsten Schritte vor."""
+        if self.provider == "none":
+            return None
+        prompt = (
+            "Hier ist der aktuelle Stand eines Pentest-Projekts. Was sind die nächsten "
+            "sinnvollen Schritte?\n\n" + state_text
+        )
+        return self._ask_system(self._advisor_system(advisor), prompt)
+
+    def interpret_output(self, tool: str, output: str, advisor: bool = True) -> Optional[str]:
+        """Deutet eine Tool-Ausgabe: was steht da, was ist auffällig, was als Nächstes."""
+        if self.provider == "none":
+            return None
+        snippet = output[:6000]
+        prompt = (
+            f"Deute die folgende Ausgabe von '{tool}'. Erkläre kurz: Was zeigt sie? "
+            f"Was ist sicherheitsrelevant/auffällig? Was sind die nächsten sinnvollen "
+            f"Schritte (mit konkretem Befehl)?\n\n```\n{snippet}\n```"
+        )
+        return self._ask_system(self._advisor_system(advisor), prompt)
+
 
 # ── Offline-Fallbacks (keine Backend-Verbindung) ──────────────────────────────
 def _offline_finding(f: Finding) -> str:

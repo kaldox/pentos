@@ -12,6 +12,7 @@ import shlex
 from pathlib import Path
 from typing import Optional
 
+import sys
 import typer
 from rich.console import Console
 from rich.columns import Columns
@@ -1009,6 +1010,8 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
                                                          help="Embedding-Modell für RAG, z.B. nomic-embed-text"),
               timeout: Optional[int] = typer.Option(None, "--timeout"),
               api_key_env: Optional[str] = typer.Option(None, "--api-key-env"),
+              advisor: Optional[bool] = typer.Option(None, "--advisor/--no-advisor",
+                                                     help="Aktive Vorschläge an/aus (Human-in-the-Loop)"),
               check: bool = typer.Option(True, "--check/--no-check",
                                          help="Nach dem Speichern Erreichbarkeit prüfen")):
     """Setzt die KI-Anbindung (schreibt in config.yaml) – ohne YAML-Editieren."""
@@ -1024,6 +1027,7 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
     if embed_model: ai["embed_model"] = embed_model
     if timeout: ai["timeout"] = timeout
     if api_key_env: ai["api_key_env"] = api_key_env
+    if advisor is not None: ai["advisor"] = advisor
     cfg["ai"] = ai
     path = config.save_config(cfg)
     console.print(f"[green]Config gespeichert:[/green] {path}")
@@ -1115,6 +1119,107 @@ def ai_ask(frage: str,
     if hits:
         srcs = "  ".join(f"[dim]{h.label()} ({h.score:.2f})[/dim]" for h in hits)
         console.print(srcs)
+
+
+def _confirm_ai_send(client: AIClient, what: str, yes: bool) -> bool:
+    """Fragt vor dem Senden an die KI nach – warnt, wenn Daten den Rechner verlassen."""
+    if not client.available():
+        console.print("[red]Kein KI-Backend konfiguriert.[/red] Siehe [cyan]pentos ai config[/cyan].")
+        return False
+    if yes:
+        return True
+    if client.provider in ("ollama", "lmstudio"):
+        # lokal -> Daten bleiben auf dem Rechner; leise Bestätigung
+        return typer.confirm(f"{what} an lokales Modell ({client.provider}) senden?", default=True)
+    # Cloud -> deutliche Warnung
+    console.print(f"[yellow]Achtung:[/yellow] {what} wird an einen externen Anbieter "
+                  f"([bold]{client.provider}[/bold]) gesendet – Daten verlassen deinen Rechner.")
+    return typer.confirm("Wirklich senden?", default=False)
+
+
+@ai_app.command("analyze")
+def ai_analyze(
+    file: Optional[Path] = typer.Argument(None, exists=True, readable=True,
+                                          help="Datei mit Scan/Log/Output (oder --text)"),
+    text: Optional[str] = typer.Option(None, "--text", help="Text direkt übergeben"),
+    label: str = typer.Option("Output", "--as", help="Was ist das? z.B. nmap, ffuf, log"),
+    save: bool = typer.Option(False, "--save", help="Ergebnis als Notiz im Projekt speichern"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden"),
+):
+    """Füttert die KI mit einem Scan/Log/Output und bekommt eine Deutung + nächste Schritte.
+
+    Beispiele:
+      pentos ai analyze scan.txt --as nmap
+      cat nikto.txt | pentos ai analyze --as nikto
+      pentos ai analyze --text "$(ss -tlnp)" --as ports
+    """
+    # Eingabe sammeln: Datei, --text, oder stdin
+    content = None
+    if text is not None:
+        content = text
+    elif file is not None:
+        content = file.read_text(encoding="utf-8", errors="ignore")
+    elif not sys.stdin.isatty():
+        content = sys.stdin.read()
+    if not content or not content.strip():
+        console.print("[red]Keine Eingabe.[/red] Datei, --text oder per Pipe (stdin) übergeben.")
+        raise typer.Exit(1)
+
+    client = _ai_client()
+    cfg = config.load_config()
+    if not _confirm_ai_send(client, f"'{label}'-Ausgabe ({len(content)} Zeichen)", yes):
+        console.print("Abgebrochen.")
+        raise typer.Exit()
+
+    advisor = bool(cfg["ai"].get("advisor", True))
+    with console.status("[cyan]KI analysiert…[/cyan]"):
+        answer = client.interpret_output(label, content, advisor=advisor)
+    if not answer:
+        console.print("[red]Keine Antwort vom Modell[/red] (Backend erreichbar? `pentos ai status`).")
+        raise typer.Exit(1)
+    console.print(Panel(answer, title=f"KI · Analyse ({label})"))
+    if save:
+        repo, _ = _repo()
+        repo.add_note(Note(title=f"KI-Analyse · {label}", body=answer, category="ai"))
+        repo.close()
+        console.print("[green]Als Notiz gespeichert.[/green]")
+
+
+@ai_app.command("next")
+def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden")):
+    """Schlägt auf Basis des aktuellen Projektstands die nächsten sinnvollen Schritte vor."""
+    repo, name = _repo()
+    hosts = repo.list_hosts()
+    services = repo.list_services()
+    findings = repo.list_findings()
+    notes = repo.list_notes()
+    # kompakten Stand bauen
+    lines = [f"Projekt: {name}", f"Hosts: {len(hosts)}, Services: {len(services)}, "
+             f"Findings: {len(findings)}, Notizen: {len(notes)}", ""]
+    for h in hosts:
+        svcs = [s for s in services if s.host_id == h.id]
+        lines.append(f"Host {h.address} ({h.hostname or '-'}, OS {h.os_guess or '?'}):")
+        for s in svcs:
+            lines.append(f"  - {s.port}/{s.protocol} {s.name or ''} {s.product or ''} {s.version or ''}".rstrip())
+    if findings:
+        lines.append("\nFindings:")
+        for f in findings:
+            lines.append(f"  - [{f.severity.value}] {f.title}")
+    state = "\n".join(lines)
+    repo.close()
+
+    client = _ai_client()
+    cfg = config.load_config()
+    if not _confirm_ai_send(client, "den Projektstand", yes):
+        console.print("Abgebrochen.")
+        raise typer.Exit()
+    advisor = bool(cfg["ai"].get("advisor", True))
+    with console.status("[cyan]KI denkt über die nächsten Schritte nach…[/cyan]"):
+        answer = client.next_steps(state, advisor=advisor)
+    if not answer:
+        console.print("[red]Keine Antwort vom Modell[/red] (Backend erreichbar? `pentos ai status`).")
+        raise typer.Exit(1)
+    console.print(Panel(answer, title=f"KI · Nächste Schritte ({name})"))
 
 
 # ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────
