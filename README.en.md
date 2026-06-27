@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English** · [🐻 Baseldütsch](README.bl.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.22.0%2Brunner-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.23.0%2Brunner-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -241,4 +241,4 @@ Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.md`](CHANGELOG.md).
-Current version: **2.22.0**.
+Current version: **2.23.0**.

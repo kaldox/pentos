@@ -83,6 +83,101 @@ def build_argv(template: list[str], spec: ToolSpec, target: str, outfile: Option
     return argv
 
 
+def _format_dur(seconds: float) -> str:
+    s = int(seconds)
+    return f"{s // 60}:{s % 60:02d}"
+
+
+def _run_with_live(cmd, shell: bool, eff_timeout: int, label: str):
+    """Führt das Kommando aus und zeigt live einen Timer plus die letzten
+    Ausgabe-Zeilen des Tools. Gibt (returncode, stdout, stderr, timed_out) zurück.
+    Die vollständige Ausgabe wird weiterhin komplett erfasst (für Parser/Capture)."""
+    import threading
+    import time
+    from collections import deque
+    from rich.console import Console, Group
+    from rich.live import Live
+    from rich.panel import Panel
+    from rich.text import Text
+
+    console = Console()
+    proc = subprocess.Popen(
+        cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, bufsize=1,
+    )
+    out_buf: list[str] = []
+    err_buf: list[str] = []
+    tail: deque = deque(maxlen=10)
+    lock = threading.Lock()
+
+    def _reader(pipe, buf):
+        try:
+            for line in pipe:
+                buf.append(line)
+                with lock:
+                    tail.append(line.rstrip("\n"))
+        except Exception:
+            pass
+
+    threads = [
+        threading.Thread(target=_reader, args=(proc.stdout, out_buf), daemon=True),
+        threading.Thread(target=_reader, args=(proc.stderr, err_buf), daemon=True),
+    ]
+    for t in threads:
+        t.start()
+
+    spin = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    start = time.monotonic()
+    timed_out = False
+
+    def _panel(i: int) -> Panel:
+        elapsed = time.monotonic() - start
+        remaining = max(0, eff_timeout - elapsed)
+        head = Text()
+        head.append(spin[i % len(spin)] + " ", style="cyan")
+        head.append(label, style="bold")
+        head.append(f"   läuft {_format_dur(elapsed)}", style="cyan")
+        head.append(f" · Timeout in {_format_dur(remaining)}", style="dim")
+        with lock:
+            lines = list(tail)
+        body = Text("\n".join(lines) if lines else "(noch keine Ausgabe …)", style="dim")
+        return Panel(Group(head, body), border_style="cyan", padding=(0, 1))
+
+    i = 0
+    try:
+        with Live(_panel(0), console=console, refresh_per_second=8, transient=True) as live:
+            while proc.poll() is None:
+                if time.monotonic() - start > eff_timeout:
+                    proc.kill()
+                    timed_out = True
+                    break
+                i += 1
+                live.update(_panel(i))
+                time.sleep(0.12)
+    finally:
+        try:
+            proc.wait(timeout=2)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+        for t in threads:
+            t.join(timeout=2)
+
+    out = "".join(out_buf)
+    err = "".join(err_buf)
+    rc = proc.returncode
+    elapsed = time.monotonic() - start
+    if timed_out:
+        err += f"\n[Timeout nach {eff_timeout}s abgebrochen]"
+        console.print(f"[yellow]⏱  Timeout nach {_format_dur(eff_timeout)} – abgebrochen.[/yellow]")
+    else:
+        mark = "[green]✓[/green]" if rc == 0 else f"[yellow]rc={rc}[/yellow]"
+        console.print(f"{mark}  {label} fertig in {_format_dur(elapsed)}.")
+    return rc, out, err, timed_out
+
+
 def run_tool(spec: ToolSpec, target: str, scans_dir: Path,
              extra_args: Optional[list[str]] = None,
              wordlist: Optional[str] = None,
@@ -133,14 +228,19 @@ def run_tool(spec: ToolSpec, target: str, scans_dir: Path,
     eff_timeout = timeout or spec.timeout
     t0 = datetime.now()
     timed_out = False
+    cmd_for_exec = cmd_str if shell else argv
+    label = f"{spec.name} {host_of(target)}".strip()
+    from rich.console import Console as _Console
+    interactive = _Console().is_terminal
     try:
-        if shell:
-            proc = subprocess.run(cmd_str, shell=True, capture_output=True, text=True,
-                                  timeout=eff_timeout, check=False)
+        if interactive:
+            # Live-Anzeige: Timer + letzte Ausgabe-Zeilen (volle Ausgabe wird erfasst).
+            rc, out, err, timed_out = _run_with_live(cmd_for_exec, shell, eff_timeout, label)
         else:
-            proc = subprocess.run(argv, capture_output=True, text=True,
-                                  timeout=eff_timeout, check=False)
-        rc, out, err = proc.returncode, proc.stdout, proc.stderr
+            # Nicht-Terminal (Tests, Pipes): schlichtes Capture, gleiches Ergebnis.
+            proc = subprocess.run(cmd_for_exec, shell=shell, capture_output=True,
+                                  text=True, timeout=eff_timeout, check=False)
+            rc, out, err = proc.returncode, proc.stdout, proc.stderr
     except subprocess.TimeoutExpired as e:
         timed_out = True
         rc = None

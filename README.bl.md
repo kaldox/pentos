@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · [🇬🇧 English](README.en.md) · **🐻 Baseldütsch**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.22.0%2Brunner-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.23.0%2Brunner-informational)
 
 > ⚠️ **Experimentell:** Die Versjoon isch uf Baseldütsch gschriibe – churzwiilig gmeint, nid zwingend perfekt. Wär e Fähler findet, derf ne gärn flicke.
 
@@ -208,4 +208,4 @@ Tools wo's git: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 ## Changelog
 
 Alli Versjoone und Änderige stöhn in [`CHANGELOG.md`](CHANGELOG.md).
-Aktuelli Versjoon: **2.22.0**.
+Aktuelli Versjoon: **2.23.0**.

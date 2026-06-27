@@ -5,6 +5,15 @@ Alle nennenswerten Änderungen an PentOS werden hier festgehalten.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/),
 die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.23.0] – 2026-06-27
+### Hinzugefügt
+- **Live-Fortschritt beim Runner:** `pentos run` und `sweep` zeigen während ein
+  Tool läuft einen mitlaufenden Timer (verstrichene Zeit plus verbleibende Zeit
+  bis zum Timeout) sowie die letzten Ausgabe-Zeilen des Tools, statt still bis
+  zum Ende zu blockieren. Die vollständige Ausgabe wird weiterhin erfasst und an
+  die Parser übergeben. In nicht-interaktiven Umgebungen (Pipes, Tests) bleibt
+  das schlichte Verhalten erhalten.
+
 ## [2.22.0] – 2026-06-27
 ### Hinzugefügt
 - **Interaktives Web-Dashboard:** Finding-Status direkt im Browser ändern
