@@ -18,6 +18,13 @@ from ..models import SEVERITY_ORDER, Severity
 from ..repository import Repository
 from ..workspace import list_projects
 
+# Auf Modulebene, damit FastAPI die (durch `from __future__ import annotations`
+# verstringten) Typ-Hints der Endpunkte auflösen kann. Optional – None ohne fastapi.
+try:
+    from fastapi import Request, Body
+except ModuleNotFoundError:  # pragma: no cover
+    Request = Body = None
+
 STATIC_DIR = Path(__file__).parent / "static"
 
 
@@ -35,7 +42,8 @@ def _finding_dict(f) -> dict:
     }
 
 
-def create_app(project: Optional[str] = None):
+def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
+               _bind_port: int = 8787):
     try:
         from fastapi import FastAPI, HTTPException
         from fastapi.responses import FileResponse, JSONResponse
@@ -46,6 +54,20 @@ def create_app(project: Optional[str] = None):
         ) from exc
 
     app = FastAPI(title="PentOS Dashboard", docs_url="/api/docs")
+
+    # Erlaubte Origins für Schreibzugriffe = die eigene Bind-Adresse.
+    # Schützt das lokale Dashboard vor Drive-By-Schreibzugriffen fremder Websites.
+    _allowed_origins = {
+        f"http://127.0.0.1:{_bind_port}", f"http://localhost:{_bind_port}",
+        f"http://{_bind_host}:{_bind_port}",
+    }
+
+    def _guard_write(request: Request):
+        origin = request.headers.get("origin")
+        if origin and origin not in _allowed_origins:
+            raise HTTPException(403, "Schreibzugriff nur vom lokalen Dashboard erlaubt.")
+
+    _VALID_STATUS = {s.value for s in __import__("pentos.models", fromlist=["FindingStatus"]).FindingStatus}
 
     def resolve(name: Optional[str]) -> str:
         name = name or project
@@ -151,6 +173,46 @@ def create_app(project: Optional[str] = None):
         finally:
             repo.close()
 
+    # ── Schreibaktionen (interaktiv) ─────────────────────────────────────────
+    @app.post("/api/project/{name}/finding/{fid}/status")
+    def api_set_status(name: str, fid: int, request: Request,
+                       payload: dict = Body(...)):
+        _guard_write(request)
+        name = resolve(name)
+        status = (payload or {}).get("status", "").strip()
+        if status not in _VALID_STATUS:
+            raise HTTPException(422, f"Ungültiger Status. Erlaubt: {sorted(_VALID_STATUS)}")
+        repo = _repo(name)
+        try:
+            ok = repo.set_finding_status(fid, status)
+            if not ok:
+                raise HTTPException(404, f"Finding {fid} nicht gefunden.")
+            return {"ok": True, "id": fid, "status": status}
+        finally:
+            repo.close()
+
+    @app.post("/api/project/{name}/notes")
+    def api_add_note(name: str, request: Request, payload: dict = Body(...)):
+        _guard_write(request)
+        name = resolve(name)
+        from ..models import Note
+        title = (payload or {}).get("title", "").strip()
+        body = (payload or {}).get("body", "").strip()
+        category = (payload or {}).get("category") or None
+        if not title:
+            raise HTTPException(422, "Titel erforderlich.")
+        repo = _repo(name)
+        try:
+            n = repo.add_note(Note(title=title, body=body, category=category))
+            return {"ok": True, "id": n.id, "title": n.title}
+        finally:
+            repo.close()
+
+    @app.get("/api/meta")
+    def api_meta():
+        from ..models import FindingStatus
+        return {"statuses": [s.value for s in FindingStatus]}
+
     # ── Frontend (statisches SPA) ────────────────────────────────────────────
     @app.get("/")
     def index():
@@ -170,5 +232,5 @@ def serve(project: Optional[str] = None, host: str = "127.0.0.1", port: int = 87
         raise SystemExit(
             "uvicorn fehlt. Installiere die Web-Extras: pip install -e \".[web]\""
         ) from exc
-    app = create_app(project)
+    app = create_app(project, _bind_host=host, _bind_port=port)
     uvicorn.run(app, host=host, port=port, log_level="warning")

@@ -34,12 +34,11 @@ Lern- und Analyseassistent — **sie führt niemals selbst Angriffe oder Befehle
 | „Frag dein Projekt" (RAG über eigene Projektdaten, lokale Embeddings) | ✅ |
 | KI-Mentor + **Advisor-Modus** (Scan/Log analysieren, nächste Schritte; fragt vor dem Senden; Offline-Fallback) | ✅ |
 | Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
-| **Web-Dashboard** (lokales Lagebild: Severity-Donut, Findings, Hosts, Loot) | ✅ |
+| **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
 | **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
 
 **Roadmap (offen):**
-- Web-Dashboard interaktiv: Finding-Status im Browser ändern, Notizen bearbeiten, Live-Updates während eines Scans, Report-Download
 - KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
 - Remediation-/Status-Historie für Findings (Retest-Tracking)
 - Attack-Path-Graph visuell im Dashboard
@@ -421,8 +420,10 @@ pentos serve                     # startet http://127.0.0.1:8787
 pentos serve --port 9000 --project meinprojekt
 ```
 
-Bindet standardmässig nur an `127.0.0.1` — **keine offene Angriffsfläche**, passend
-zur Local-First-Idee. Aktuell read-only (Ansicht); interaktive Bearbeitung folgt.
+Im Dashboard kannst du den **Status von Findings ändern** und **Notizen anlegen** —
+die Änderungen landen direkt im Projekt. Es bindet standardmässig nur an `127.0.0.1`
+(**keine offene Angriffsfläche**); Schreibzugriffe sind zusätzlich per Origin-Prüfung
+gegen Drive-By-Zugriffe fremder Websites geschützt.
 
 ---
 
@@ -445,3 +446,10 @@ Client-Konfiguration (Beispiel, z.B. in der MCP-Settings-Datei des Clients):
 
 Bereitgestellte Tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 `pentos_hosts`, `pentos_loot`, `pentos_notes`, `pentos_knowledge`.
+
+---
+
+## Changelog
+
+Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
+Aktuelle Version: **2.22.0**.

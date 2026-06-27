@@ -153,6 +153,30 @@ body{
 .empty{color:var(--muted); text-align:center; padding:48px; font-family:var(--mono); font-size:13px}
 .empty b{color:var(--text); display:block; margin-bottom:6px; font-family:var(--sans)}
 
+/* Interaktiv: Status-Dropdown */
+.status-sel{
+  background:var(--ink); color:var(--text); border:1px solid var(--line);
+  border-radius:7px; padding:5px 9px; font-family:var(--sans); font-size:12.5px; cursor:pointer;
+}
+.status-sel:hover{border-color:var(--brand)}
+.status-sel:disabled{opacity:.5; cursor:wait}
+
+/* Interaktiv: Notiz-Formular */
+.note-form{display:flex; flex-direction:column; gap:10px; margin-bottom:20px}
+.note-form input,.note-form textarea{
+  background:var(--ink); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; padding:10px 12px; font-family:var(--sans); font-size:13.5px; resize:vertical;
+}
+.note-form input:focus,.note-form textarea:focus{outline:none; border-color:var(--brand)}
+.note-form .nf-row{display:flex; gap:10px}
+.note-form .nf-row input{flex:1}
+.btn{
+  background:var(--brand); color:#04211d; border:0; border-radius:8px; cursor:pointer;
+  padding:10px 18px; font-family:inherit; font-size:13.5px; font-weight:600; white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.6; cursor:wait}
+
 @media(max-width:680px){
   #app{grid-template-columns:1fr}
   .rail{position:fixed; bottom:0; top:auto; height:auto; width:100%; flex-direction:row; z-index:20; padding:8px}

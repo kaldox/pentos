@@ -22,10 +22,27 @@ async function api(path) {
   return r.json();
 }
 
+async function apiPost(path, body) {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    let msg = `${r.status}`;
+    try { msg = (await r.json()).detail || msg; } catch (e) { /* ignore */ }
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+  }
+  return r.json();
+}
+
+let STATUSES = ["Zu verifizieren", "Bestätigt", "Ausgenutzt", "False Positive", "Geschlossen"];
+
 // ── Boot ───────────────────────────────────────────────────────────────
 async function boot() {
   try {
     const { projects, active } = await api("/api/projects");
+    try { STATUSES = (await api("/api/meta")).statuses || STATUSES; } catch (e) { /* ok */ }
     const sel = $("#project-select");
     sel.innerHTML = "";
     projects.forEach((p) => {
@@ -162,21 +179,48 @@ async function renderFindings(c) {
   drawFindings();
 }
 function drawFindings() {
-  const rows = _findings
-    .filter((f) => _filter === "all" || f.severity.toLowerCase() === _filter)
-    .map((f) => {
-      const cvss = f.cvss_score != null ? `<span class="mono">${f.cvss_score}</span>` : "<span style='color:var(--faint)'>—</span>";
-      return `<tr>
-        <td><span class="badge sev-${f.severity.toLowerCase()}">${esc(f.severity)}</span></td>
-        <td>${esc(f.title)}${f.description ? `<div style="color:var(--muted);font-size:12.5px;margin-top:3px">${esc(f.description).slice(0, 160)}</div>` : ""}</td>
-        <td>${esc(f.category)}</td>
-        <td>${esc(f.status)}</td>
-        <td>${cvss}</td>
-      </tr>`;
-    }).join("");
+  const list = _findings.filter((f) => _filter === "all" || f.severity.toLowerCase() === _filter);
+  const rows = list.map((f) => {
+    const cvss = f.cvss_score != null ? `<span class="mono">${f.cvss_score}</span>` : "<span style='color:var(--faint)'>—</span>";
+    const opts = STATUSES.map((s) => `<option value="${esc(s)}"${s === f.status ? " selected" : ""}>${esc(s)}</option>`).join("");
+    return `<tr>
+      <td><span class="badge sev-${f.severity.toLowerCase()}">${esc(f.severity)}</span></td>
+      <td>${esc(f.title)}${f.description ? `<div style="color:var(--muted);font-size:12.5px;margin-top:3px">${esc(f.description).slice(0, 160)}</div>` : ""}</td>
+      <td>${esc(f.category)}</td>
+      <td><select class="status-sel" data-id="${f.id}">${opts}</select></td>
+      <td>${cvss}</td>
+    </tr>`;
+  }).join("");
   $("#ftable").innerHTML = rows
     ? `<table class="tbl"><thead><tr><th>Severity</th><th>Titel</th><th>Kategorie</th><th>Status</th><th>CVSS</th></tr></thead><tbody>${rows}</tbody></table>`
     : emptyState("Keine Findings", "in dieser Auswahl.");
+  // Status-Änderung speichern (optimistic)
+  $("#ftable").querySelectorAll(".status-sel").forEach((sel) => {
+    sel.onchange = async () => {
+      const id = +sel.dataset.id, val = sel.value, prev = sel.dataset.prev || "";
+      sel.disabled = true;
+      try {
+        await apiPost(`/api/project/${encodeURIComponent(state.project)}/finding/${id}/status`, { status: val });
+        const f = _findings.find((x) => x.id === id);
+        if (f) f.status = val;
+        flash(sel, "ok");
+      } catch (e) {
+        flash(sel, "err");
+        if (prev) sel.value = prev;
+        alert("Speichern fehlgeschlagen: " + e.message);
+      } finally {
+        sel.disabled = false;
+        sel.dataset.prev = sel.value;
+      }
+    };
+    sel.dataset.prev = sel.value;
+  });
+}
+
+function flash(el, kind) {
+  el.style.transition = "box-shadow .2s";
+  el.style.boxShadow = kind === "ok" ? "0 0 0 2px var(--brand)" : "0 0 0 2px var(--crit)";
+  setTimeout(() => { el.style.boxShadow = "none"; }, 700);
 }
 
 // ── Hosts ──────────────────────────────────────────────────────────────
@@ -214,11 +258,35 @@ async function renderLoot(c) {
 // ── Notizen ────────────────────────────────────────────────────────────
 async function renderNotes(c) {
   const { notes } = await api(`/api/project/${encodeURIComponent(state.project)}/notes`);
-  if (!notes.length) { c.innerHTML = emptyState("Keine Notizen", "Halte was fest mit <code>pentos note add</code>."); return; }
-  c.innerHTML = notes.map((n) => `<div class="note-card">
-    <h3>${esc(n.title)}</h3>
-    <div class="nmeta">${esc(n.category || "—")} · ${esc(n.created_at || "")}</div>
-    <pre>${esc(n.body || "")}</pre></div>`).join("");
+  const form = `<div class="note-form card">
+    <input id="nf-title" placeholder="Titel der Notiz" />
+    <textarea id="nf-body" placeholder="Inhalt …" rows="3"></textarea>
+    <div class="nf-row">
+      <input id="nf-cat" placeholder="Kategorie (optional)" />
+      <button id="nf-save" class="btn">Notiz speichern</button>
+    </div>
+  </div>`;
+  const list = notes.length
+    ? notes.map((n) => `<div class="note-card">
+        <h3>${esc(n.title)}</h3>
+        <div class="nmeta">${esc(n.category || "—")} · ${esc(n.created_at || "")}</div>
+        <pre>${esc(n.body || "")}</pre></div>`).join("")
+    : `<div class="empty"><b>Noch keine Notizen</b>Leg oben die erste an.</div>`;
+  c.innerHTML = form + list;
+  $("#nf-save").onclick = async () => {
+    const title = $("#nf-title").value.trim();
+    if (!title) { $("#nf-title").focus(); return; }
+    const btn = $("#nf-save"); btn.disabled = true; btn.textContent = "Speichere …";
+    try {
+      await apiPost(`/api/project/${encodeURIComponent(state.project)}/notes`, {
+        title, body: $("#nf-body").value, category: $("#nf-cat").value.trim() || null,
+      });
+      renderNotes(c);  // neu laden
+    } catch (e) {
+      alert("Speichern fehlgeschlagen: " + e.message);
+      btn.disabled = false; btn.textContent = "Notiz speichern";
+    }
+  };
 }
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
