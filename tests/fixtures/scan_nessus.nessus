@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Report name="Test">
+<ReportHost name="192.168.56.10">
+<HostProperties>
+<tag name="host-ip">192.168.56.10</tag>
+<tag name="host-fqdn">kingslanding.local</tag>
+<tag name="operating-system">Windows Server 2019</tag>
+</HostProperties>
+<ReportItem port="445" svc_name="cifs" protocol="tcp" severity="3" pluginID="57608" pluginName="SMB Signing not required">
+<description>Signing is not required on the remote SMB server.</description>
+<solution>Enforce message signing in the host configuration.</solution>
+<risk_factor>Medium</risk_factor>
+<cvss_base_score>5.3</cvss_base_score>
+<cvss3_base_score>5.9</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:A/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N</cvss3_vector>
+<cve>CVE-2016-2118</cve>
+</ReportItem>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information">
+<description>Info only.</description>
+</ReportItem>
+</ReportHost>
+</Report>
+</NessusClientData_v2>

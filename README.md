@@ -5,7 +5,7 @@
 PentOS ist **keine Scanner-Sammlung**, sondern ein vollständiges Pentest-*Workspace*-System:
 Erkenntnisse, Angriffspfade, Notizen, Beweise, Wissen und Dokumentation stehen im
 Mittelpunkt. Lokal-first, kein Cloud-Zwang, deutschsprachige Ausgabe. Die KI ist reiner
-Lern- und Analyseassistent — **sie führt niemals selbst Angriffe oder Befehle aus**.
+Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle aus.**
 
 > Gedacht für autorisiertes Testing: CTF, TryHackMe und freigegebene Engagements.
 
@@ -121,7 +121,7 @@ pentos ai next                                 # KI schlägt nächste Schritte z
 ```
 
 Der **Advisor-Modus** (Standard an) macht die KI proaktiv: konkrete nächste Schritte
-mit Begründung und vorgeschlagenen Befehlen — die du prüfst und selbst startest. Die KI
+mit Begründung und vorgeschlagenen Befehlen, die du prüfst und selbst startest. Die KI
 **führt nie selbst etwas aus**. Vor jedem Senden fragt PentOS nach; geht es an einen
 Cloud-Anbieter, warnt es ausdrücklich, dass Daten den Rechner verlassen (lokales Ollama
 bleibt dagegen privat). Umschalten: `pentos ai config --advisor / --no-advisor`.
@@ -130,7 +130,7 @@ bleibt dagegen privat). Umschalten: `pentos ai config --advisor / --no-advisor`.
 
 ## Runner-Layer (opt-in)
 
-PentOS kann Tools auch **selbst ausführen** — aber nur, wenn du sie explizit
+PentOS kann Tools auch **selbst ausführen**, aber nur, wenn du sie explizit
 startest. Die Rohausgabe landet in `scans/`, wird geparst und automatisch in
 Findings/Tasks/Evidence/Notizen überführt und im Journal protokolliert.
 
@@ -347,7 +347,7 @@ Datenmodell: pro Projekt eine eigene SQLite-DB unter `<projekt>/database/pentos.
 
 ## Sicherheit / Scope
 
-PentOS orchestriert und dokumentiert — es führt **keine** Scans oder Exploits selbst aus.
+PentOS orchestriert und dokumentiert. Es führt **keine** Scans oder Exploits selbst aus.
 Empfehlungen sind Vorschläge, die KI analysiert ausschliesslich. Einsatz nur in
 autorisierten Umgebungen (eigene Labs, CTF/THM, freigegebene Tests).
 
@@ -398,7 +398,7 @@ in den meisten Rechtsordnungen strafbar.
 
 Die Autorinnen und Autoren übernehmen **keine Haftung** für Missbrauch oder Schäden. Die
 Nutzung erfolgt auf eigene Verantwortung. Das Tool **führt selbst keine Angriffe aus** und
-die integrierte KI **analysiert ausschliesslich** — die Verantwortung für jede ausgeführte
+die integrierte KI **analysiert ausschliesslich**. Die Verantwortung für jede ausgeführte
 Aktion liegt bei der nutzenden Person.
 
 ---
@@ -411,7 +411,7 @@ Veröffentlicht unter der [MIT-Lizenz](LICENSE).
 
 ## Web-Dashboard (optional)
 
-Ein lokales Lagebild deines Workspace im Browser — Severity-Verteilung, Findings,
+Ein lokales Lagebild deines Workspace im Browser: Severity-Verteilung, Findings,
 Hosts/Dienste, Loot und Notizen auf einen Blick.
 
 ```bash
@@ -420,7 +420,7 @@ pentos serve                     # startet http://127.0.0.1:8787
 pentos serve --port 9000 --project meinprojekt
 ```
 
-Im Dashboard kannst du den **Status von Findings ändern** und **Notizen anlegen** —
+Im Dashboard kannst du den **Status von Findings ändern** und **Notizen anlegen**;
 die Änderungen landen direkt im Projekt. Es bindet standardmässig nur an `127.0.0.1`
 (**keine offene Angriffsfläche**); Schreibzugriffe sind zusätzlich per Origin-Prüfung
 gegen Drive-By-Zugriffe fremder Websites geschützt.

@@ -2,14 +2,14 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English** · [🐻 Baseldütsch](README.bl.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.17.0%2Brunner-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.22.0%2Brunner-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
-PentOS is **not a scanner collection** — it's a full pentest *workspace* system:
+PentOS is **not a scanner collection**. It is a full pentest *workspace* system:
 findings, attack paths, notes, evidence, knowledge and documentation are what it
 revolves around. Local-first, no forced cloud, German-language output by default.
-The AI is purely a learning and analysis assistant — **it never runs attacks or
+The AI is purely a learning and analysis assistant. **It never runs attacks or
 commands itself**.
 
 > Built for authorized testing: CTF, TryHackMe and signed-off engagements.
@@ -36,7 +36,7 @@ commands itself**.
 | nmap XML import (hosts/services/scripts) | ✅ |
 
 **Roadmap (next phases):**
-- **Opt-in runner layer:** ✅ shipped — tools run on request, output is parsed and
+- **Opt-in runner layer:** ✅ shipped. Tools run on request, output is parsed and
   ingested into the workspace (scope guard included).
 - **Phase 2:** methodology/playbook library (web/AD/Linux/Windows/cloud/API/mobile as
   checklists), richer screenshot handling, knowledge-base expansion.
@@ -116,7 +116,7 @@ pentos ai enum 4
 
 ## Runner layer (opt-in)
 
-PentOS can also **run tools itself** — but only when you explicitly start them.
+PentOS can also **run tools itself**, but only when you explicitly start them.
 The raw output lands in `scans/`, gets parsed and is automatically ingested into
 findings/tasks/evidence/notes and logged in the journal.
 
@@ -131,15 +131,15 @@ pentos runs                          # history of all runs
 ```
 
 > **Shell mode (`--shell`)**: By default, tools run without a shell (fixed `argv`,
-> no metacharacter eval — injection protection). Some tools need a real shell
+> no metacharacter eval, injection protection). Some tools need a real shell
 > though (e.g. `smbclient -c '...'`). `--shell` enables that deliberately: the
 > command from `--args` is interpreted by the shell. The scope guard stays active.
-> **Only use with trusted input** — shell metacharacters will be executed.
+> **Only use with trusted input.** Shell metacharacters will be executed.
 
-### Sweep — guided recon/enum chain
+### Sweep: guided recon/enum chain
 
 `sweep` takes a target, runs base recon (nmap) and then suggests the next tools per
-discovered service. Rule-based and traceable — **not an autonomous agent**: safe
+discovered service. Rule-based and traceable, **not an autonomous agent**: safe
 recon/enum tools can run automatically (with a prompt per step), brute-force/exploits
 are **never** run automatically, only suggested.
 
@@ -167,7 +167,7 @@ pentos playbook status                     # progress across all playbooks
 
 Ask questions about your **own** project data (findings, notes, knowledge, loot,
 hosts/services). PentOS builds local embeddings (via the AI backend), stores them as
-a vector index in the project DB and answers with source attribution — exclusively
+a vector index in the project DB and answers with source attribution, exclusively
 from the project context, no hallucination.
 
 ```bash
@@ -208,7 +208,7 @@ Data model: one SQLite DB per project under `<project>/database/pentos.db`.
 
 ## Security / scope
 
-PentOS orchestrates and documents — it runs **no** scans or exploits itself.
+PentOS orchestrates and documents. It runs **no** scans or exploits itself.
 Recommendations are suggestions, the AI analyzes only. Use only in authorized
 environments (your own labs, CTF/THM, signed-off tests).
 
@@ -231,7 +231,7 @@ permission** from the target owner. Use against systems without explicit permiss
 is a criminal offense in most jurisdictions.
 
 The authors accept **no liability** for misuse or damage. Use at your own risk. The
-tool **runs no attacks itself** and the integrated AI **only analyzes** — responsibility
+tool **runs no attacks itself** and the integrated AI **only analyzes**; responsibility
 for every executed action lies with the user.
 
 ---

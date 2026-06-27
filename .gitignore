@@ -33,6 +33,7 @@ projects/
 scans/
 reports/
 *.nessus
+!tests/fixtures/*.nessus
 
 # ── Editor / OS ─────────────────────────────────────────────────────────────
 .idea/
