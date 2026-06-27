@@ -50,6 +50,8 @@ kei Cloud-Zwang, dütschi Uusgaab. D KI isch nume zum Lärne und Analysiere doo 
 - Aagriffspfad-Graph visuell im Dashboard
 - Bessers Screenshot-Handling (z.B. diräkt uufnäh und annotiere)
 
+D ganzi Roadmap, mit Begründige und bewusste Nöd-Ziil, stoht in [`ROADMAP.md`](ROADMAP.md).
+
 ---
 
 ## Installiere

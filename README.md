@@ -48,6 +48,8 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 - Attack-Path-Graph visuell im Dashboard
 - Reicheres Screenshot-Handling (z.B. direkte Aufnahme/Annotation)
 
+Die vollständige Roadmap mit Begründungen und bewussten Nicht-Zielen steht in [`ROADMAP.md`](ROADMAP.md).
+
 ---
 
 ## Installation

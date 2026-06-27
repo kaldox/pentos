@@ -49,6 +49,8 @@ commands itself**.
 - Attack-path graph rendered visually in the dashboard
 - Richer screenshot handling (e.g. direct capture/annotation)
 
+The full roadmap, with rationale and deliberate non-goals, lives in [`ROADMAP.md`](ROADMAP.md).
+
 ---
 
 ## Installation
