@@ -35,6 +35,7 @@ Lern- und Analyseassistent — **sie führt niemals selbst Angriffe oder Befehle
 | KI-Mentor + **Advisor-Modus** (Scan/Log analysieren, nächste Schritte; fragt vor dem Senden; Offline-Fallback) | ✅ |
 | Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
 | **Web-Dashboard** (lokales Lagebild: Severity-Donut, Findings, Hosts, Loot) | ✅ |
+| **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
 
 **Roadmap (offen):**
@@ -43,7 +44,6 @@ Lern- und Analyseassistent — **sie führt niemals selbst Angriffe oder Befehle
 - Remediation-/Status-Historie für Findings (Retest-Tracking)
 - Attack-Path-Graph visuell im Dashboard
 - Reicheres Screenshot-Handling (z.B. direkte Aufnahme/Annotation)
-- MCP-Server (PentOS aus Claude Code/Cursor steuern, Human-in-the-Loop)
 
 ---
 
@@ -361,7 +361,7 @@ git clone https://github.com/kaldox/pentos.git
 cd pentos
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[pdf,web]"    # PDF-Export (reportlab) + Web-Dashboard (FastAPI); minimal: pip install -e .
+pip install -e ".[pdf,web,mcp]"  # alle Extras: PDF + Web-Dashboard + MCP-Server; minimal: pip install -e .
 pentos --help
 ```
 
@@ -423,3 +423,25 @@ pentos serve --port 9000 --project meinprojekt
 
 Bindet standardmässig nur an `127.0.0.1` — **keine offene Angriffsfläche**, passend
 zur Local-First-Idee. Aktuell read-only (Ansicht); interaktive Bearbeitung folgt.
+
+---
+
+## MCP-Server (optional)
+
+Macht den PentOS-Workspace für MCP-Clients wie **Claude Code** oder **Cursor**
+abfragbar – du sprichst dein Projekt in natürlicher Sprache an („zeig die
+High-Findings", „was steht in den Notizen zu SMB"). Alle MCP-Tools sind
+**ausschliesslich lesend/analysierend** – kein Tool führt Scans oder Angriffe
+aus. Das grosse Reasoning übernimmt der Client, die Kontrolle bleibt bei dir.
+
+```bash
+pip install -e ".[mcp]"
+```
+
+Client-Konfiguration (Beispiel, z.B. in der MCP-Settings-Datei des Clients):
+```json
+{ "mcpServers": { "pentos": { "command": "pentos", "args": ["mcp"] } } }
+```
+
+Bereitgestellte Tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
+`pentos_hosts`, `pentos_loot`, `pentos_notes`, `pentos_knowledge`.

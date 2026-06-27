@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pentos"
-version = "2.20.0+runner"
+version = "2.21.0+runner"
 description = "PentOS – Knowledge-Driven Offensive Security Workspace"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 pdf = ["reportlab>=4.0"]
 web = ["fastapi>=0.110", "uvicorn>=0.27"]
+mcp = ["mcp>=1.0"]
 
 [project.scripts]
 pentos = "pentos.cli.app:app"

@@ -1259,6 +1259,36 @@ def serve_cmd(
         raise typer.Exit(1)
     except KeyboardInterrupt:
         console.print("\n[dim]Dashboard gestoppt.[/dim]")
+
+
+@app.command("mcp")
+def mcp_cmd():
+    """Startet den MCP-Server (stdio) – macht den Workspace für Claude Code/Cursor lesbar.
+
+    Wird normalerweise nicht von Hand gestartet, sondern vom MCP-Client als
+    Subprozess. Alle MCP-Tools sind lesend/analysierend – nichts wird ausgeführt.
+    Benötigt die MCP-Extras: pip install -e ".[mcp]"
+
+    Client-Konfiguration (z.B. Claude Code / Cursor), Beispiel:
+      {"mcpServers": {"pentos": {"command": "pentos", "args": ["mcp"]}}}
+    """
+    try:
+        from .. import mcp_server
+    except ModuleNotFoundError:
+        console.print('[red]MCP-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[mcp]"[/cyan]')
+        raise typer.Exit(1)
+    # WICHTIG: keine Konsolenausgabe auf stdout – stdio gehört dem MCP-Protokoll.
+    try:
+        mcp_server.serve()
+    except ModuleNotFoundError:
+        console.print('[red]MCP-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[mcp]"[/cyan]')
+        raise typer.Exit(1)
+
+
+# ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────
+@app.command("tools")
+def tools_cmd():
+    """Listet verfügbare Tools des Runners (inkl. Installations-Check)."""
     import shutil
     table = Table(title="Runner – verfügbare Tools")
     for c in ["Tool", "Kategorie", "Binary", "Installiert", "Wordlist", "Parser"]:
