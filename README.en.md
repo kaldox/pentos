@@ -16,33 +16,38 @@ commands itself**.
 
 ---
 
-## What Phase 1 already does
+## What PentOS can do
 
-| Spec requirement | Status |
+| Feature | Status |
 |---|---|
 | Pentest workspace (full folder structure per project) | ✅ |
 | Automatic notes (e.g. `notes/nmap.md` on import) | ✅ |
 | Pentest journal (every action timestamped) | ✅ |
 | Task system (auto-generated per service, Open/In progress/Done) | ✅ |
 | Intelligent next steps (recommendations, **no execution**) | ✅ |
-| Automatic findings (rule-based, parses NSE output) | ✅ |
+| Guided recon/enum chain (`sweep`, rule-based, prompts per step) | ✅ |
+| Opt-in runner layer (23 tools, no shell eval, scope guard, timeout) | ✅ |
+| Methodology / playbook library (web/AD/Linux/Windows privesc) | ✅ |
+| Automatic findings (rule-based) + structured parsers (enum4linux-ng, nuclei) | ✅ |
 | Attack-path graph (Mermaid + Graphviz DOT) | ✅ |
 | Obsidian integration (vault with `[[wikilinks]]`) | ✅ |
 | Loot management (credentials/hashes/tokens/…) | ✅ |
 | Evidence management (attach files/screenshots/outputs to a finding) | ✅ |
+| **Evidence/screenshots embedded in reports** (HTML inline, PDF, Markdown) | ✅ |
+| Finding-template library (reusable, with CVSS, pre-filled + extendable) | ✅ |
 | CTF/THM knowledge base (tagged entries) | ✅ |
-| AI mentor (explain findings, enumeration ideas; offline fallback) | ✅ |
-| Reporting (Markdown from findings/journal/tasks/attack path) | ✅ |
-| nmap XML import (hosts/services/scripts) | ✅ |
+| "Ask your project" (RAG over your own project data, local embeddings) | ✅ |
+| AI mentor + **advisor mode** (analyze a scan/log, suggest next steps; asks before sending; offline fallback) | ✅ |
+| Reporting: Markdown, **branded HTML & PDF**, didactic learning report | ✅ |
+| **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
+| **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
+| Import: nmap XML **+ scanner import (Nessus/OpenVAS/Burp)** | ✅ |
 
-**Roadmap (next phases):**
-- **Opt-in runner layer:** ✅ shipped. Tools run on request, output is parsed and
-  ingested into the workspace (scope guard included).
-- **Phase 2:** methodology/playbook library (web/AD/Linux/Windows/cloud/API/mobile as
-  checklists), richer screenshot handling, knowledge-base expansion.
-- **Phase 3:** AI flashcards & note summaries, Nuclei template management,
-  structured parsers for more tools (enum4linux-ng/ffuf JSON → users/shares/paths),
-  HTML/PDF report.
+**Roadmap (open):**
+- AI flashcards & note summaries (from your own data only, no hallucination)
+- Remediation/status history for findings (retest tracking)
+- Attack-path graph rendered visually in the dashboard
+- Richer screenshot handling (e.g. direct capture/annotation)
 
 ---
 
@@ -239,3 +244,50 @@ for every executed action lies with the user.
 ## License
 
 Released under the [MIT License](LICENSE).
+
+---
+
+## Web dashboard (optional)
+
+A local situational overview of your workspace in the browser: severity distribution,
+findings, hosts/services, loot and notes at a glance.
+
+```bash
+pip install -e ".[web]"          # FastAPI + uvicorn
+pentos serve                     # starts http://127.0.0.1:8787
+pentos serve --port 9000 --project myproject
+```
+
+In the dashboard you can **change a finding's status** and **add notes**; the changes
+go straight into the project. It binds to `127.0.0.1` only (**no open attack surface**),
+and write requests are additionally guarded by an origin check against drive-by access
+from other websites.
+
+---
+
+## MCP server (optional)
+
+Makes the PentOS workspace queryable from MCP clients like **Claude Code** or **Cursor**.
+You talk to your project in natural language ("show the high findings", "what is in the
+SMB notes"). All MCP tools are **strictly read-only/analytical**; no tool runs scans or
+attacks. The heavy reasoning happens in the client, control stays with you.
+
+```bash
+pip install -e ".[mcp]"
+```
+
+Client configuration (example, e.g. in the client's MCP settings file):
+
+```json
+{ "mcpServers": { "pentos": { "command": "pentos", "args": ["mcp"] } } }
+```
+
+Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
+`pentos_hosts`, `pentos_loot`, `pentos_notes`, `pentos_knowledge`.
+
+---
+
+## Changelog
+
+All versions and changes are documented in [`CHANGELOG.md`](CHANGELOG.md).
+Current version: **2.22.0**.

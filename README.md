@@ -1,5 +1,9 @@
 # PentOS
 
+**🇩🇪 Deutsch** · [🇬🇧 English](README.en.md) · [🐻 Baseldütsch](README.bl.md)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.22.0%2Brunner-informational)
+
 **Knowledge-Driven Offensive Security Workspace**
 
 PentOS ist **keine Scanner-Sammlung**, sondern ein vollständiges Pentest-*Workspace*-System:
