@@ -97,7 +97,7 @@ SEV_STYLE = {
 
 # ── Projekte ─────────────────────────────────────────────────────────────────
 project_app = typer.Typer(help="Projekte / Workspaces verwalten")
-app.add_typer(project_app, name="project")
+app.add_typer(project_app, name="project", rich_help_panel="Workspace")
 
 
 @project_app.command("new")
@@ -153,7 +153,7 @@ def project_show():
 
 # ── Hosts ────────────────────────────────────────────────────────────────────
 host_app = typer.Typer(help="Hosts verwalten")
-app.add_typer(host_app, name="host")
+app.add_typer(host_app, name="host", rich_help_panel="Workspace")
 
 
 @host_app.command("add")
@@ -180,7 +180,7 @@ def host_list():
 
 # ── Services ─────────────────────────────────────────────────────────────────
 service_app = typer.Typer(help="Services verwalten")
-app.add_typer(service_app, name="service")
+app.add_typer(service_app, name="service", rich_help_panel="Workspace")
 
 
 @service_app.command("add")
@@ -227,7 +227,7 @@ def service_list(host_id: Optional[int] = typer.Option(None, "--host")):
 
 # ── Scan-Import ──────────────────────────────────────────────────────────────
 scan_app = typer.Typer(help="Scanner-Outputs importieren")
-app.add_typer(scan_app, name="scan")
+app.add_typer(scan_app, name="scan", rich_help_panel="Recon & Import")
 
 
 @scan_app.command("import-nmap")
@@ -324,7 +324,7 @@ def scan_import_scanner(
 
 
 # ── Empfehlungen ─────────────────────────────────────────────────────────────
-@app.command("recommend")
+@app.command("recommend", rich_help_panel="Recon & Import")
 def recommend_cmd(service_id: int,
                   create_tasks: bool = typer.Option(False, "--create-tasks",
                                                      help="Vorgeschlagene Aufgaben anlegen")):
@@ -375,7 +375,7 @@ def recommend_cmd(service_id: int,
 
 # ── Aufgaben ─────────────────────────────────────────────────────────────────
 task_app = typer.Typer(help="Aufgaben verwalten")
-app.add_typer(task_app, name="task")
+app.add_typer(task_app, name="task", rich_help_panel="Befunde & Doku")
 
 
 @task_app.command("list")
@@ -421,7 +421,7 @@ def task_done(task_id: int):
 
 # ── Findings ─────────────────────────────────────────────────────────────────
 finding_app = typer.Typer(help="Findings verwalten")
-app.add_typer(finding_app, name="finding")
+app.add_typer(finding_app, name="finding", rich_help_panel="Befunde & Doku")
 
 
 @finding_app.command("add")
@@ -502,7 +502,7 @@ def finding_status(finding_id: int,
 
 # ── Finding-Template-Bibliothek ──────────────────────────────────────────────
 template_app = typer.Typer(help="Wiederverwendbare Finding-Vorlagen (pro Projekt)")
-app.add_typer(template_app, name="template")
+app.add_typer(template_app, name="template", rich_help_panel="Befunde & Doku")
 
 
 @template_app.command("seed")
@@ -620,7 +620,7 @@ def template_apply(
 
 # ── Notizen ──────────────────────────────────────────────────────────────────
 note_app = typer.Typer(help="Notizen verwalten")
-app.add_typer(note_app, name="note")
+app.add_typer(note_app, name="note", rich_help_panel="Befunde & Doku")
 
 
 @note_app.command("add")
@@ -668,7 +668,7 @@ def note_rm(note_id: int,
 
 # ── Loot ─────────────────────────────────────────────────────────────────────
 loot_app = typer.Typer(help="Loot / Credentials verwalten")
-app.add_typer(loot_app, name="loot")
+app.add_typer(loot_app, name="loot", rich_help_panel="Befunde & Doku")
 
 
 @loot_app.command("add")
@@ -710,7 +710,7 @@ def loot_rm(loot_id: int,
 
 # ── Evidence ─────────────────────────────────────────────────────────────────
 evidence_app = typer.Typer(help="Beweise verwalten")
-app.add_typer(evidence_app, name="evidence")
+app.add_typer(evidence_app, name="evidence", rich_help_panel="Befunde & Doku")
 
 
 @evidence_app.command("add")
@@ -751,7 +751,7 @@ def evidence_rm(evidence_id: int,
 
 # ── Wissensdatenbank ─────────────────────────────────────────────────────────
 knowledge_app = typer.Typer(help="CTF/THM-Wissensdatenbank")
-app.add_typer(knowledge_app, name="knowledge")
+app.add_typer(knowledge_app, name="knowledge", rich_help_panel="Befunde & Doku")
 
 
 @knowledge_app.command("add")
@@ -775,7 +775,7 @@ def knowledge_list(tag: Optional[str] = typer.Option(None, "--tag")):
 
 # ── Journal ──────────────────────────────────────────────────────────────────
 journal_app = typer.Typer(help="Journal / Timeline")
-app.add_typer(journal_app, name="journal")
+app.add_typer(journal_app, name="journal", rich_help_panel="Befunde & Doku")
 
 
 @journal_app.command("show")
@@ -792,7 +792,7 @@ def journal_show():
 
 # ── Graph ────────────────────────────────────────────────────────────────────
 graph_app = typer.Typer(help="Attack-Path-Graph")
-app.add_typer(graph_app, name="graph")
+app.add_typer(graph_app, name="graph", rich_help_panel="Reporting & Übersicht")
 
 
 @graph_app.command("mermaid")
@@ -819,7 +819,7 @@ def graph_dot(out: Optional[Path] = typer.Option(None, "--out", help="Datei stat
 
 
 # ── Obsidian ─────────────────────────────────────────────────────────────────
-@app.command("obsidian")
+@app.command("obsidian", rich_help_panel="Reporting & Übersicht")
 def obsidian_export(out: Optional[Path] = typer.Option(None, "--out",
                                                        help="Vault-Verzeichnis (Default: <projekt>/obsidian)")):
     """Exportiert die Projektdaten als verlinkten Obsidian-Vault."""
@@ -830,7 +830,7 @@ def obsidian_export(out: Optional[Path] = typer.Option(None, "--out",
 
 
 # ── Reporting ────────────────────────────────────────────────────────────────
-@app.command("report")
+@app.command("report", rich_help_panel="Reporting & Übersicht")
 def report_build(out: Optional[Path] = typer.Option(None, "--out",
                                                     help="Default: <projekt>/reports/report.<ext>"),
                  explain: bool = typer.Option(False, "--explain",
@@ -897,7 +897,7 @@ def _bar(n: int, total: int, color: str, width: int = 16) -> str:
     return f"[{color}]" + "█" * filled + "[/]" + "[grey30]" + "░" * (width - filled) + "[/]"
 
 
-@app.command("dashboard")
+@app.command("dashboard", rich_help_panel="Reporting & Übersicht")
 def dashboard_cmd():
     """Kompakte Übersicht des aktiven Projekts (Findings, Tasks, Loot, letzte Läufe)."""
     repo, name = _repo()
@@ -968,7 +968,7 @@ def dashboard_cmd():
 
 # ── KI-Mentor ────────────────────────────────────────────────────────────────
 ai_app = typer.Typer(help="KI-Mentor (lokal, nur Analyse)")
-app.add_typer(ai_app, name="ai")
+app.add_typer(ai_app, name="ai", rich_help_panel="KI & Integration")
 
 
 @ai_app.command("status")
@@ -1222,7 +1222,7 @@ def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage
     console.print(Panel(answer, title=f"KI · Nächste Schritte ({name})"))
 
 
-@app.command("serve")
+@app.command("serve", rich_help_panel="KI & Integration")
 def serve_cmd(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind-Adresse (Default nur lokal)"),
     port: int = typer.Option(8787, "--port", "-p", help="Port"),
@@ -1261,7 +1261,7 @@ def serve_cmd(
         console.print("\n[dim]Dashboard gestoppt.[/dim]")
 
 
-@app.command("mcp")
+@app.command("mcp", rich_help_panel="KI & Integration")
 def mcp_cmd():
     """Startet den MCP-Server (stdio) – macht den Workspace für Claude Code/Cursor lesbar.
 
@@ -1286,7 +1286,7 @@ def mcp_cmd():
 
 
 # ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────
-@app.command("tools")
+@app.command("tools", rich_help_panel="Recon & Import")
 def tools_cmd():
     """Listet verfügbare Tools des Runners (inkl. Installations-Check)."""
     import shutil
@@ -1302,7 +1302,7 @@ def tools_cmd():
     console.print("[dim]Start: pentos run <tool> <ziel>   ·   Vorschau: --dry-run[/dim]")
 
 
-@app.command("run")
+@app.command("run", rich_help_panel="Recon & Import")
 def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools)"),
             target: str = typer.Argument(..., help="Ziel: IP, Host oder URL"),
             profile: Optional[str] = typer.Option(None, "--profile",
@@ -1388,7 +1388,7 @@ def _run_and_ingest(repo, name, spec, target, profile=None, timeout=None) -> boo
     return True
 
 
-@app.command("sweep")
+@app.command("sweep", rich_help_panel="Recon & Import")
 def sweep_cmd(target: str = typer.Argument(..., help="Ziel: IP oder Host"),
               run: bool = typer.Option(False, "--run",
                                        help="Sichere Enum-Tools automatisch ausführen (mit Rückfrage)"),
@@ -1471,7 +1471,7 @@ def sweep_cmd(target: str = typer.Argument(..., help="Ziel: IP oder Host"),
     repo.close()
 
 
-@app.command("runs")
+@app.command("runs", rich_help_panel="Reporting & Übersicht")
 def runs_cmd():
     """Zeigt die Historie ausgeführter Tools."""
     repo, _ = _repo()
@@ -1488,7 +1488,7 @@ def runs_cmd():
 
 # ── Playbooks / Methodik ──────────────────────────────────────────────────────
 playbook_app = typer.Typer(help="Methodik-Playbooks (Checklisten)")
-app.add_typer(playbook_app, name="playbook")
+app.add_typer(playbook_app, name="playbook", rich_help_panel="Recon & Import")
 
 _KIND_ICON = {"pentos": "🔧", "external": "🌐", "manual": "📝"}
 
@@ -1589,7 +1589,7 @@ def playbook_status():
 
 # ── Scope ────────────────────────────────────────────────────────────────────
 scope_app = typer.Typer(help="Scope (erlaubte Ziele) verwalten")
-app.add_typer(scope_app, name="scope")
+app.add_typer(scope_app, name="scope", rich_help_panel="Workspace")
 
 
 @scope_app.command("add")

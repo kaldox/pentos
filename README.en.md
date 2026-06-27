@@ -72,117 +72,66 @@ On first start, `~/.config/pentos/config.yaml` is created automatically
 ## Quickstart
 
 ```bash
-# 1) Create a project workspace (becomes active automatically)
+# 1) Create a project (becomes active automatically)
 pentos project new THM_Alfred
 
-# 2) Import an nmap scan  (recommended: nmap -sC -sV -oX scan.xml <target>)
-pentos scan import-nmap scan.xml
-pentos scan import-scanner report.nessus          # Nessus/OpenVAS/Burp (auto-detect)
-pentos scan import-scanner gvm.xml --format openvas   # force format (nessus|openvas|burp)
+# 2) Import a scan  (nmap -sC -sV -oX scan.xml <target>)
+pentos scan import-nmap scan.xml          # or import-scanner for Nessus/OpenVAS/Burp
 #   -> hosts + services + auto-tasks + auto-findings + auto-note
 
-# 3) Overview
-pentos dashboard                   # project overview at a glance
-pentos finding list
-pentos task list
-pentos service list
+# 3) Overview & next steps
+pentos dashboard                          # compact project overview
+pentos recommend 4                        # suggestions for a service (no execution)
 
-# 4) Next steps for a service (suggestion only)
-pentos recommend 4                 # optional: --create-tasks
-
-# 5) Document your work
-pentos task start 12
-pentos task done 12
+# 4) Document your work
 pentos finding status 4 confirmed
 pentos loot add "admin:Passw0rd" --type cred --host 1 --source smb
-pentos evidence add ./screenshots/smb_share.png --kind screenshot --finding 4
-pentos note show <id>                 # show full note content
-pentos knowledge add Jenkins "Script Console RCE" --body "Groovy under /script"
+pentos evidence add ./shot.png --kind screenshot --finding 4   # shows up in the report
 
-# 5b) Finding template library (reusable, vetted templates, per project)
-pentos template seed                           # pre-fill from the knowledge base (8 templates, idempotent)
-pentos template list                           # show templates
-pentos template show pwn3d                      # detail (description, remediation, CVSS)
-pentos template apply pwn3d --host 192.168.56.10 --suffix "(192.168.56.10)"  # template -> finding
-
-# 6) Visualize & export
-pentos graph mermaid --out attack_paths/ap.mmd
-pentos graph dot --out attack_paths/ap.dot     # dot -Tpng ap.dot -o ap.png
-pentos obsidian                                # vault under <project>/obsidian
-pentos report                                  # Markdown report under <project>/reports
-pentos report --html                           # branded HTML report (printable/PDF in browser)
-pentos report --pdf                            # branded PDF (needs reportlab: pip install reportlab)
-pentos report --explain                        # learning report: explains each step didactically
-
-# 7) AI mentor (local; without a model -> offline fallback)
-pentos ai explain-finding 4
-pentos ai enum 4
+# 5) Generate a report
+pentos report --html                      # branded HTML (also --pdf, --explain)
 ```
+
+That is the core flow. All commands grouped by area in the
+**[command reference (COMMANDS.md)](COMMANDS.md)**, or live via `pentos --help`
+and `pentos <group> --help` (e.g. `pentos finding --help`).
 
 ---
 
 ## Runner layer (opt-in)
 
-PentOS can also **run tools itself**, but only when you explicitly start them.
-The raw output lands in `scans/`, gets parsed and is automatically ingested into
-findings/tasks/evidence/notes and logged in the journal.
+PentOS can also **run tools itself**, but only when you explicitly start them
+(`pentos run <tool> <target>`). The raw output lands in `scans/`, gets parsed and
+is automatically ingested into findings/tasks/evidence/notes and logged in the
+journal. Some tools ingest their output directly: `nmap` builds the full
+host/service/finding pipeline, `nuclei` creates findings, `hydra`/`nxc` write found
+logins as loot, `enum4linux-ng` adds a structured note plus SMB findings.
 
-```bash
-pentos tools                         # available tools + install check
-pentos run nmap 10.10.10.10          # full cascade: hosts/services/tasks/findings
-pentos run nuclei http://10.10.10.10 # hits -> findings (severity from output)
-pentos run nmap 10.10.10.10 --profile full     # basic | standard | full | custom
-pentos run nmap 10.10.10.10 --args "-p- -T4"   # pass through extra arguments
-pentos run nmap 10.10.10.10 --dry-run          # only show the command
-pentos runs                          # history of all runs
-```
+> **Shell mode (`--shell`)**: By default tools run without a shell (fixed `argv`,
+> no metacharacter eval, injection protection). Some tools need a real shell though
+> (e.g. `smbclient -c '...'`); `--shell` enables that deliberately. The scope guard
+> stays active. **Only use with trusted input.**
 
-> **Shell mode (`--shell`)**: By default, tools run without a shell (fixed `argv`,
-> no metacharacter eval, injection protection). Some tools need a real shell
-> though (e.g. `smbclient -c '...'`). `--shell` enables that deliberately: the
-> command from `--args` is interpreted by the shell. The scope guard stays active.
-> **Only use with trusted input.** Shell metacharacters will be executed.
-
-### Sweep: guided recon/enum chain
-
-`sweep` takes a target, runs base recon (nmap) and then suggests the next tools per
-discovered service. Rule-based and traceable, **not an autonomous agent**: safe
+**Guided chain (`sweep`)** takes a target, runs base recon and then suggests the
+next tools per discovered service. Rule-based, **not an autonomous agent**: safe
 recon/enum tools can run automatically (with a prompt per step), brute-force/exploits
 are **never** run automatically, only suggested.
 
-```bash
-pentos sweep 10.10.10.10                 # preview: chain as ready-to-run commands
-pentos sweep 10.10.10.10 --run           # run safe enum tools (prompt per step)
-pentos sweep 10.10.10.10 --run --yes     # run through without prompts
-```
+**Playbooks** are checkable checklists (web, AD, Linux/Windows privesc) for a
+structured approach; progress is saved per project. Add your own as YAML under
+`~/.config/pentos/playbooks/`.
 
-### Playbooks / methodology
+**"Ask your project" (RAG)** answers questions about your own project data with
+source attribution, exclusively from the project context, no hallucination (local
+embeddings via the AI backend).
 
-Checkable checklists for a structured approach (web, AD, Linux/Windows privesc).
-Each step is 🔧 a PentOS tool (with a ready command), 🌐 an external/GUI tool
-(Burp, ZAP, wpscan, impacket, LinPEAS …) or 📝 a manual check. Progress is saved
-per project.
+**Scope guard:** for real engagements you define allowed targets so nothing runs
+outside the engagement; without a scope the runner runs unrestricted (CTF mode).
+Execution is always without a shell and with a per-tool timeout. PentOS runs nothing
+on its own and chains no attacks automatically.
 
-```bash
-pentos playbook list                       # available playbooks
-pentos playbook show web --target 10.10.10.10   # checklist, commands with target
-pentos playbook check web ports            # check off a step (--note "...", --skip)
-pentos playbook status                     # progress across all playbooks
-```
-
-### "Ask your project" (RAG)
-
-Ask questions about your **own** project data (findings, notes, knowledge, loot,
-hosts/services). PentOS builds local embeddings (via the AI backend), stores them as
-a vector index in the project DB and answers with source attribution, exclusively
-from the project context, no hallucination.
-
-```bash
-ollama pull nomic-embed-text                 # embedding model (once)
-pentos ai config --embed-model nomic-embed-text
-pentos ai index                              # build the index over the active project
-pentos ai ask "Where do I find kenobi's SSH key?"
-```
+The concrete commands (tools, profiles, `sweep`, playbooks, RAG, scope) are in the
+**[command reference (COMMANDS.md)](COMMANDS.md)**.
 
 ---
 

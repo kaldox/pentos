@@ -73,75 +73,59 @@ Bim erschte Start wird `~/.config/pentos/config.yaml` automatisch aagleit
 ## Schnällstart
 
 ```bash
-# 1) Projäkt-Werchstatt aalege (wird automatisch aktiv)
+# 1) Projäkt aalege (wird automatisch aktiv)
 pentos project new THM_Alfred
 
-# 2) nmap-Scan importiere  (empfohle: nmap -sC -sV -oX scan.xml <ziil>)
-pentos scan import-nmap scan.xml
-pentos scan import-scanner report.nessus          # Nessus/OpenVAS/Burp (automatisch erkennt)
+# 2) Scan importiere  (nmap -sC -sV -oX scan.xml <ziil>)
+pentos scan import-nmap scan.xml          # oder import-scanner für Nessus/OpenVAS/Burp
 #   -> Hosts + Dienscht + Auto-Uufgabe + Auto-Findings + Auto-Notiz
 
-# 3) Überblick
-pentos dashboard                   # Projäkt-Übersicht uf ei Blick
-pentos finding list
-pentos task list
-pentos service list
+# 3) Überblick & nächschti Schritt
+pentos dashboard                          # kompakti Projäkt-Übersicht
+pentos recommend 4                        # Vorschläg für e Dienscht (kei Uusfüehrig)
 
-# 4) Nächschti Schritt für e Dienscht (nume Vorschlag)
-pentos recommend 4                 # optional: --create-tasks
-
-# 5) Schaffe dokumentiere
-pentos task start 12
-pentos task done 12
+# 4) Schaffe dokumentiere
 pentos finding status 4 confirmed
 pentos loot add "admin:Passw0rd" --type cred --host 1 --source smb
-pentos evidence add ./screenshots/smb_share.png --kind screenshot --finding 4
+pentos evidence add ./shot.png --kind screenshot --finding 4   # chunnt in Report
 
-# 6) Visualisiere & exportiere
-pentos graph mermaid --out attack_paths/ap.mmd
-pentos obsidian                                # Vault under <projäkt>/obsidian
-pentos report                                  # Markdown-Report
-pentos report --html                           # gebrandete HTML-Report (im Browser druckbar)
-pentos report --pdf                            # PDF (bruucht reportlab)
-pentos report --explain                        # Lärn-Report: erklärt jede Schritt didaktisch
-
-# 7) KI-Mentor & Advisor (lokal; ohni Modäll -> Offline-Fallback)
-pentos ai explain-finding 4
-pentos ai enum 4
-pentos ai analyze scan.txt --as nmap           # e Scan/Log deute loo
-pentos ai next                                 # Vorschläg zum Projäkt-Stand
+# 5) Report mache
+pentos report --html                      # gebrandets HTML (au --pdf, --explain)
 ```
+
+Das isch dr Chärn-Ablauf. Alli Befähl noch Bereich gruppiert in dr
+**[Befähls-Referänz (COMMANDS.md)](COMMANDS.md)**, oder live mit `pentos --help`
+und `pentos <gruppe> --help` (z.B. `pentos finding --help`).
 
 ---
 
 ## Runner-Layer (opt-in)
 
-PentOS cha Tools au **sälber laufe loo** – aber nume wenn du si extra startsch.
-Dr rohi Output landet in `scans/`, wird gläse und automatisch in
-Findings/Tasks/Evidence/Notize gschoba und im Journal protokolliert.
-
-```bash
-pentos tools                         # verfüegbari Tools + Installations-Check
-pentos run nmap 10.10.10.10          # ganzi Cascade: Hosts/Dienscht/Tasks/Findings
-pentos run nmap 10.10.10.10 --dry-run          # nume s Kommando zeige
-pentos runs                          # Gschicht vo alle Läuf
-```
+PentOS cha Tools au **sälber laufe loo** – aber nume wenn du si extra startsch
+(`pentos run <tool> <ziil>`). Dr rohi Output landet in `scans/`, wird gläse und
+automatisch in Findings/Tasks/Evidence/Notize gschoba und im Journal protokolliert.
+E paar Tools wärte d Uusgaab grad uus: `nmap` macht di ganzi Host/Dienscht/Finding-
+Pipeline, `nuclei` git Findings, `hydra`/`nxc` schriibe gfundeni Logins as Loot.
 
 > **Shell-Modus (`--shell`)**: Standardmässig laufe Tools ohni Shell (fescht `argv`,
-> kei Metazeiche-Eval – Injection-Schutz). Mängi Tools bruuche aber e richtigi Shell.
+> kei Metazeiche-Eval, Injection-Schutz). Mängi Tools bruuche aber e richtigi Shell;
 > `--shell` macht das bewusst aa. **Nume mit vertrouewürdige Iigaab bruuche.**
 
-### Sweep – gfüehrti Recon-/Enum-Chetti
+**Gfüehrti Chetti (`sweep`)** nimmt e Ziil, startet d Basis-Recon und schlat denn pro
+Dienscht di nächschte Tools vor. Rägelbasiert, **kei autonome Agent**: sicheri Tools
+chönne automatisch laufe (mit Nochfrog pro Schritt), Brute-Force/Exploits wärde **nie**
+automatisch gmacht, nume vorgschlage.
 
-`sweep` nimmt e Ziil, startet d Basis-Recon (nmap) und schlat denn pro gfundene
-Dienscht di nächschte Tools vor. Rägelbasiert und nochvollziehbar – **kei autonome
-Agent**: sicheri Tools chönne automatisch laufe (mit Nochfrog pro Schritt),
-Brute-Force/Exploits wärde **nie** automatisch gmacht, nume vorgschlage.
+**Playbooks** sin abhakbari Checkliste (Web, AD, Linux-/Windows-PrivEsc); dr Fortschritt
+wird pro Projäkt gspeicheret. **„Frog dis Projäkt" (RAG)** beantwortet Froge über dini
+eigene Date, nume uus em Projäkt-Kontext, ohni Halluzination.
 
-```bash
-pentos sweep 10.10.10.10                 # Vorschau: Chetti als fertigi Kommandos
-pentos sweep 10.10.10.10 --run           # sicheri Enum-Tools laufe loo
-```
+**Scope-Guard:** Für echti Engagements legsch erlaubti Ziil fescht, damit nüt ussert em
+Uuftrag lauft; ohni Scope lauft dr Runner uneigschränkt (CTF-Modus). Uusgfüehrt wird
+immer ohni Shell und mit Timeout pro Tool. PentOS macht nüt vo sälber.
+
+Di konkrete Befähl (Tools, `sweep`, Playbooks, RAG, Scope) stöhn in dr
+**[Befähls-Referänz (COMMANDS.md)](COMMANDS.md)**.
 
 ---
 

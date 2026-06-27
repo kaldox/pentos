@@ -15,6 +15,11 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 ### Sicherheit
 - **Origin-Prüfung** auf allen Schreibzugriffen: Fremde Websites können das
   lokale Dashboard nicht per Drive-By (CSRF/DNS-Rebinding) verändern.
+### Geändert
+- CLI-Hilfe in Kategorien gruppiert (`pentos --help` zeigt Workspace,
+  Recon & Import, Befunde & Doku, Reporting & Übersicht, KI & Integration).
+- Dokumentation verschlankt: zentrale Befehls-Referenz (`COMMANDS.md`),
+  READMEs auf den Kern-Ablauf gekürzt, Roadmap in `ROADMAP.md` ausgelagert.
 
 ## [2.21.0] – 2026-06-26
 ### Hinzugefügt
