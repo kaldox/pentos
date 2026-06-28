@@ -21,18 +21,19 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Loot-/Credential-Matching: Loot gegen passende Dienste vorschlagen (`loot match`)
 - Projektweite Folge-Tool-Vorschläge nach Import und via `recommend` ohne Argument
 - Terminal-UI (`pentos tui`): tastaturgesteuertes Lagebild mit Status-Pflege
+- Status-Historie / Retest-Tracking für Findings (`finding history`, `--note`)
+- Dashboard-Detailansicht pro Finding mit Status-Zeitleiste
+- Attack-Path-Graph visuell im Web-Dashboard (Reiter „Angriffspfad")
 
 ## Als Nächstes
 
 Konkret geplant, baut auf Bestehendem auf:
 
-- **Remediation- und Status-Historie** für Findings, damit ein Retest
-  nachvollziehbar wird (wann bestätigt, wann geschlossen, wann erneut geprüft).
-- **Attack-Path-Graph visuell im Dashboard**, statt nur als Mermaid- oder
-  DOT-Export. Die Graph-Logik ist schon da, sie muss nur im Browser gerendert
-  werden.
-- **Dashboard-Detailansicht** pro Finding und pro Host, mit Verlinkung zu
-  Evidence und Notizen.
+- **Strukturierte Web-Parser** (gobuster/ffuf/feroxbuster/nikto), damit deren
+  Ausgabe automatisch zu Findings/Pfaden wird statt nur als Capture.
+- **Detailansicht pro Host** im Dashboard, analog zur Finding-Detailansicht, mit
+  Verlinkung zu Diensten, Findings und Notizen.
+- **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).
 
 ## Später
 

@@ -82,6 +82,7 @@ async function render() {
     if (state.view === "overview") return renderOverview(c);
     if (state.view === "findings") return renderFindings(c);
     if (state.view === "hosts") return renderHosts(c);
+    if (state.view === "graph") return renderGraph(c);
     if (state.view === "loot") return renderLoot(c);
     if (state.view === "notes") return renderNotes(c);
   } catch (e) {
@@ -185,7 +186,7 @@ function drawFindings() {
     const opts = STATUSES.map((s) => `<option value="${esc(s)}"${s === f.status ? " selected" : ""}>${esc(s)}</option>`).join("");
     return `<tr>
       <td><span class="badge sev-${f.severity.toLowerCase()}">${esc(f.severity)}</span></td>
-      <td>${esc(f.title)}${f.description ? `<div style="color:var(--muted);font-size:12.5px;margin-top:3px">${esc(f.description).slice(0, 160)}</div>` : ""}</td>
+      <td><a class="f-link" data-id="${f.id}">${esc(f.title)}</a>${f.description ? `<div style="color:var(--muted);font-size:12.5px;margin-top:3px">${esc(f.description).slice(0, 160)}</div>` : ""}</td>
       <td>${esc(f.category)}</td>
       <td><select class="status-sel" data-id="${f.id}">${opts}</select></td>
       <td>${cvss}</td>
@@ -214,6 +215,9 @@ function drawFindings() {
       }
     };
     sel.dataset.prev = sel.value;
+  });
+  $("#ftable").querySelectorAll(".f-link").forEach((a) => {
+    a.onclick = () => openFindingDetail(+a.dataset.id);
   });
 }
 
@@ -288,6 +292,163 @@ async function renderNotes(c) {
     }
   };
 }
+
+// ── Finding-Detail (Drawer mit Status-Historie) ────────────────────────
+async function openFindingDetail(fid) {
+  const drawer = $("#drawer"), panel = $("#drawer-panel");
+  drawer.hidden = false;
+  panel.innerHTML = `<div class="loading">Lade …</div>`;
+  $("#drawer-back").onclick = closeDrawer;
+  document.onkeydown = (e) => { if (e.key === "Escape") closeDrawer(); };
+  let d;
+  try {
+    d = await api(`/api/project/${encodeURIComponent(state.project)}/finding/${fid}`);
+  } catch (e) { panel.innerHTML = emptyState("Fehler", esc(e.message)); return; }
+
+  const timeline = (d.history || []).map((h) => {
+    const arrow = h.old ? `${esc(h.old)} → <b>${esc(h.new)}</b>` : `<b>${esc(h.new)}</b>`;
+    return `<div class="tl-item">
+      <span class="tl-dot"></span>
+      <div class="tl-body">
+        <div class="tl-head"><span class="tl-arrow">${arrow}</span>
+          <span class="tl-ts mono">${esc((h.ts || "").slice(0, 16))}</span></div>
+        ${h.note ? `<div class="tl-note">${esc(h.note)}</div>` : ""}
+      </div></div>`;
+  }).join("") || `<div class="fd" style="color:var(--muted)">Keine Historie.</div>`;
+
+  const ev = (d.evidence || []).map((e) =>
+    `<div class="ev-row"><span class="badge">${esc(e.kind)}</span> ${esc(e.description || e.path)}</div>`
+  ).join("") || `<div class="fd" style="color:var(--muted)">Keine Belege.</div>`;
+
+  const cvss = d.cvss_score != null
+    ? `<span class="mono">${d.cvss_score}</span>${d.cvss_vector ? ` <span style="color:var(--muted)">${esc(d.cvss_vector)}</span>` : ""}`
+    : "—";
+  const opts = STATUSES.map((s) => `<option value="${esc(s)}"${s === d.status ? " selected" : ""}>${esc(s)}</option>`).join("");
+
+  panel.innerHTML = `
+    <div class="dr-head">
+      <span class="badge sev-${d.severity.toLowerCase()}">${esc(d.severity)}</span>
+      <button class="dr-close" id="dr-x">✕</button>
+    </div>
+    <h2 class="dr-title">${esc(d.title)}</h2>
+    <div class="dr-meta">
+      <span>${esc(d.category)}</span>${d.location ? ` · <span class="mono">${esc(d.location)}</span>` : ""}
+      · <span>${d.auto ? "automatisch" : "manuell"}</span> · CVSS ${cvss}
+    </div>
+    ${d.description ? `<p class="dr-desc">${esc(d.description)}</p>` : ""}
+    ${d.remediation ? `<div class="dr-rem"><b>Remediation</b><p>${esc(d.remediation)}</p></div>` : ""}
+
+    <div class="dr-section"><h3>Status ändern</h3>
+      <div class="dr-status">
+        <select id="dr-status">${opts}</select>
+        <input id="dr-note" placeholder="Notiz (z.B. 'Retest ok, gefixt')" />
+        <button id="dr-save" class="btn">Setzen</button>
+      </div>
+    </div>
+
+    <div class="dr-section"><h3>Status-Verlauf</h3><div class="timeline">${timeline}</div></div>
+    <div class="dr-section"><h3>Belege</h3>${ev}</div>`;
+
+  $("#dr-x").onclick = closeDrawer;
+  $("#dr-save").onclick = async () => {
+    const status = $("#dr-status").value, note = $("#dr-note").value.trim();
+    const btn = $("#dr-save"); btn.disabled = true; btn.textContent = "…";
+    try {
+      await apiPost(`/api/project/${encodeURIComponent(state.project)}/finding/${fid}/status`,
+        { status, note: note || null });
+      openFindingDetail(fid);           // neu laden -> Timeline aktualisiert
+      const f = _findings.find((x) => x.id === fid); if (f) f.status = status;
+    } catch (e) {
+      alert("Speichern fehlgeschlagen: " + e.message);
+      btn.disabled = false; btn.textContent = "Setzen";
+    }
+  };
+}
+function closeDrawer() {
+  $("#drawer").hidden = true;
+  document.onkeydown = null;
+  if (state.view === "findings") render();   // Tabelle ggf. mit neuem Status
+}
+
+// ── Angriffspfad (SVG, drei Spalten: Host -> Dienst -> Finding) ─────────
+async function renderGraph(c) {
+  const g = await api(`/api/project/${encodeURIComponent(state.project)}/graph`);
+  if (!g.hosts.length && !g.findings.length) {
+    c.innerHTML = emptyState("Kein Angriffspfad", "Scanne ein Ziel und erfasse Findings."); return;
+  }
+  // Spalten-Layout
+  const COLX = { host: 90, svc: 360, find: 660 };
+  const rowH = 34, padY = 40;
+  const nodes = {}; const lines = [];
+  let y = { host: padY, svc: padY, find: padY };
+
+  const hostY = {}, svcY = {};
+  g.hosts.forEach((h) => { hostY[h.id] = y.host; y.host += rowH * Math.max(1, countChildren(g, h.id)); });
+  function countChildren(g, hid) {
+    const svc = g.services.filter((s) => s.host_id === hid).length;
+    const fh = g.findings.filter((f) => f.host_id === hid && !f.service_id).length;
+    return Math.max(1, svc + fh);
+  }
+  g.services.forEach((s) => { svcY[s.id] = y.svc; y.svc += rowH; });
+  const findY = {};
+  g.findings.forEach((f) => { findY[f.id] = y.find; y.find += rowH; });
+
+  const W = 860, H = Math.max(y.host, y.svc, y.find) + padY;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="apgraph" preserveAspectRatio="xMidYMin meet">`;
+  // Kanten host->svc
+  g.services.forEach((s) => {
+    if (hostY[s.host_id] == null) return;
+    svg += edge(COLX.host + 120, hostY[s.host_id] + 11, COLX.svc, svcY[s.id] + 11);
+  });
+  // Kanten svc/host -> finding
+  g.findings.forEach((f) => {
+    if (f.service_id != null && svcY[f.service_id] != null)
+      svg += edge(COLX.svc + 150, svcY[f.service_id] + 11, COLX.find, findY[f.id] + 11);
+    else if (f.host_id != null && hostY[f.host_id] != null)
+      svg += edge(COLX.host + 120, hostY[f.host_id] + 11, COLX.find, findY[f.id] + 11, true);
+  });
+  // Knoten
+  g.hosts.forEach((h) => {
+    svg += node(COLX.host, hostY[h.id], 120, esc(h.label), "g-host");
+  });
+  g.services.forEach((s) => {
+    svg += node(COLX.svc, svcY[s.id], 150, esc(s.label), "g-svc");
+  });
+  g.findings.forEach((f) => {
+    svg += node(COLX.find, findY[f.id], 190, esc(f.title), "g-find",
+      SEV_COLOR[f.severity.toLowerCase()] || "var(--line)", f.id);
+  });
+  svg += `</svg>`;
+
+  c.innerHTML = `<div class="ap-legend">
+      <span><span class="sw" style="background:var(--brand)"></span>Host</span>
+      <span><span class="sw" style="background:var(--med)"></span>Dienst</span>
+      <span><span class="sw" style="background:var(--high)"></span>Finding (Severity-Farbe)</span>
+      <span style="color:var(--muted)">· Finding anklicken für Details</span>
+    </div>
+    <div class="ap-scroll">${svg}</div>`;
+  c.querySelectorAll("[data-fid]").forEach((n) =>
+    n.addEventListener("click", () => openFindingDetail(+n.dataset.fid)));
+
+  function edge(x1, y1, x2, y2, dashed) {
+    const mx = (x1 + x2) / 2;
+    return `<path d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"
+      fill="none" stroke="var(--line)" stroke-width="1.5"${dashed ? ' stroke-dasharray="4 3"' : ""}/>`;
+  }
+  function node(x, yy, w, label, cls, accent, fid) {
+    const click = fid != null ? ` class="g-node ${cls}" data-fid="${fid}" style="cursor:pointer"` : ` class="g-node ${cls}"`;
+    const bar = accent ? `<rect x="${x}" y="${yy}" width="4" height="22" rx="2" fill="${accent}"/>` : "";
+    const tx = accent ? x + 12 : x + 10;
+    return `<g${click}>
+      <rect x="${x}" y="${yy}" width="${w}" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      ${bar}
+      <text x="${tx}" y="${yy + 15}" font-size="11.5" fill="var(--text)">${clip(label, w - 18)}</text>
+    </g>`;
+  }
+  function clip(s, px) { const max = Math.floor(px / 6.2); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
+}
+
+
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 boot();

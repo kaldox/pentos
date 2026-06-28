@@ -67,6 +67,8 @@ pentos playbook status               # Fortschritt über alle Playbooks
 # Findings
 pentos finding list
 pentos finding status 4 confirmed    # Status setzen
+pentos finding status 4 closed --note "Retest ok, gefixt"   # mit Begruendung
+pentos finding history 4             # Status-Zeitleiste (Retest-Tracking)
 pentos finding rm 4
 
 # Finding-Vorlagen (wiederverwendbar, pro Projekt)

@@ -17,6 +17,7 @@
       <button class="nav-item active" data-view="overview"><span class="ni-ic">◉</span>Lagebild</button>
       <button class="nav-item" data-view="findings"><span class="ni-ic">⚑</span>Findings</button>
       <button class="nav-item" data-view="hosts"><span class="ni-ic">⊞</span>Hosts &amp; Dienste</button>
+      <button class="nav-item" data-view="graph"><span class="ni-ic">⌖</span>Angriffspfad</button>
       <button class="nav-item" data-view="loot"><span class="ni-ic">⚿</span>Loot</button>
       <button class="nav-item" data-view="notes"><span class="ni-ic">≡</span>Notizen</button>
     </nav>
@@ -42,6 +43,10 @@
       <div class="loading">Lade Lagebild …</div>
     </section>
   </main>
+</div>
+<div id="drawer" class="drawer" hidden>
+  <div class="drawer-back" id="drawer-back"></div>
+  <aside class="drawer-panel" id="drawer-panel"></aside>
 </div>
 <script src="/static/app.js"></script>
 </body>

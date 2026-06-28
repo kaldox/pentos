@@ -16,6 +16,7 @@ from .models import (
     Evidence,
     Finding,
     FindingCategory,
+    FindingStatusChange,
     FindingTemplate,
     Host,
     JournalEntry,
@@ -129,6 +130,7 @@ class Repository:
         )
         self.conn.commit()
         f.id = cur.lastrowid
+        self._record_status(f.id, None, f.status.value, note="Erstellt")
         tag = "Auto-Finding" if f.auto else "Finding erstellt"
         self.log(tag, f"[{f.severity.value}] {f.title} (id={f.id})")
         return f
@@ -190,14 +192,41 @@ class Repository:
             out.append(Finding(**d))
         return out
 
-    def set_finding_status(self, finding_id: int, status: str) -> bool:
+    def set_finding_status(self, finding_id: int, status: str,
+                           note: Optional[str] = None) -> bool:
+        old = self.conn.execute(
+            "SELECT status FROM findings WHERE id = ?", (finding_id,)
+        ).fetchone()
+        if old is None:
+            return False
+        old_status = old["status"]
         cur = self.conn.execute(
             "UPDATE findings SET status = ? WHERE id = ?", (status, finding_id)
         )
         self.conn.commit()
-        if cur.rowcount:
-            self.log("Finding-Status geändert", f"id={finding_id} -> {status}")
+        if cur.rowcount and status != old_status:
+            self._record_status(finding_id, old_status, status, note)
+            self.log("Finding-Status geändert",
+                     f"id={finding_id} {old_status} -> {status}"
+                     + (f" ({note})" if note else ""))
         return cur.rowcount > 0
+
+    def _record_status(self, finding_id: int, old: Optional[str], new: str,
+                       note: Optional[str] = None) -> None:
+        self.conn.execute(
+            "INSERT INTO finding_status_history (finding_id, old_status, new_status, note, ts) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (finding_id, old, new, note, _now()),
+        )
+        self.conn.commit()
+
+    def finding_history(self, finding_id: int) -> list[FindingStatusChange]:
+        """Status-Zeitleiste eines Findings (älteste zuerst)."""
+        rows = self.conn.execute(
+            "SELECT * FROM finding_status_history WHERE finding_id = ? ORDER BY id",
+            (finding_id,),
+        ).fetchall()
+        return [FindingStatusChange(**dict(r)) for r in rows]
 
     # ── Finding-Templates ──────────────────────────────────────────────────
     @staticmethod

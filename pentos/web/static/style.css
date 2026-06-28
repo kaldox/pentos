@@ -186,3 +186,45 @@ body{
   .content{padding:16px; padding-bottom:80px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ── Detail-Drawer ─────────────────────────────────────────────────────── */
+.drawer{position:fixed;inset:0;z-index:50}
+.drawer-back{position:absolute;inset:0;background:rgba(5,9,18,.55);backdrop-filter:blur(2px)}
+.drawer-panel{position:absolute;top:0;right:0;height:100%;width:min(460px,92vw);
+  background:var(--surface);border-left:1px solid var(--line);box-shadow:-20px 0 50px rgba(0,0,0,.4);
+  overflow-y:auto;padding:18px 20px 40px;animation:drslide .18s ease}
+@keyframes drslide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+.dr-head{display:flex;justify-content:space-between;align-items:center}
+.dr-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+.dr-close:hover{color:var(--text)}
+.dr-title{margin:10px 0 4px;font-size:18px;line-height:1.3}
+.dr-meta{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+.dr-desc{font-size:13.5px;line-height:1.55;color:var(--text)}
+.dr-rem{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.dr-rem b{color:var(--brand);font-size:12px}
+.dr-rem p{margin:4px 0 0;font-size:13px}
+.dr-section{margin-top:18px}
+.dr-section h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 8px}
+.dr-status{display:grid;grid-template-columns:1fr;gap:7px}
+.dr-status select,.dr-status input{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  border-radius:8px;padding:7px 9px;font:inherit}
+/* Timeline */
+.timeline{position:relative;padding-left:6px}
+.tl-item{display:flex;gap:10px;padding:0 0 12px}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--brand);margin-top:4px;flex:0 0 auto;
+  box-shadow:0 0 0 3px rgba(45,212,191,.15)}
+.tl-body{flex:1;border-left:1px solid var(--line);margin-left:-5px;padding-left:14px;padding-bottom:2px}
+.tl-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.tl-arrow{font-size:13px}.tl-ts{color:var(--faint);font-size:11px}
+.tl-note{color:var(--muted);font-size:12.5px;margin-top:2px}
+.ev-row{padding:5px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.f-link{color:var(--text);cursor:pointer;border-bottom:1px dotted var(--faint)}
+.f-link:hover{color:var(--brand);border-bottom-color:var(--brand)}
+
+/* ── Angriffspfad-Graph ────────────────────────────────────────────────── */
+.ap-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--text);margin-bottom:10px}
+.ap-legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ap-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);padding:6px}
+.apgraph{width:100%;min-width:760px;display:block}
+.g-node rect{transition:stroke .15s}
+.g-find:hover rect{stroke:var(--brand)}

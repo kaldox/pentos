@@ -91,3 +91,45 @@ def test_frontend_served():
     assert c.get("/").status_code == 200
     assert "text/html" in c.get("/").headers["content-type"]
     assert c.get("/static/app.js").status_code == 200
+
+
+# ── #3: Finding-Detail, Graph, Status-Notiz ──────────────────────────────
+def test_finding_detail_with_history():
+    c = _client_with_data()
+    # Finding 1 (RCE) Status setzen, dann Detail prüfen
+    c.post("/api/project/Box/finding/1/status",
+           json={"status": "Bestätigt", "note": "verifiziert"},
+           headers={"origin": "http://127.0.0.1:8787"})
+    d = c.get("/api/project/Box/finding/1").json()
+    assert d["title"] == "RCE"
+    assert d["location"] == "10.10.10.5"
+    # Ersteintrag + Wechsel
+    assert len(d["history"]) == 2
+    assert d["history"][-1]["new"] == "Bestätigt"
+    assert d["history"][-1]["note"] == "verifiziert"
+
+
+def test_finding_detail_404():
+    c = _client_with_data()
+    assert c.get("/api/project/Box/finding/999").status_code == 404
+
+
+def test_graph_endpoint_structure():
+    c = _client_with_data()
+    g = c.get("/api/project/Box/graph").json()
+    assert len(g["hosts"]) == 1
+    assert len(g["services"]) == 2
+    assert len(g["findings"]) == 2
+    assert g["hosts"][0]["address"] == "10.10.10.5"
+    # Findings nach Severity sortiert (Critical zuerst)
+    assert g["findings"][0]["severity"] == "Critical"
+
+
+def test_status_post_records_note():
+    c = _client_with_data()
+    c.post("/api/project/Box/finding/2/status",
+           json={"status": "Geschlossen", "note": "Retest ok"},
+           headers={"origin": "http://127.0.0.1:8787"})
+    d = c.get("/api/project/Box/finding/2").json()
+    assert d["status"] == "Geschlossen"
+    assert any(h["note"] == "Retest ok" for h in d["history"])

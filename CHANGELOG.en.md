@@ -7,6 +7,24 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.26.0] – 2026-06-28
+### Added
+- **Status history / retest tracking:** every status change of a finding is
+  recorded with a timestamp and an optional note (including the initial entry at
+  creation). New command `pentos finding history <id>` shows the timeline;
+  `pentos finding status <id> <status> --note "..."` records the rationale. The
+  status history also appears in the Markdown report. Status changes via the TUI
+  and the web dashboard feed into the history automatically.
+- **Dashboard detail view:** clicking a finding title opens a drawer with
+  description, remediation, CVSS, evidence and the full status timeline; status
+  changes can be made right there, including a note field.
+- **Attack path, visual:** new "Attack path" tab in the web dashboard renders
+  hosts → services → findings as an SVG graph (findings in their severity colour,
+  clickable for the detail view). Offline, no CDN.
+- New API endpoints: `GET /api/project/{name}/finding/{id}` (detail incl. history
+  and evidence) and `GET /api/project/{name}/graph` (graph data). The status
+  endpoint now accepts an optional `note` field.
+
 ## [2.25.2] – 2026-06-28
 ### Changed
 - `template apply --host` now accepts both the host ID and the host address

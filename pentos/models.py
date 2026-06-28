@@ -144,6 +144,16 @@ class JournalEntry(BaseModel):
     detail: Optional[str] = None
 
 
+class FindingStatusChange(BaseModel):
+    """Ein Eintrag in der Status-Historie eines Findings (Retest-Tracking)."""
+    id: Optional[int] = None
+    finding_id: int
+    old_status: Optional[str] = None     # None = Ersteintrag bei Erstellung
+    new_status: str
+    note: Optional[str] = None
+    ts: str = Field(default_factory=_now)
+
+
 class Loot(BaseModel):
     id: Optional[int] = None
     type: LootType = LootType.OTHER

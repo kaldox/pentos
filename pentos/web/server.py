@@ -174,17 +174,79 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
             repo.close()
 
     # ── Schreibaktionen (interaktiv) ─────────────────────────────────────────
+    @app.get("/api/project/{name}/finding/{fid}")
+    def api_finding_detail(name: str, fid: int):
+        name = resolve(name)
+        repo = _repo(name)
+        try:
+            f = repo.get_finding(fid)
+            if not f:
+                raise HTTPException(404, f"Finding {fid} nicht gefunden.")
+            d = _finding_dict(f)
+            d["created_at"] = f.created_at
+            # Verortung
+            loc = None
+            if f.service_id:
+                s = repo.get_service(f.service_id)
+                if s:
+                    h = repo.get_host(s.host_id)
+                    loc = f"{h.address if h else ''}:{s.port}/{s.protocol}"
+            elif f.host_id:
+                h = repo.get_host(f.host_id)
+                loc = h.address if h else None
+            d["location"] = loc
+            d["history"] = [
+                {"old": h.old_status, "new": h.new_status, "note": h.note, "ts": h.ts}
+                for h in repo.finding_history(fid)
+            ]
+            d["evidence"] = [
+                {"kind": e.kind, "path": e.path, "description": e.description}
+                for e in repo.list_evidence() if e.finding_id == fid
+            ]
+            return d
+        finally:
+            repo.close()
+
+    @app.get("/api/project/{name}/graph")
+    def api_graph(name: str):
+        name = resolve(name)
+        repo = _repo(name)
+        try:
+            hosts = repo.list_hosts()
+            services = repo.list_services()
+            findings = sorted(repo.list_findings(),
+                              key=lambda f: SEVERITY_ORDER.get(f.severity, 9))
+            return {
+                "hosts": [
+                    {"id": h.id, "address": h.address,
+                     "label": (h.hostname or h.address)} for h in hosts
+                ],
+                "services": [
+                    {"id": s.id, "host_id": s.host_id,
+                     "label": f"{s.port}/{s.protocol} {s.name or ''}".strip()}
+                    for s in services
+                ],
+                "findings": [
+                    {"id": f.id, "title": f.title, "severity": f.severity.value,
+                     "status": f.status.value, "host_id": f.host_id,
+                     "service_id": f.service_id} for f in findings
+                ],
+            }
+        finally:
+            repo.close()
+
     @app.post("/api/project/{name}/finding/{fid}/status")
     def api_set_status(name: str, fid: int, request: Request,
                        payload: dict = Body(...)):
         _guard_write(request)
         name = resolve(name)
         status = (payload or {}).get("status", "").strip()
+        note = (payload or {}).get("note") or None
         if status not in _VALID_STATUS:
             raise HTTPException(422, f"Ungültiger Status. Erlaubt: {sorted(_VALID_STATUS)}")
         repo = _repo(name)
         try:
-            ok = repo.set_finding_status(fid, status)
+            ok = repo.set_finding_status(fid, status, note=note)
             if not ok:
                 raise HTTPException(404, f"Finding {fid} nicht gefunden.")
             return {"ok": True, "id": fid, "status": status}

@@ -76,6 +76,15 @@ def build_markdown(repo: Repository, project: str) -> str:
         if f.remediation:
             md.append(f"**Remediation:** {f.remediation}")
             md.append("")
+        hist = repo.finding_history(f.id) if f.id else []
+        changes = [h for h in hist if h.old_status is not None]
+        if changes:
+            md.append("**Status-Verlauf:**")
+            md.append("")
+            for h in changes:
+                note = f" — {h.note}" if h.note else ""
+                md.append(f"- `{h.ts}` {h.old_status} → {h.new_status}{note}")
+            md.append("")
         evs = ev_by_finding.get(f.id, [])
         if evs:
             md.append("**Belege:**")

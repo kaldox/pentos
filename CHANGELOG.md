@@ -7,6 +7,24 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.26.0] – 2026-06-28
+### Hinzugefügt
+- **Status-Historie / Retest-Tracking:** Jeder Statuswechsel eines Findings wird
+  mit Zeitstempel und optionaler Notiz festgehalten (auch der Ersteintrag bei der
+  Erstellung). Neuer Befehl `pentos finding history <id>` zeigt die Zeitleiste;
+  `pentos finding status <id> <status> --note "..."` hält die Begründung fest. Der
+  Status-Verlauf erscheint zusätzlich im Markdown-Report. Statuswechsel über TUI
+  und Web-Dashboard fliessen automatisch in die Historie ein.
+- **Dashboard-Detailansicht:** Klick auf einen Finding-Titel öffnet einen Drawer
+  mit Beschreibung, Remediation, CVSS, Belegen und der vollen Status-Zeitleiste;
+  Statuswechsel direkt dort inklusive Notiz-Feld.
+- **Angriffspfad visuell:** Neuer Reiter „Angriffspfad" im Web-Dashboard rendert
+  Hosts → Dienste → Findings als SVG-Graph (Findings in Severity-Farbe, anklickbar
+  für die Detailansicht). Offline, ohne CDN.
+- Neue API-Endpoints: `GET /api/project/{name}/finding/{id}` (Detail inkl.
+  Historie und Belegen) und `GET /api/project/{name}/graph` (Graph-Daten). Der
+  Status-Endpoint nimmt jetzt ein optionales `note`-Feld.
+
 ## [2.25.2] – 2026-06-28
 ### Geändert
 - `template apply --host` akzeptiert jetzt sowohl die Host-ID als auch die

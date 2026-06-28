@@ -566,13 +566,32 @@ def finding_show(finding_id: int):
 
 @finding_app.command("status")
 def finding_status(finding_id: int,
-                   status: str = typer.Argument(..., help="unverified|confirmed|exploited|fp|closed")):
+                   status: str = typer.Argument(..., help="unverified|confirmed|exploited|fp|closed"),
+                   note: Optional[str] = typer.Option(None, "--note", "-n",
+                                                      help="Begründung/Kontext für den Wechsel")):
     repo, _ = _repo()
     st = FSTATUS_MAP.get(status)
     if not st:
         console.print("[red]Unbekannter Status.[/red]"); repo.close(); raise typer.Exit(1)
-    ok = repo.set_finding_status(finding_id, st.value); repo.close()
+    ok = repo.set_finding_status(finding_id, st.value, note=note); repo.close()
     console.print(f"[green]#{finding_id} → {st.value}[/green]" if ok else "[red]Nicht gefunden.[/red]")
+
+
+@finding_app.command("history")
+def finding_history(finding_id: int):
+    """Zeigt die Status-Zeitleiste eines Findings (Retest-Tracking)."""
+    repo, _ = _repo()
+    f = repo.get_finding(finding_id)
+    if not f:
+        console.print(f"[red]Finding #{finding_id} existiert nicht.[/red]"); repo.close(); raise typer.Exit(1)
+    hist = repo.finding_history(finding_id); repo.close()
+    lines = []
+    for h in hist:
+        arrow = f"{h.old_status} → {h.new_status}" if h.old_status else h.new_status
+        note = f"  [dim]{h.note}[/dim]" if h.note else ""
+        lines.append(f"[dim]{h.ts}[/dim]  {arrow}{note}")
+    body = "\n".join(lines) if lines else "[dim]Keine Historie erfasst.[/dim]"
+    console.print(Panel.fit(body, title=f"Status-Historie · Finding #{finding_id}: {f.title}"))
 
 
 # ── Finding-Template-Bibliothek ──────────────────────────────────────────────

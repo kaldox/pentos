@@ -67,6 +67,8 @@ pentos playbook status               # progress across all playbooks
 # Findings
 pentos finding list
 pentos finding status 4 confirmed    # set status
+pentos finding status 4 closed --note "retest ok, fixed"    # with rationale
+pentos finding history 4             # status timeline (retest tracking)
 pentos finding rm 4
 
 # Finding templates (reusable, per project)

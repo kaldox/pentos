@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.25.2-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.26.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -43,6 +43,8 @@ commands itself**.
 | AI mentor + **advisor mode** (analyze a scan/log, suggest next steps; asks before sending; offline fallback) | ✅ |
 | Reporting: Markdown, **branded HTML & PDF**, didactic learning report | ✅ |
 | **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
+| **Finding detail view + attack-path graph** in the dashboard (SVG, clickable) | ✅ |
+| **Status history / retest tracking** (`finding history`, timeline in the report) | ✅ |
 | **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
 | **Terminal UI** (`pentos tui`: keyboard-driven dashboard, status editing) | ✅ |
 | Import: nmap XML **+ scanner import (Nessus/OpenVAS/Burp)** | ✅ |
@@ -50,8 +52,7 @@ commands itself**.
 
 **Roadmap (open):**
 - AI flashcards & note summaries (from your own data only, no hallucination)
-- Remediation/status history for findings (retest tracking)
-- Attack-path graph rendered visually in the dashboard
+- Structured web parsers (gobuster/ffuf/feroxbuster/nikto) into findings
 - Richer screenshot handling (e.g. direct capture/annotation)
 
 The full roadmap, with rationale and deliberate non-goals, lives in [`ROADMAP.en.md`](ROADMAP.en.md).
@@ -310,4 +311,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.25.2**.
+Current version: **2.26.0**.

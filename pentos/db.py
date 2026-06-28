@@ -77,6 +77,16 @@ CREATE TABLE IF NOT EXISTS journal (
     detail TEXT
 );
 
+CREATE TABLE IF NOT EXISTS finding_status_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    finding_id INTEGER NOT NULL,
+    old_status TEXT,
+    new_status TEXT NOT NULL,
+    note TEXT,
+    ts TEXT NOT NULL,
+    FOREIGN KEY (finding_id) REFERENCES findings(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS loot (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT,
