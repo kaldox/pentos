@@ -7,6 +7,14 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.25.2] – 2026-06-28
+### Geändert
+- `template apply --host` akzeptiert jetzt sowohl die Host-ID als auch die
+  Host-Adresse (vorher nur Adresse) - konsistent zu `finding add --host`, das die
+  ID nimmt. Damit funktioniert `--host 1` wie `--host 10.10.10.5`.
+### Hinzugefügt
+- `--category` als Alias für `--cat` bei `note add` und `finding add`.
+
 ## [2.25.1] – 2026-06-28
 ### Geändert
 - **Dokumentation internationalisiert:** Die englische Seite ist jetzt vollständig

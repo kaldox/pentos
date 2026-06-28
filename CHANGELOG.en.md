@@ -7,6 +7,14 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.25.2] – 2026-06-28
+### Changed
+- `template apply --host` now accepts both the host ID and the host address
+  (previously address only) - consistent with `finding add --host`, which takes
+  the ID. So `--host 1` works just like `--host 10.10.10.5`.
+### Added
+- `--category` as an alias for `--cat` on `note add` and `finding add`.
+
 ## [2.25.1] – 2026-06-28
 ### Changed
 - **Documentation internationalized:** the English side is now complete and

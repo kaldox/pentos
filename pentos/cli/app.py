@@ -502,7 +502,7 @@ app.add_typer(finding_app, name="finding", rich_help_panel="Befunde & Doku")
 @finding_app.command("add")
 def finding_add(title: str,
                 severity: str = typer.Option("medium", "--sev", "--severity", help="info|low|medium|high|critical"),
-                category: str = typer.Option("other", "--cat",
+                category: str = typer.Option("other", "--cat", "--category",
                                              help="misconfig|vuln|exposure|credential|infodisc|other"),
                 description: Optional[str] = typer.Option(None, "--desc"),
                 host_id: Optional[int] = typer.Option(None, "--host"),
@@ -674,14 +674,16 @@ def template_rm(ident: str = typer.Argument(..., help="ID oder Key"),
 @template_app.command("apply")
 def template_apply(
     ident: str = typer.Argument(..., help="ID oder Key der Vorlage"),
-    host: Optional[str] = typer.Option(None, "--host", help="Host-Adresse zum Verknüpfen"),
+    host: Optional[str] = typer.Option(None, "--host", help="Host-ID oder -Adresse zum Verknüpfen"),
     suffix: str = typer.Option("", "--suffix", help="Titel-Zusatz, z.B. '(192.168.56.10)'"),
 ):
     """Erzeugt aus einer Vorlage ein konkretes Finding im Projekt."""
     repo, _ = _repo()
     host_id = None
     if host:
-        h = repo.get_host_by_address(host) if hasattr(repo, "get_host_by_address") else None
+        h = repo.get_host(int(host)) if host.isdigit() else None
+        if h is None:
+            h = repo.get_host_by_address(host)
         if h:
             host_id = h.id
         else:
@@ -700,7 +702,7 @@ app.add_typer(note_app, name="note", rich_help_panel="Befunde & Doku")
 
 @note_app.command("add")
 def note_add(title: str, body: str = typer.Option("", "--body"),
-             category: Optional[str] = typer.Option(None, "--cat")):
+             category: Optional[str] = typer.Option(None, "--cat", "--category")):
     repo, _ = _repo()
     n = repo.add_note(Note(title=title, body=body, category=category)); repo.close()
     console.print(f"[green]Notiz #{n.id}:[/green] {n.title}")
