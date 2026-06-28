@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · [🇬🇧 English](README.en.md) · **🐻 Baseldütsch**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.23.0%2Brunner-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.24.0-informational)
 
 > ⚠️ **Experimentell:** Die Versjoon isch uf Baseldütsch gschriibe – churzwiilig gmeint, nid zwingend perfekt. Wär e Fähler findet, derf ne gärn flicke.
 
@@ -26,6 +26,9 @@ kei Cloud-Zwang, dütschi Uusgaab. D KI isch nume zum Lärne und Analysiere doo 
 | Pentest-Journal (jedi Aktion mit Ziitstämpel) | ✅ |
 | Uufgabe-Sischtem (auto pro Dienscht, Offe/Am Schaffe/Fertig) | ✅ |
 | Gschiidi nächschti Schritt (Vorschläg, **kei Uusfüehrig**) | ✅ |
+| **Scan-Diff** (`scan diff`: nmap-Scan gege de Projäktstand, nume läsend) | ✅ |
+| **Loot-/Credential-Matching** (`loot match`: Spray/Pass-the-Hash/Key-Login vorschlo) | ✅ |
+| **Projäktwiti Folge-Tool-Vorschläg** (`recommend` ohni Argumänt + noch em Import) | ✅ |
 | Gfüehrti Recon-/Enum-Chetti (`sweep`, rägelbasiert, Nochfrog pro Schritt) | ✅ |
 | Opt-in Runner-Layer (23 Tools, kei Shell-Eval, Scope-Guard, Timeout) | ✅ |
 | Methodik-/Playbook-Bibliothek (Web/AD/Linux-/Windows-PrivEsc) | ✅ |
@@ -43,6 +46,7 @@ kei Cloud-Zwang, dütschi Uusgaab. D KI isch nume zum Lärne und Analysiere doo 
 | **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändere, Notize aalege im Browser) | ✅ |
 | **MCP-Server** (Werchstatt uus Claude Code/Cursor abfroge, nume läsend) | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
+| **Shell-Completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
 
 **Roadmap (offe):**
 - KI-Lärnkarte & Notize-Zämmefassige (nume uus eigene Date, ohni Halluzination)
@@ -82,6 +86,7 @@ pentos scan import-nmap scan.xml          # oder import-scanner für Nessus/Open
 
 # 3) Überblick & nächschti Schritt
 pentos dashboard                          # kompakti Projäkt-Übersicht
+pentos recommend                          # projäktwiti Run-Shortcuts über alli Dienscht
 pentos recommend 4                        # Vorschläg für e Dienscht (kei Uusfüehrig)
 
 # 4) Schaffe dokumentiere
@@ -208,4 +213,4 @@ Tools wo's git: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 ## Changelog
 
 Alli Versjoone und Änderige stöhn in [`CHANGELOG.md`](CHANGELOG.md).
-Aktuelli Versjoon: **2.23.0**.
+Aktuelli Versjoon: **2.24.0**.

@@ -15,6 +15,9 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Web-Dashboard mit lokalem Lagebild (`pentos serve`)
 - Interaktives Dashboard: Finding-Status ändern und Notizen anlegen im Browser
 - MCP-Server: den Workspace aus Claude Code oder Cursor abfragen (nur lesend)
+- Scan-Diff: einen nmap-Scan gegen den Projektstand vergleichen (`scan diff`)
+- Loot-/Credential-Matching: Loot gegen passende Dienste vorschlagen (`loot match`)
+- Projektweite Folge-Tool-Vorschläge nach Import und via `recommend` ohne Argument
 
 ## Als Nächstes
 

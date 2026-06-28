@@ -259,3 +259,68 @@ def is_web(svc: Service) -> bool:
     name = (svc.name or "").lower()
     return "http" in name or svc.port in (80, 443, 8000, 8080, 8081, 8443, 8888)
 
+
+def target_url(svc: Service, addr: str) -> str:
+    """Bildet die Ziel-URL für einen Web-Service (Schema + Port-Logik)."""
+    is_https = (
+        (svc.name or "").lower() == "https"
+        or (svc.tunnel or "") == "ssl"
+        or svc.port in (443, 8443)
+    )
+    scheme = "https" if is_https else "http"
+    if svc.port in (80, 443):
+        return f"{scheme}://{addr}"
+    return f"{scheme}://{addr}:{svc.port}"
+
+
+def run_shortcuts_for(svc: Service, addr: Optional[str]) -> tuple[list[tuple[str, str]], list[str]]:
+    """Run-Shortcuts für einen Service.
+
+    Liefert (ready, missing):
+    - ready   = Liste aus (Tool-Name, fertiger `pentos run ...`-Befehl) für
+                installierte Tools.
+    - missing = Tool-Namen, die passen würden, aber nicht installiert sind.
+    Es wird NICHTS ausgeführt - reine Vorschläge.
+    """
+    import shutil
+    from .runners import registry as _registry
+
+    ready: list[tuple[str, str]] = []
+    missing: list[str] = []
+    if not addr:
+        return ready, missing
+    web = is_web(svc)
+    url = target_url(svc, addr)
+    for tname in tools_for(svc):
+        spec = _registry.get(tname)
+        if not spec:
+            continue
+        tgt = url if (web and spec.category == "web") else addr
+        if shutil.which(spec.binary):
+            ready.append((tname, f"pentos run {tname} {tgt}"))
+        else:
+            missing.append(tname)
+    return ready, missing
+
+
+def project_shortcuts(
+    services_with_addr: list[tuple[Service, Optional[str]]],
+) -> tuple[list[str], list[str]]:
+    """Projektweite Run-Shortcuts über alle Services, dedupliziert.
+
+    Liefert (ready_cmds, missing_tools) - beide ohne Duplikate, Reihenfolge
+    stabil. Gedacht für die Übersicht nach einem Import oder `pentos recommend`
+    ohne Argument.
+    """
+    ready: list[str] = []
+    missing: list[str] = []
+    for svc, addr in services_with_addr:
+        r, m = run_shortcuts_for(svc, addr)
+        for _tool, cmd in r:
+            if cmd not in ready:
+                ready.append(cmd)
+        for tool in m:
+            if tool not in missing:
+                missing.append(tool)
+    return ready, missing
+

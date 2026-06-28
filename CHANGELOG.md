@@ -5,6 +5,29 @@ Alle nennenswerten Änderungen an PentOS werden hier festgehalten.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/),
 die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.24.0] – 2026-06-28
+### Hinzugefügt
+- **Scan-Diff:** `pentos scan diff <nmap.xml>` vergleicht einen frischen
+  nmap-Scan mit dem aktuellen Projektstand und zeigt neue Hosts, neue Dienste,
+  Versionswechsel und was im neuen Scan fehlt. Rein lesend - es wird nichts
+  importiert oder verändert.
+- **Loot-/Credential-Matching:** `pentos loot match [loot-id]` schlägt vor,
+  gegen welche Dienste im Projekt sich ein gefundenes Passwort, ein Hash
+  (Pass-the-Hash), ein SSH-Key oder ein API-Key/Cookie wiederverwenden lässt -
+  inklusive fertiger Befehls-Kopiervorlagen und passendem Runner-Tool. Ohne
+  Argument werden alle passenden Loot-Einträge ausgewertet. Reiner Vorschlag,
+  keine Ausführung.
+- **Projektweite Folge-Tool-Vorschläge:** `pentos recommend` ohne Service-ID
+  zeigt jetzt eine projektweite Übersicht der ausführbaren Run-Shortcuts über
+  alle Dienste. Dieselbe Übersicht erscheint zusätzlich automatisch am Ende von
+  `scan import-nmap`, damit nach dem Import sofort klar ist, was als Nächstes
+  läuft (nur installierte Tools = „bereit").
+- **Shell-Completion:** `pentos --install-completion` bzw. `--show-completion`
+  für Bash/Zsh/Fish.
+### Behoben
+- `pentos runs` öffnete das Repository versehentlich zweimal; der überflüssige
+  Aufruf wurde entfernt.
+
 ## [2.23.0] – 2026-06-27
 ### Hinzugefügt
 - **Live-Fortschritt beim Runner:** `pentos run` und `sweep` zeigen während ein

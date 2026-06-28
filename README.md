@@ -2,7 +2,7 @@
 
 **🇩🇪 Deutsch** · [🇬🇧 English](README.en.md) · [🐻 Baseldütsch](README.bl.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.23.0%2Brunner-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.24.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -24,6 +24,9 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | Pentest-Journal (jede Aktion mit Zeitstempel) | ✅ |
 | Aufgabensystem (auto-generiert je Service, Offen/In Bearbeitung/Erledigt) | ✅ |
 | Intelligente nächste Schritte (Empfehlungen, **keine Ausführung**) | ✅ |
+| **Scan-Diff** (`scan diff`: nmap-Scan gegen Projektstand, nur lesend) | ✅ |
+| **Loot-/Credential-Matching** (`loot match`: Spray/Pass-the-Hash/Key-Login vorschlagen) | ✅ |
+| **Projektweite Folge-Tool-Vorschläge** (`recommend` ohne Argument + nach Import) | ✅ |
 | Geführte Recon-/Enum-Kette (`sweep`, regelbasiert, Rückfrage je Schritt) | ✅ |
 | Opt-in Runner-Layer (23 Tools, kein Shell-Eval, Scope-Guard, Timeout) | ✅ |
 | Methodik-/Playbook-Bibliothek (Web/AD/Linux-/Windows-PrivEsc) | ✅ |
@@ -41,6 +44,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
 | **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
+| **Shell-Completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
 
 **Roadmap (offen):**
 - KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
@@ -297,4 +301,4 @@ Bereitgestellte Tools: `pentos_list_projects`, `pentos_summary`, `pentos_finding
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.23.0**.
+Aktuelle Version: **2.24.0**.

@@ -24,6 +24,8 @@ from ..ai import AIClient
 from .. import findings_rules, graph as graph_mod, obsidian as obsidian_mod, recommend, report as report_mod
 from .. import export as export_mod
 from .. import playbooks as playbooks_mod
+from .. import diff as diff_mod
+from .. import credmatch as credmatch_mod
 from ..importers import nmap as nmap_importer
 from ..importers import scanners as scanner_importer
 from ..runners import base as runner_base, parsers as runner_parsers, registry as runner_registry
@@ -48,7 +50,7 @@ from ..workspace import create_workspace, list_projects
 
 console = Console()
 app = typer.Typer(help="PentOS – Knowledge-Driven Offensive Security Workspace",
-                  no_args_is_help=True, add_completion=False)
+                  no_args_is_help=True, add_completion=True)
 
 
 # ── Hilfsfunktionen ──────────────────────────────────────────────────────────
@@ -262,6 +264,12 @@ def scan_import_nmap(xml_file: Path = typer.Argument(..., exists=True, readable=
     repo.add_note(Note(title=f"Nmap-Import {xml_file.name}", body="\n".join(note_lines), category="nmap"))
     repo.log("Nmap-Import abgeschlossen",
              f"{n_hosts} Hosts, {n_services} Services, {n_tasks} Tasks, {n_findings} Findings")
+
+    # Projektweite Folge-Tool-Vorschläge sammeln (nur installierte = "bereit").
+    hosts_by_id = {h.id: h for h in repo.list_hosts()}
+    svc_addr = [(s, (hosts_by_id.get(s.host_id).address if hosts_by_id.get(s.host_id) else None))
+                for s in repo.list_services()]
+    ready, missing = recommend.project_shortcuts(svc_addr)
     repo.close()
 
     console.print(Panel.fit(
@@ -270,6 +278,18 @@ def scan_import_nmap(xml_file: Path = typer.Argument(..., exists=True, readable=
         f"Neue Aufgaben: {n_tasks}   Auto-Findings: {n_findings}\n"
         f"Notiz: {note_path}",
         title="Nmap"))
+
+    if ready or missing:
+        body = ""
+        if ready:
+            shown = ready[:12]
+            body += "[green]Bereit (installiert):[/green]\n" + "\n".join(f"  {c}" for c in shown)
+            if len(ready) > len(shown):
+                body += f"\n  [dim]… und {len(ready) - len(shown)} weitere[/dim]"
+        if missing:
+            body += ("\n\n" if ready else "") + f"[dim]Nicht installiert: {', '.join(missing)}[/dim]"
+        body += "\n\n[dim]Vorschläge - nichts wird automatisch ausgeführt.[/dim]"
+        console.print(Panel.fit(body, title="▶ Nächste Schritte (Runner)"))
 
 
 @scan_app.command("import-scanner")
@@ -323,14 +343,83 @@ def scan_import_scanner(
         title="Scanner-Import"))
 
 
+@scan_app.command("diff")
+def scan_diff(xml_file: Path = typer.Argument(..., exists=True, readable=True,
+                                              help="nmap XML (nmap -oX) zum Vergleich")):
+    """Vergleicht einen nmap-Scan mit dem aktuellen Projektstand (nur lesend).
+
+    Zeigt neue Hosts, neue Dienste, Versionswechsel und was im neuen Scan fehlt.
+    Schreibt NICHTS - zum Importieren weiterhin `scan import-nmap` nutzen.
+    """
+    repo, _ = _repo()
+    parsed = nmap_importer.parse_nmap_xml(xml_file)
+    d = diff_mod.diff_parsed_against_repo(parsed, repo.list_hosts(), repo.list_services())
+    repo.close()
+
+    if not d.has_changes:
+        console.print(Panel.fit(
+            f"[green]Keine Änderungen[/green]\nÜbereinstimmende Dienste: {d.unchanged}",
+            title=f"Scan-Diff — {xml_file.name}"))
+        return
+
+    lines: list[str] = []
+    if d.new_hosts:
+        lines.append("[bold green]Neue Hosts:[/bold green]")
+        lines += [f"  + {h}" for h in d.new_hosts]
+    if d.new_services:
+        lines.append("[bold green]Neue Dienste:[/bold green]")
+        lines += [f"  + {s.host}  {s.port}/{s.protocol}  {s.banner()}" for s in d.new_services]
+    if d.changed_services:
+        lines.append("[bold yellow]Versionswechsel:[/bold yellow]")
+        lines += [f"  ~ {c.host}  {c.port}/{c.protocol}  {c.before} → {c.after}"
+                  for c in d.changed_services]
+    if d.missing_hosts:
+        lines.append("[bold red]Im neuen Scan nicht gesehen (Hosts):[/bold red]")
+        lines += [f"  - {h}" for h in d.missing_hosts]
+    if d.missing_services:
+        lines.append("[bold red]Im neuen Scan nicht gesehen (Dienste):[/bold red]")
+        lines += [f"  - {s.host}  {s.port}/{s.protocol}  {s.banner()}" for s in d.missing_services]
+    lines.append(f"[dim]Unverändert: {d.unchanged}[/dim]")
+
+    console.print(Panel.fit("\n".join(lines), title=f"Scan-Diff — {xml_file.name}"))
+
+
 # ── Empfehlungen ─────────────────────────────────────────────────────────────
 @app.command("recommend", rich_help_panel="Recon & Import")
-def recommend_cmd(service_id: int,
+def recommend_cmd(service_id: Optional[int] = typer.Argument(
+                      None, help="Service-ID; ohne Angabe projektweite Übersicht"),
                   create_tasks: bool = typer.Option(False, "--create-tasks",
                                                      help="Vorgeschlagene Aufgaben anlegen")):
-    """Zeigt empfohlene nächste Schritte für einen Service (keine Ausführung)."""
-    import shutil
+    """Zeigt empfohlene nächste Schritte (keine Ausführung).
+
+    Mit Service-ID: Empfehlungen für genau diesen Dienst. Ohne Argument: eine
+    projektweite Übersicht der ausführbaren Run-Shortcuts über alle Dienste.
+    """
     repo, _ = _repo()
+
+    # ── Projektweite Übersicht ───────────────────────────────────────────────
+    if service_id is None:
+        hosts_by_id = {h.id: h for h in repo.list_hosts()}
+        svc_addr = [(s, (hosts_by_id.get(s.host_id).address if hosts_by_id.get(s.host_id) else None))
+                    for s in repo.list_services()]
+        repo.close()
+        if not svc_addr:
+            console.print("[dim]Keine Dienste im Projekt. Erst importieren oder anlegen.[/dim]")
+            return
+        ready, missing = recommend.project_shortcuts(svc_addr)
+        if not ready and not missing:
+            console.print("[dim]Keine passenden Runner-Tools für die vorhandenen Dienste.[/dim]")
+            return
+        body = ""
+        if ready:
+            body += "[green]Bereit (installiert):[/green]\n" + "\n".join(f"  {c}" for c in ready)
+        if missing:
+            body += ("\n\n" if ready else "") + f"[dim]Nicht installiert: {', '.join(missing)}[/dim]"
+        body += "\n\n[dim]Vorschläge - nichts wird automatisch ausgeführt.[/dim]"
+        console.print(Panel.fit(body, title="▶ Nächste Schritte (projektweit)"))
+        return
+
+    # ── Einzelner Dienst ─────────────────────────────────────────────────────
     svc = repo.get_service(service_id)
     if not svc:
         console.print(f"[red]Service #{service_id} existiert nicht.[/red]")
@@ -344,28 +433,14 @@ def recommend_cmd(service_id: int,
 
     # Run-Shortcuts: passende Registry-Tools, die installiert sind
     addr = host.address if host else None
-    if addr:
-        web = recommend.is_web(svc)
-        scheme = "https" if (svc.name or "").lower() == "https" or (svc.tunnel or "") == "ssl" \
-            or svc.port in (443, 8443) else "http"
-        url = f"{scheme}://{addr}:{svc.port}" if svc.port not in (80, 443) else f"{scheme}://{addr}"
-        lines, missing = [], []
-        for tname in recommend.tools_for(svc):
-            spec = runner_registry.get(tname)
-            if not spec:
-                continue
-            tgt = url if (web and spec.category == "web") else addr
-            if shutil.which(spec.binary):
-                lines.append(f"  pentos run {tname} {tgt}")
-            else:
-                missing.append(tname)
-        if lines:
-            body = "[green]Bereit (installiert):[/green]\n" + "\n".join(lines)
-            if missing:
-                body += f"\n\n[dim]Nicht installiert: {', '.join(missing)}[/dim]"
-            console.print(Panel.fit(body, title="▶ Ausführen via Runner"))
-        elif missing:
-            console.print(f"[dim]Passende Tools nicht installiert: {', '.join(missing)}[/dim]")
+    ready, missing = recommend.run_shortcuts_for(svc, addr)
+    if ready:
+        body = "[green]Bereit (installiert):[/green]\n" + "\n".join(f"  {cmd}" for _t, cmd in ready)
+        if missing:
+            body += f"\n\n[dim]Nicht installiert: {', '.join(missing)}[/dim]"
+        console.print(Panel.fit(body, title="▶ Ausführen via Runner"))
+    elif missing:
+        console.print(f"[dim]Passende Tools nicht installiert: {', '.join(missing)}[/dim]")
 
     if create_tasks:
         created = sum(1 for t in recommend.tasks_for(svc) if repo.add_task(t))
@@ -696,6 +771,53 @@ def loot_list():
         table.add_row(str(l.id), l.type.value, l.label, l.value or "-",
                       str(l.host_id or "-"), l.source or "-")
     console.print(table)
+
+
+@loot_app.command("match")
+def loot_match(loot_id: Optional[int] = typer.Argument(
+                   None, help="Loot-ID; ohne Angabe alle passenden Loot-Einträge")):
+    """Schlägt vor, gegen welche Dienste sich ein Loot wiederverwenden lässt.
+
+    Reine Vorschläge mit Kopier-Befehlen (Spray / Pass-the-Hash / Key-Login).
+    Es wird NICHTS ausgeführt.
+    """
+    repo, _ = _repo()
+    loot_items = repo.list_loot()
+    hosts_by_id = {h.id: h for h in repo.list_hosts()}
+    host_services = [
+        (hosts_by_id[s.host_id].address, s)
+        for s in repo.list_services()
+        if s.host_id in hosts_by_id
+    ]
+    repo.close()
+
+    if loot_id is not None:
+        loot_items = [l for l in loot_items if l.id == loot_id]
+        if not loot_items:
+            console.print(f"[red]Loot #{loot_id} existiert nicht.[/red]")
+            raise typer.Exit(1)
+
+    if not host_services:
+        console.print("[dim]Keine Dienste im Projekt - erst importieren oder anlegen.[/dim]")
+        return
+
+    any_shown = False
+    for l in loot_items:
+        ms = credmatch_mod.matches_for(l, host_services)
+        if not ms:
+            continue
+        any_shown = True
+        lines = []
+        for m in ms:
+            where = f"{m.host}:{m.port}/{m.protocol}" if m.host != "-" else "(offline)"
+            tool = f"  [dim](pentos run {m.tool} …)[/dim]" if m.tool else ""
+            lines.append(f"[bold]{m.method}[/bold] → {where}{tool}\n    {m.hint}")
+        console.print(Panel.fit(
+            "\n".join(lines),
+            title=f"Loot #{l.id} [{l.type.value}] {l.label}"))
+
+    if not any_shown:
+        console.print("[dim]Keine passenden Dienste für diese(n) Loot-Eintrag/Einträge gefunden.[/dim]")
 
 
 @loot_app.command("rm")
@@ -1474,7 +1596,6 @@ def sweep_cmd(target: str = typer.Argument(..., help="Ziel: IP oder Host"),
 @app.command("runs", rich_help_panel="Reporting & Übersicht")
 def runs_cmd():
     """Zeigt die Historie ausgeführter Tools."""
-    repo, _ = _repo()
     repo, _ = _repo()
     items = repo.list_runs(); repo.close()
     table = Table(title="Run-Historie")

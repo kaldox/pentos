@@ -27,8 +27,10 @@ pentos service list                  # Dienste
 pentos scan import-nmap scan.xml                 # nmap-XML (-oX) importieren
 pentos scan import-scanner report.nessus         # Nessus/OpenVAS/Burp (auto-erkannt)
 pentos scan import-scanner gvm.xml --format openvas   # Format erzwingen
+pentos scan diff rescan.xml                       # nmap-Scan gegen Projektstand (nur lesend)
 
 # Empfehlungen (nur Vorschlag, keine Ausführung)
+pentos recommend                     # projektweite Run-Shortcuts über alle Dienste
 pentos recommend 4                   # nächste Schritte für Service 4  (--create-tasks)
 
 # Tools ausführen (opt-in)
@@ -76,6 +78,8 @@ pentos template add ...              # eigene Vorlage anlegen
 # Loot, Evidence, Notizen, Wissen
 pentos loot add "admin:Passw0rd" --type cred --host 1 --source smb
 pentos loot list
+pentos loot match                    # alle Loot-Einträge gegen passende Dienste vorschlagen
+pentos loot match 1                  # nur Loot #1 (Spray / Pass-the-Hash / Key-Login)
 pentos evidence add ./shot.png --kind screenshot --finding 4
 pentos note show <id>                # Notiz-Inhalt anzeigen
 pentos knowledge add Jenkins "Script Console RCE" --body "Groovy unter /script"
@@ -121,6 +125,15 @@ pentos serve --port 9000 --project meinprojekt
 
 # MCP-Server (für Claude Code / Cursor)
 pentos mcp                           # stdio-Server (read-only)
+```
+
+---
+
+Shell-Completion einrichten (Bash/Zsh/Fish):
+
+```bash
+pentos --install-completion          # Completion für die aktuelle Shell installieren
+pentos --show-completion             # Completion-Skript nur ausgeben (zum Kopieren)
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English** · [🐻 Baseldütsch](README.bl.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.23.0%2Brunner-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.24.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -25,6 +25,9 @@ commands itself**.
 | Pentest journal (every action timestamped) | ✅ |
 | Task system (auto-generated per service, Open/In progress/Done) | ✅ |
 | Intelligent next steps (recommendations, **no execution**) | ✅ |
+| **Scan diff** (`scan diff`: nmap scan vs. project state, read-only) | ✅ |
+| **Loot/credential matching** (`loot match`: suggest spray/pass-the-hash/key login) | ✅ |
+| **Project-wide follow-up tool suggestions** (`recommend` with no argument + after import) | ✅ |
 | Guided recon/enum chain (`sweep`, rule-based, prompts per step) | ✅ |
 | Opt-in runner layer (23 tools, no shell eval, scope guard, timeout) | ✅ |
 | Methodology / playbook library (web/AD/Linux/Windows privesc) | ✅ |
@@ -42,6 +45,7 @@ commands itself**.
 | **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
 | **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
 | Import: nmap XML **+ scanner import (Nessus/OpenVAS/Burp)** | ✅ |
+| **Shell completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
 
 **Roadmap (open):**
 - AI flashcards & note summaries (from your own data only, no hallucination)
@@ -81,6 +85,7 @@ pentos scan import-nmap scan.xml          # or import-scanner for Nessus/OpenVAS
 
 # 3) Overview & next steps
 pentos dashboard                          # compact project overview
+pentos recommend                          # project-wide run shortcuts across all services
 pentos recommend 4                        # suggestions for a service (no execution)
 
 # 4) Document your work
@@ -241,4 +246,4 @@ Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.md`](CHANGELOG.md).
-Current version: **2.23.0**.
+Current version: **2.24.0**.
