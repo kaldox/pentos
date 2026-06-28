@@ -2,7 +2,7 @@
 
 **🇩🇪 Deutsch** · [🇬🇧 English](README.en.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.26.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.27.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -40,6 +40,8 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | CTF/THM-Wissensdatenbank (getaggte Einträge) | ✅ |
 | „Frag dein Projekt" (RAG über eigene Projektdaten, lokale Embeddings) | ✅ |
 | KI-Mentor + **Advisor-Modus** (Scan/Log analysieren, nächste Schritte; fragt vor dem Senden; Offline-Fallback) | ✅ |
+| **KI-Sprache, Auto-Modellwahl je Aufgabe, Persona, Streaming, Temperatur/Verbosity** | ✅ |
+| **Vision** (`ai analyze-image`, z.B. qwen3-vl) + **KI-Panel im Dashboard** (Ask + Settings) | ✅ |
 | Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
 | **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
 | **Finding-Detailansicht + Angriffspfad-Graph** im Dashboard (SVG, anklickbar) | ✅ |
@@ -319,4 +321,4 @@ pentos tui                 # oder: pentos tui --project meinprojekt
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.26.0**.
+Aktuelle Version: **2.27.0**.

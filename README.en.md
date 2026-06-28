@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.26.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.27.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -41,6 +41,8 @@ commands itself**.
 | CTF/THM knowledge base (tagged entries) | ✅ |
 | "Ask your project" (RAG over your own project data, local embeddings) | ✅ |
 | AI mentor + **advisor mode** (analyze a scan/log, suggest next steps; asks before sending; offline fallback) | ✅ |
+| **AI language, auto model-per-task, persona, streaming, temperature/verbosity** | ✅ |
+| **Vision** (`ai analyze-image`, e.g. qwen3-vl) + **AI panel in the dashboard** (ask + settings) | ✅ |
 | Reporting: Markdown, **branded HTML & PDF**, didactic learning report | ✅ |
 | **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
 | **Finding detail view + attack-path graph** in the dashboard (SVG, clickable) | ✅ |
@@ -311,4 +313,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.26.0**.
+Current version: **2.27.0**.

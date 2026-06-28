@@ -24,6 +24,7 @@ For context, what was added most recently (details in the changelog):
 - Status history / retest tracking for findings (`finding history`, `--note`)
 - Dashboard detail view per finding with a status timeline
 - Attack-path graph rendered visually in the web dashboard ("Attack path" tab)
+- AI overhaul: output language, auto model-per-task/fallback, persona, streaming, temperature/verbosity, vision (analyze-image) and an AI panel in the dashboard
 
 ## Next
 

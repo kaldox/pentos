@@ -7,6 +7,31 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.27.0] – 2026-06-28
+### Added
+- **AI output language:** selectable (Deutsch, English, Español, Français, 中文, हिन्दी,
+  العربية, Português, Русский, 日本語 or free text). Asked once on first AI use, then
+  stored in the config; overridable per call via `--lang`. Technical terms, CVE IDs and
+  tool/command names optionally stay in the original (`keep_terms`).
+- **Automatic per-task model selection** (`ai config --auto-model`): for each task
+  (analyze/next/explain/enum/ask/vision) the best installed model is picked from a
+  preference list. Explicit mapping via `--model-for analyze=deepseek-r1:14b`.
+- **Fallback chain:** if a model fails or is missing, the next candidate is tried.
+- **Persona / customizable prompt** (`ai config --persona "..."`), also settable in the
+  dashboard.
+- **Streaming output** in the CLI (`--stream` on analyze/next/ask) with a live filter
+  for `<think>` reasoning blocks (deepseek-r1 et al.).
+- **Temperature & verbosity** configurable (`--temperature`, `--verbosity concise|normal|detailed`).
+- **Vision:** `pentos ai analyze-image <image>` analyses screenshots with a vision model
+  (e.g. qwen3-vl); `--vision-model` or auto-selection.
+- **AI in the dashboard:** new "AI" tab with "Ask your project" (RAG) and a settings
+  panel for language, verbosity, temperature, auto-model and persona.
+- New API endpoints: `GET/POST /api/ai/config` and `POST /api/project/{name}/ai/ask`.
+
+### Changed
+- The whole AI chat path now runs through one central method (model selection,
+  language, persona, temperature, streaming, vision in one place).
+
 ## [2.26.0] – 2026-06-28
 ### Added
 - **Status history / retest tracking:** every status change of a finding is

@@ -24,6 +24,7 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Status-Historie / Retest-Tracking für Findings (`finding history`, `--note`)
 - Dashboard-Detailansicht pro Finding mit Status-Zeitleiste
 - Attack-Path-Graph visuell im Web-Dashboard (Reiter „Angriffspfad")
+- KI-Ausbau: Ausgabesprache, Auto-Modellwahl/Fallback, Persona, Streaming, Temperatur/Verbosity, Vision (analyze-image) und KI-Panel im Dashboard
 
 ## Als Nächstes
 

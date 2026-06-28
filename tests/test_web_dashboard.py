@@ -133,3 +133,47 @@ def test_status_post_records_note():
     d = c.get("/api/project/Box/finding/2").json()
     assert d["status"] == "Geschlossen"
     assert any(h["note"] == "Retest ok" for h in d["history"])
+
+
+# ── 2.27.0: KI-Endpoints ─────────────────────────────────────────────────
+def test_ai_config_get_defaults():
+    c = _client_with_data()
+    cfg = c.get("/api/ai/config").json()
+    assert "language" in cfg and "auto_model" in cfg and "temperature" in cfg
+
+
+def test_ai_config_post_updates():
+    c = _client_with_data()
+    r = c.post("/api/ai/config",
+               json={"language": "en", "verbosity": "concise", "temperature": 0.7,
+                     "auto_model": True, "persona": "OSCP mentor"},
+               headers={"origin": "http://127.0.0.1:8787"})
+    assert r.status_code == 200
+    cfg = c.get("/api/ai/config").json()
+    assert cfg["language"] == "en"
+    assert cfg["verbosity"] == "concise"
+    assert cfg["temperature"] == 0.7
+    assert cfg["auto_model"] is True
+    assert cfg["persona"] == "OSCP mentor"
+
+
+def test_ai_config_temperature_validation():
+    c = _client_with_data()
+    r = c.post("/api/ai/config", json={"temperature": "abc"},
+               headers={"origin": "http://127.0.0.1:8787"})
+    assert r.status_code == 422
+
+
+def test_ai_ask_requires_question():
+    c = _client_with_data()
+    r = c.post("/api/project/Box/ai/ask", json={"question": "  "},
+               headers={"origin": "http://127.0.0.1:8787"})
+    assert r.status_code == 422
+
+
+def test_ai_ask_no_backend():
+    # _client_with_data setzt provider=none -> Ask muss 400 liefern
+    c = _client_with_data()
+    r = c.post("/api/project/Box/ai/ask", json={"question": "Was läuft?"},
+               headers={"origin": "http://127.0.0.1:8787"})
+    assert r.status_code == 400

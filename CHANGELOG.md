@@ -7,6 +7,32 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.27.0] – 2026-06-28
+### Hinzugefügt
+- **KI-Ausgabesprache:** wählbar (Deutsch, English, Español, Français, 中文, हिन्दी,
+  العربية, Português, Русский, 日本語 oder Freitext). Beim ersten KI-Aufruf einmalige
+  Abfrage, danach in der Config; pro Aufruf via `--lang` überschreibbar. Fachbegriffe,
+  CVE-IDs sowie Tool-/Befehlsnamen bleiben optional im Original (`keep_terms`).
+- **Automatische Modellwahl je Aufgabe** (`ai config --auto-model`): pro Task
+  (analyze/next/explain/enum/ask/vision) wird das beste installierte Modell aus einer
+  Präferenzliste gewählt. Explizite Zuordnung via `--model-for analyze=deepseek-r1:14b`.
+- **Fallback-Kette:** schlägt ein Modell fehl oder fehlt, wird automatisch das nächste
+  aus der Kandidatenliste versucht.
+- **Persona / anpassbarer Prompt** (`ai config --persona "..."`), zusätzlich im
+  Dashboard setzbar.
+- **Streaming-Ausgabe** in der CLI (`--stream` bei analyze/next/ask) mit Live-Filter
+  für `<think>`-Reasoning-Blöcke (deepseek-r1 & Co.).
+- **Temperatur & Verbosity** konfigurierbar (`--temperature`, `--verbosity concise|normal|detailed`).
+- **Vision:** `pentos ai analyze-image <bild>` wertet Screenshots mit einem
+  Vision-Modell aus (z.B. qwen3-vl); `--vision-model` bzw. Auto-Wahl.
+- **KI im Dashboard:** neuer Reiter „KI" mit „Frag dein Projekt" (RAG) und einem
+  Einstellungs-Panel für Sprache, Verbosity, Temperatur, Auto-Modell und Persona.
+- Neue API-Endpoints: `GET/POST /api/ai/config` und `POST /api/project/{name}/ai/ask`.
+
+### Geändert
+- Der gesamte KI-Chat-Pfad läuft jetzt zentral über eine Methode (Modellwahl,
+  Sprache, Persona, Temperatur, Streaming, Vision an einer Stelle).
+
 ## [2.26.0] – 2026-06-28
 ### Hinzugefügt
 - **Status-Historie / Retest-Tracking:** Jeder Statuswechsel eines Findings wird

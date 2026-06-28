@@ -270,6 +270,70 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
         finally:
             repo.close()
 
+    @app.get("/api/ai/config")
+    def api_ai_config_get():
+        ai = config.load_config().get("ai", {})
+        return {
+            "provider": ai.get("provider"), "model": ai.get("model"),
+            "language": ai.get("language", "de"), "auto_model": bool(ai.get("auto_model")),
+            "persona": ai.get("persona", ""), "temperature": ai.get("temperature", 0.3),
+            "verbosity": ai.get("verbosity", "normal"),
+            "vision_model": ai.get("vision_model", ""),
+            "available": ai.get("provider") not in (None, "none"),
+        }
+
+    @app.post("/api/ai/config")
+    def api_ai_config_set(request: Request, payload: dict = Body(...)):
+        _guard_write(request)
+        cfg = config.load_config()
+        ai = dict(cfg.get("ai", {}))
+        for key in ("language", "persona", "verbosity"):
+            if key in payload and payload[key] is not None:
+                ai[key] = payload[key]
+        if "auto_model" in payload:
+            ai["auto_model"] = bool(payload["auto_model"])
+        if "temperature" in payload and payload["temperature"] is not None:
+            try:
+                ai["temperature"] = max(0.0, min(1.0, float(payload["temperature"])))
+            except (TypeError, ValueError):
+                raise HTTPException(422, "temperature muss eine Zahl 0.0-1.0 sein.")
+        if payload.get("language"):
+            ai["language_set"] = True
+        cfg["ai"] = ai
+        config.save_config(cfg)
+        return {"ok": True}
+
+    @app.post("/api/project/{name}/ai/ask")
+    def api_ai_ask(name: str, request: Request, payload: dict = Body(...)):
+        _guard_write(request)
+        name = resolve(name)
+        question = (payload or {}).get("question", "").strip()
+        if not question:
+            raise HTTPException(422, "Frage erforderlich.")
+        from ..ai import AIClient
+        from .. import rag
+        cfg = config.load_config()
+        client = AIClient(cfg["ai"], language=cfg.get("language", "de"))
+        if not client.available():
+            raise HTTPException(400, "Kein KI-Backend konfiguriert (pentos ai config).")
+        repo = _repo(name)
+        try:
+            if repo.rag_count() == 0:
+                raise HTTPException(400, "RAG-Index leer. Erst 'pentos ai index' ausführen.")
+            qvec = client.embed(question)
+            if not qvec:
+                raise HTTPException(502, "Frage konnte nicht eingebettet werden (Backend/Embed-Modell?).")
+            hits = rag.search(repo, qvec, k=int((payload or {}).get("k", 5)))
+            contexts = [f"{h.label()}: {h.chunk}" for h in hits]
+            answer = client.answer_with_context(question, contexts)
+            if not answer:
+                raise HTTPException(502, "Keine Antwort vom Modell (Backend erreichbar?).")
+            return {"answer": answer,
+                    "sources": [{"label": h.label(), "score": round(h.score, 3)} for h in hits],
+                    "model": client.select_model("ask")}
+        finally:
+            repo.close()
+
     @app.get("/api/meta")
     def api_meta():
         from ..models import FindingStatus

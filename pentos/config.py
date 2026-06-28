@@ -46,6 +46,17 @@ DEFAULT_CONFIG = {
         "timeout": 60,
         # advisor: aktive, konkrete Vorschläge (Human-in-the-Loop). False = nur erklärend.
         "advisor": True,
+        # Ausgabesprache der KI (de,en,es,fr,zh,hi,ar,pt,ru,ja oder Freitext).
+        "language": "de",
+        "language_set": False,    # wurde die Sprache schon bewusst gewählt?
+        "keep_terms": True,       # Fachbegriffe/CVEs/Tool-/Befehlsnamen im Original lassen
+        # auto_model: bestes installiertes Modell je Aufgabe wählen
+        "auto_model": False,
+        "models": {},             # explizit pro Task: {"analyze": "deepseek-r1:14b", ...}
+        "vision_model": "",       # optionales Vision-Modell (z.B. qwen3-vl:4b)
+        "persona": "",            # zusätzlicher System-Prompt-Vorsatz
+        "temperature": 0.3,
+        "verbosity": "normal",    # concise | normal | detailed
     },
     "report": {
         # Branding für HTML-/PDF-Reports

@@ -1139,13 +1139,28 @@ app.add_typer(ai_app, name="ai", rich_help_panel="KI & Integration")
 def ai_status():
     """Prüft, ob das konfigurierte KI-Backend erreichbar ist (inkl. Modelle)."""
     info = AIClient(config.load_config()["ai"]).ping()
+    aicfg = config.load_config()["ai"]
     ok = "[green]erreichbar[/green]" if info["ok"] else "[red]nicht erreichbar[/red]"
+    from ..ai import LANGUAGES
+    lang = aicfg.get("language", "de")
     lines = [
         f"Provider:  {info['provider']}",
         f"Base-URL:  {info['base_url'] or '-'}",
         f"Modell:    {info['model'] or '-'}",
         f"Status:    {ok}",
+        f"Sprache:   {LANGUAGES.get(lang, lang)}"
+        + ("" if aicfg.get("language_set") else " [dim](noch nicht bewusst gewählt)[/dim]"),
+        f"Auto-Modell: {'an' if aicfg.get('auto_model') else 'aus'}"
+        f"   Verbosity: {aicfg.get('verbosity', 'normal')}"
+        f"   Temp: {aicfg.get('temperature', 0.3)}",
     ]
+    if aicfg.get("persona"):
+        lines.append(f"Persona:   {aicfg['persona']}")
+    if aicfg.get("vision_model"):
+        lines.append(f"Vision:    {aicfg['vision_model']}")
+    if aicfg.get("models"):
+        pairs = ", ".join(f"{t}={m}" for t, m in aicfg["models"].items())
+        lines.append(f"Pro-Task:  {pairs}")
     if info["ok"]:
         models = [m for m in info["models"] if m]
         lines.append(f"Modelle:   {', '.join(models) if models else '(keine gefunden)'}")
@@ -1176,13 +1191,30 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
               api_key_env: Optional[str] = typer.Option(None, "--api-key-env"),
               advisor: Optional[bool] = typer.Option(None, "--advisor/--no-advisor",
                                                      help="Aktive Vorschläge an/aus (Human-in-the-Loop)"),
+              language: Optional[str] = typer.Option(None, "--language", "--lang",
+                                                     help="Ausgabesprache: de,en,es,fr,zh,hi,ar,pt,ru,ja oder Freitext"),
+              auto_model: Optional[bool] = typer.Option(None, "--auto-model/--no-auto-model",
+                                                        help="Bestes installiertes Modell je Aufgabe wählen"),
+              persona: Optional[str] = typer.Option(None, "--persona",
+                                                    help="Zusatz-System-Prompt, z.B. 'knapper OSCP-Mentor'"),
+              temperature: Optional[float] = typer.Option(None, "--temperature", help="0.0-1.0"),
+              verbosity: Optional[str] = typer.Option(None, "--verbosity",
+                                                      help="concise | normal | detailed"),
+              vision_model: Optional[str] = typer.Option(None, "--vision-model",
+                                                         help="Modell für Bildanalyse, z.B. qwen3-vl:4b"),
+              keep_terms: Optional[bool] = typer.Option(None, "--keep-terms/--no-keep-terms",
+                                                        help="Fachbegriffe/CVEs im Original lassen"),
+              model_for: list[str] = typer.Option(None, "--model-for",
+                                                  help="Pro-Task-Modell, z.B. analyze=deepseek-r1:14b (mehrfach)"),
               check: bool = typer.Option(True, "--check/--no-check",
                                          help="Nach dem Speichern Erreichbarkeit prüfen")):
-    """Setzt die KI-Anbindung (schreibt in config.yaml) – ohne YAML-Editieren."""
+    """Setzt die KI-Anbindung und das KI-Verhalten (schreibt in config.yaml)."""
     valid = {"ollama", "lmstudio", "openai", "none"}
     if provider and provider not in valid:
         console.print(f"[red]Unbekannter Provider '{provider}'.[/red] Erlaubt: {', '.join(sorted(valid))}")
         raise typer.Exit(1)
+    if verbosity and verbosity not in {"concise", "normal", "detailed"}:
+        console.print("[red]verbosity: concise | normal | detailed[/red]"); raise typer.Exit(1)
     cfg = config.load_config()
     ai = dict(cfg.get("ai", {}))
     if provider: ai["provider"] = provider
@@ -1192,41 +1224,129 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
     if timeout: ai["timeout"] = timeout
     if api_key_env: ai["api_key_env"] = api_key_env
     if advisor is not None: ai["advisor"] = advisor
+    if language:
+        ai["language"] = language.lower(); ai["language_set"] = True
+    if auto_model is not None: ai["auto_model"] = auto_model
+    if persona is not None: ai["persona"] = persona
+    if temperature is not None: ai["temperature"] = max(0.0, min(1.0, temperature))
+    if verbosity: ai["verbosity"] = verbosity
+    if vision_model is not None: ai["vision_model"] = vision_model
+    if keep_terms is not None: ai["keep_terms"] = keep_terms
+    if model_for:
+        models = dict(ai.get("models") or {})
+        for pair in model_for:
+            if "=" in pair:
+                t, m = pair.split("=", 1)
+                models[t.strip()] = m.strip()
+        ai["models"] = models
     cfg["ai"] = ai
     path = config.save_config(cfg)
     console.print(f"[green]Config gespeichert:[/green] {path}")
     console.print(f"  provider={ai.get('provider')}  base_url={ai.get('base_url')}  "
-                  f"model={ai.get('model')}  embed_model={ai.get('embed_model')}")
+                  f"model={ai.get('model')}  sprache={ai.get('language')}  "
+                  f"auto-modell={ai.get('auto_model')}")
     if check and ai.get("provider") not in (None, "none"):
         ai_status()
 
 
 @ai_app.command("explain-finding")
-def ai_explain_finding(finding_id: int):
+def ai_explain_finding(finding_id: int,
+                       lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache")):
     repo, _ = _repo()
     f = repo.get_finding(finding_id)
     repo.close()
     if not f:
         console.print("[red]Finding nicht gefunden.[/red]"); raise typer.Exit(1)
-    client = AIClient(config.load_config()["ai"])
+    _ensure_language()
+    client = _ai_client(lang)
     console.print(Panel(client.explain_finding(f), title=f"KI-Mentor · Finding #{finding_id}"))
 
 
 @ai_app.command("enum")
-def ai_enum(service_id: int):
+def ai_enum(service_id: int,
+            lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache")):
     repo, _ = _repo()
     svc = repo.get_service(service_id)
     repo.close()
     if not svc:
         console.print("[red]Service nicht gefunden.[/red]"); raise typer.Exit(1)
-    client = AIClient(config.load_config()["ai"])
+    _ensure_language()
+    client = _ai_client(lang)
     console.print(Panel(client.enumeration_ideas(svc),
                         title=f"KI-Mentor · Enumeration {svc.port}/{svc.protocol}"))
 
 
-def _ai_client() -> AIClient:
+@ai_app.command("analyze-image")
+def ai_analyze_image(
+    image: Path = typer.Argument(..., exists=True, readable=True, help="Bild/Screenshot (PNG/JPG)"),
+    question: Optional[str] = typer.Option(None, "--q", help="Konkrete Frage zum Bild"),
+    lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden"),
+):
+    """Wertet einen Screenshot/ein Bild mit einem Vision-Modell aus (z.B. qwen3-vl).
+
+    Nutzt das in der Config gesetzte vision_model bzw. die Auto-Wahl.
+    """
+    import base64
+    _ensure_language()
+    client = _ai_client(lang)
+    if not _confirm_ai_send(client, f"das Bild '{image.name}'", yes):
+        console.print("Abgebrochen."); raise typer.Exit()
+    b64 = base64.b64encode(image.read_bytes()).decode()
+    model = client.select_model("vision")
+    with console.status(f"[cyan]Vision-Modell ({model}) analysiert das Bild…[/cyan]"):
+        answer = client.analyze_image(b64, question)
+    if not answer:
+        console.print("[red]Keine Antwort.[/red] Vision-Modell installiert/erreichbar? "
+                      "([cyan]ollama pull qwen3-vl[/cyan], dann "
+                      "[cyan]pentos ai config --vision-model qwen3-vl:4b[/cyan])")
+        raise typer.Exit(1)
+    console.print(Panel(answer, title=f"KI · Bildanalyse ({image.name}, {model})"))
+
+
+def _ai_client(lang: Optional[str] = None) -> AIClient:
     cfg = config.load_config()
-    return AIClient(cfg["ai"], language=cfg.get("language", "de"))
+    ai = dict(cfg["ai"])
+    if lang:                       # Pro-Befehl-Override
+        ai["language"] = lang.lower()
+    return AIClient(ai, language=cfg.get("language", "de"))
+
+
+def _ensure_language() -> None:
+    """Fragt einmalig die Ausgabesprache ab, falls noch nie bewusst gewählt."""
+    cfg = config.load_config()
+    ai = cfg.get("ai", {})
+    if ai.get("language_set") or ai.get("provider") in (None, "none"):
+        return
+    if not sys.stdin.isatty():     # nicht-interaktiv (Pipe/CI) -> nicht fragen
+        return
+    from ..ai import LANGUAGES
+    console.print("[bold]In welcher Sprache soll die KI antworten?[/bold]")
+    codes = list(LANGUAGES.keys())
+    for i, code in enumerate(codes, 1):
+        console.print(f"  {i}. {LANGUAGES[code]} [dim]({code})[/dim]")
+    console.print(f"  {len(codes)+1}. Andere (Code eingeben)")
+    choice = typer.prompt("Auswahl", default="1")
+    code = ai.get("language", "de")
+    if choice.isdigit() and 1 <= int(choice) <= len(codes):
+        code = codes[int(choice) - 1]
+    elif choice.isdigit() and int(choice) == len(codes) + 1:
+        code = typer.prompt("Sprachcode/-name").strip().lower() or code
+    elif choice.strip():
+        code = choice.strip().lower()
+    ai = dict(ai); ai["language"] = code; ai["language_set"] = True
+    cfg["ai"] = ai; config.save_config(cfg)
+    console.print(f"[green]Sprache gesetzt:[/green] {LANGUAGES.get(code, code)} "
+                  f"[dim](änderbar mit pentos ai config --language ..)[/dim]\n")
+
+
+def _stream_to_console(title: str):
+    """Gibt einen on_token-Callback zurück, der live in ein Rich-Panel/Plain schreibt."""
+    console.print(f"[dim]── {title} ──[/dim]")
+
+    def on_token(t: str):
+        console.print(t, end="", markup=False, highlight=False)
+    return on_token
 
 
 @ai_app.command("index")
@@ -1255,10 +1375,13 @@ def ai_index():
 
 @ai_app.command("ask")
 def ai_ask(frage: str,
-           k: int = typer.Option(5, "--k", help="Anzahl Kontext-Treffer")):
+           k: int = typer.Option(5, "--k", help="Anzahl Kontext-Treffer"),
+           lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache nur für diesen Aufruf"),
+           stream: bool = typer.Option(False, "--stream", help="Antwort live streamen")):
     """Beantwortet eine Frage über die Projektdaten (RAG, mit Quellenangabe)."""
     from .. import rag
-    client = _ai_client()
+    _ensure_language()
+    client = _ai_client(lang)
     if not client.available():
         console.print("[red]Kein KI-Backend konfiguriert.[/red] Siehe [cyan]pentos ai config[/cyan].")
         raise typer.Exit(1)
@@ -1275,11 +1398,17 @@ def ai_ask(frage: str,
     hits = rag.search(repo, qvec, k=k)
     repo.close()
     contexts = [f"{h.label()}: {h.chunk}" for h in hits]
-    answer = client.answer_with_context(frage, contexts)
+    if stream:
+        answer = client.answer_with_context(frage, contexts, stream=True,
+                                            on_token=_stream_to_console(f"Frag dein Projekt ({name})"))
+        console.print()
+    else:
+        answer = client.answer_with_context(frage, contexts)
+        if answer:
+            console.print(Panel(answer, title=f"KI · Frag dein Projekt ({name})"))
     if not answer:
         console.print("[red]Keine Antwort vom Modell[/red] (Backend erreichbar?).")
         raise typer.Exit(1)
-    console.print(Panel(answer, title=f"KI · Frag dein Projekt ({name})"))
     if hits:
         srcs = "  ".join(f"[dim]{h.label()} ({h.score:.2f})[/dim]" for h in hits)
         console.print(srcs)
@@ -1309,6 +1438,8 @@ def ai_analyze(
     label: str = typer.Option("Output", "--as", help="Was ist das? z.B. nmap, ffuf, log"),
     save: bool = typer.Option(False, "--save", help="Ergebnis als Notiz im Projekt speichern"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden"),
+    lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache nur für diesen Aufruf"),
+    stream: bool = typer.Option(False, "--stream", help="Antwort live streamen"),
 ):
     """Füttert die KI mit einem Scan/Log/Output und bekommt eine Deutung + nächste Schritte.
 
@@ -1329,19 +1460,26 @@ def ai_analyze(
         console.print("[red]Keine Eingabe.[/red] Datei, --text oder per Pipe (stdin) übergeben.")
         raise typer.Exit(1)
 
-    client = _ai_client()
+    _ensure_language()
+    client = _ai_client(lang)
     cfg = config.load_config()
     if not _confirm_ai_send(client, f"'{label}'-Ausgabe ({len(content)} Zeichen)", yes):
         console.print("Abgebrochen.")
         raise typer.Exit()
 
     advisor = bool(cfg["ai"].get("advisor", True))
-    with console.status("[cyan]KI analysiert…[/cyan]"):
-        answer = client.interpret_output(label, content, advisor=advisor)
+    if stream:
+        answer = client.interpret_output(label, content, advisor=advisor,
+                                         stream=True, on_token=_stream_to_console(f"Analyse ({label})"))
+        console.print()
+    else:
+        with console.status("[cyan]KI analysiert…[/cyan]"):
+            answer = client.interpret_output(label, content, advisor=advisor)
+        if answer:
+            console.print(Panel(answer, title=f"KI · Analyse ({label})"))
     if not answer:
         console.print("[red]Keine Antwort vom Modell[/red] (Backend erreichbar? `pentos ai status`).")
         raise typer.Exit(1)
-    console.print(Panel(answer, title=f"KI · Analyse ({label})"))
     if save:
         repo, _ = _repo()
         repo.add_note(Note(title=f"KI-Analyse · {label}", body=answer, category="ai"))
@@ -1350,7 +1488,9 @@ def ai_analyze(
 
 
 @ai_app.command("next")
-def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden")):
+def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden"),
+            lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache nur für diesen Aufruf"),
+            stream: bool = typer.Option(False, "--stream", help="Antwort live streamen")):
     """Schlägt auf Basis des aktuellen Projektstands die nächsten sinnvollen Schritte vor."""
     repo, name = _repo()
     hosts = repo.list_hosts()
@@ -1372,18 +1512,25 @@ def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage
     state = "\n".join(lines)
     repo.close()
 
-    client = _ai_client()
+    _ensure_language()
+    client = _ai_client(lang)
     cfg = config.load_config()
     if not _confirm_ai_send(client, "den Projektstand", yes):
         console.print("Abgebrochen.")
         raise typer.Exit()
     advisor = bool(cfg["ai"].get("advisor", True))
-    with console.status("[cyan]KI denkt über die nächsten Schritte nach…[/cyan]"):
-        answer = client.next_steps(state, advisor=advisor)
+    if stream:
+        answer = client.next_steps(state, advisor=advisor,
+                                   stream=True, on_token=_stream_to_console(f"Nächste Schritte ({name})"))
+        console.print()
+    else:
+        with console.status("[cyan]KI denkt über die nächsten Schritte nach…[/cyan]"):
+            answer = client.next_steps(state, advisor=advisor)
+        if answer:
+            console.print(Panel(answer, title=f"KI · Nächste Schritte ({name})"))
     if not answer:
         console.print("[red]Keine Antwort vom Modell[/red] (Backend erreichbar? `pentos ai status`).")
         raise typer.Exit(1)
-    console.print(Panel(answer, title=f"KI · Nächste Schritte ({name})"))
 
 
 @app.command("serve", rich_help_panel="KI & Integration")

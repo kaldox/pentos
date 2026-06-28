@@ -85,6 +85,7 @@ async function render() {
     if (state.view === "graph") return renderGraph(c);
     if (state.view === "loot") return renderLoot(c);
     if (state.view === "notes") return renderNotes(c);
+    if (state.view === "ai") return renderAI(c);
   } catch (e) {
     c.innerHTML = emptyState("Fehler beim Laden", esc(e.message));
   }
@@ -449,6 +450,82 @@ async function renderGraph(c) {
 }
 
 
+
+// ── KI: Frag dein Projekt + Einstellungen ──────────────────────────────
+const LANGS = { de: "Deutsch", en: "English", es: "Español", fr: "Français",
+  zh: "中文", hi: "हिन्दी", ar: "العربية", pt: "Português", ru: "Русский", ja: "日本語" };
+async function renderAI(c) {
+  let cfg;
+  try { cfg = await api("/api/ai/config"); }
+  catch (e) { c.innerHTML = emptyState("KI-Status nicht ladbar", esc(e.message)); return; }
+
+  if (!cfg.available) {
+    c.innerHTML = emptyState("Kein KI-Backend",
+      "Konfiguriere es mit <code>pentos ai config --provider ollama --base-url http://&lt;ip&gt;:11434</code>.");
+    return;
+  }
+  const langOpts = Object.entries(LANGS).map(([k, v]) =>
+    `<option value="${k}"${k === cfg.language ? " selected" : ""}>${v}</option>`).join("");
+  const verbOpts = ["concise", "normal", "detailed"].map((v) =>
+    `<option value="${v}"${v === cfg.verbosity ? " selected" : ""}>${v}</option>`).join("");
+
+  c.innerHTML = `
+    <div class="grid-2 ai-grid">
+      <div class="card">
+        <div class="panel-h"><h2>Frag dein Projekt</h2>
+          <span class="mono" style="color:var(--muted)">${esc(cfg.model || "")}</span></div>
+        <div class="ai-ask">
+          <textarea id="ai-q" rows="3" placeholder="z.B. Welche Dienste laufen und was wäre der erste Angriffsweg?"></textarea>
+          <button id="ai-send" class="btn">Fragen</button>
+        </div>
+        <div id="ai-out" class="ai-out"></div>
+      </div>
+      <div class="card">
+        <div class="panel-h"><h2>KI-Einstellungen</h2></div>
+        <div class="ai-set">
+          <label>Sprache<select id="set-lang">${langOpts}</select></label>
+          <label>Verbosity<select id="set-verb">${verbOpts}</select></label>
+          <label>Temperatur <span id="temp-val" class="mono">${cfg.temperature}</span>
+            <input id="set-temp" type="range" min="0" max="1" step="0.1" value="${cfg.temperature}"/></label>
+          <label class="ai-check"><input id="set-auto" type="checkbox" ${cfg.auto_model ? "checked" : ""}/> Auto-Modell (bestes je Aufgabe)</label>
+          <label>Persona<textarea id="set-persona" rows="2" placeholder="z.B. knapper OSCP-Mentor">${esc(cfg.persona || "")}</textarea></label>
+          <button id="set-save" class="btn">Einstellungen speichern</button>
+          <div id="set-msg" class="ai-msg"></div>
+        </div>
+      </div>
+    </div>`;
+
+  $("#set-temp").oninput = (e) => { $("#temp-val").textContent = e.target.value; };
+  $("#ai-send").onclick = async () => {
+    const q = $("#ai-q").value.trim();
+    if (!q) { $("#ai-q").focus(); return; }
+    const btn = $("#ai-send"); btn.disabled = true; btn.textContent = "Denkt nach …";
+    $("#ai-out").innerHTML = `<div class="loading">KI arbeitet …</div>`;
+    try {
+      const r = await apiPost(`/api/project/${encodeURIComponent(state.project)}/ai/ask`, { question: q });
+      const src = (r.sources || []).map((s) => `<span class="ai-src">${esc(s.label)} <span class="mono">${s.score}</span></span>`).join("");
+      $("#ai-out").innerHTML = `<div class="ai-answer">${esc(r.answer).replace(/\n/g, "<br>")}</div>
+        ${src ? `<div class="ai-srcs">Quellen: ${src}</div>` : ""}
+        <div class="ai-model mono">${esc(r.model || "")}</div>`;
+    } catch (e) {
+      $("#ai-out").innerHTML = emptyState("Fehler", esc(e.message));
+    } finally { btn.disabled = false; btn.textContent = "Fragen"; }
+  };
+  $("#set-save").onclick = async () => {
+    const body = {
+      language: $("#set-lang").value, verbosity: $("#set-verb").value,
+      temperature: parseFloat($("#set-temp").value), auto_model: $("#set-auto").checked,
+      persona: $("#set-persona").value.trim(),
+    };
+    const btn = $("#set-save"); btn.disabled = true;
+    try {
+      await apiPost("/api/ai/config", body);
+      $("#set-msg").innerHTML = `<span style="color:var(--brand)">Gespeichert.</span>`;
+    } catch (e) {
+      $("#set-msg").innerHTML = `<span style="color:var(--crit)">${esc(e.message)}</span>`;
+    } finally { btn.disabled = false; setTimeout(() => { $("#set-msg").innerHTML = ""; }, 2500); }
+  };
+}
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 boot();

@@ -24,11 +24,11 @@ def test_interpret_output_truncates_long_input(monkeypatch):
     c = AIClient({"provider": "ollama"}, language="de")
     captured = {}
 
-    def fake(system, prompt):
+    def fake(system, prompt, **kw):
         captured["prompt"] = prompt
         return "ok"
 
-    monkeypatch.setattr(c, "_ask_system", fake)
+    monkeypatch.setattr(c, "_chat", fake)
     long = "A" * 20000
     c.interpret_output("nmap", long, advisor=True)
     # Eingabe wird auf ~6000 Zeichen gekürzt (Prompt bleibt handhabbar)

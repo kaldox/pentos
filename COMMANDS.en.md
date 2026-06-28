@@ -117,6 +117,14 @@ pentos ai explain-finding 4
 pentos ai enum 4
 pentos ai analyze scan.txt --as nmap # interpret a scan/log (--text, stdin, --save)
 pentos ai next                       # suggestions based on project state
+pentos ai analyze scan.txt --as nmap --stream   # stream the answer live
+pentos ai analyze-image shot.png --q "Anything notable?"   # vision (qwen3-vl)
+
+# AI behaviour (language, auto-model, persona, temperature)
+pentos ai config --language en --auto-model --persona "concise OSCP mentor"
+pentos ai config --temperature 0.5 --verbosity concise
+pentos ai config --model-for analyze=deepseek-r1:14b --vision-model qwen3-vl:4b
+pentos ai next --lang de             # output language for this call only
 
 # "Ask your project" (RAG over your own data)
 pentos ai config --embed-model nomic-embed-text
