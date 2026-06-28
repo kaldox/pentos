@@ -1,8 +1,8 @@
 # PentOS
 
-**🇩🇪 Deutsch** · [🇬🇧 English](README.en.md) · [🐻 Baseldütsch](README.bl.md)
+**🇩🇪 Deutsch** · [🇬🇧 English](README.en.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.24.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.25.1-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -43,6 +43,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
 | **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
 | **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
+| **Terminal-UI** (`pentos tui`: tastaturgesteuertes Lagebild, Status-Pflege) | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
 | **Shell-Completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
 
@@ -209,7 +210,7 @@ git clone https://github.com/kaldox/pentos.git
 cd pentos
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[pdf,web,mcp]"  # alle Extras: PDF + Web-Dashboard + MCP-Server; minimal: pip install -e .
+pip install -e ".[pdf,web,mcp,tui]"  # alle Extras: PDF + Web-Dashboard + MCP-Server + TUI; minimal: pip install -e .
 pentos --help
 ```
 
@@ -298,7 +299,23 @@ Bereitgestellte Tools: `pentos_list_projects`, `pentos_summary`, `pentos_finding
 
 ---
 
+## TUI – Terminal-Oberfläche (optional)
+
+`pentos tui` öffnet ein tastaturgesteuertes Lagebild des aktiven Projekts direkt
+im Terminal. Tabs für Übersicht, Hosts, Dienste, Findings, Tasks, Loot und
+Journal; Navigation mit Pfeiltasten und Tab. Mit `s` schaltest du den Status des
+markierten Findings oder Tasks weiter (das wird ins Projekt geschrieben), `r`
+aktualisiert, `q` beendet. Reine Ansicht und Status-Pflege, es wird nichts
+ausgeführt.
+
+```bash
+pip install -e ".[tui]"
+pentos tui                 # oder: pentos tui --project meinprojekt
+```
+
+---
+
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.24.0**.
+Aktuelle Version: **2.25.1**.

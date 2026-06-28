@@ -1,8 +1,9 @@
 # PentOS Befehls-Referenz
 
 Vollständige Übersicht aller Befehle, gruppiert wie in `pentos --help`. Die
-Befehle sind in jeder Sprachversion identisch, darum gibt es diese Referenz nur
-einmal.
+Befehle sind in jeder Sprachversion identisch.
+
+> English version: [`COMMANDS.en.md`](COMMANDS.en.md)
 
 > Die lebende Referenz ist die CLI selbst: `pentos --help` zeigt alle Gruppen,
 > `pentos <gruppe> --help` (z.B. `pentos finding --help`) zeigt die Unterbefehle
@@ -94,6 +95,7 @@ pentos task done 12
 
 ```bash
 pentos dashboard                     # kompakte CLI-Übersicht des Projekts
+pentos tui                           # interaktives Terminal-Lagebild (Textual); s=Status, r=neu, q=Ende
 pentos report                        # Markdown-Report unter <projekt>/reports
 pentos report --html                 # gebrandetes HTML (im Browser druckbar)
 pentos report --pdf                  # gebrandetes PDF (braucht reportlab)

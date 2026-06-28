@@ -1,8 +1,8 @@
 # PentOS
 
-[🇩🇪 Deutsch](README.md) · **🇬🇧 English** · [🐻 Baseldütsch](README.bl.md)
+[🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.24.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.25.1-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -44,6 +44,7 @@ commands itself**.
 | Reporting: Markdown, **branded HTML & PDF**, didactic learning report | ✅ |
 | **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
 | **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
+| **Terminal UI** (`pentos tui`: keyboard-driven dashboard, status editing) | ✅ |
 | Import: nmap XML **+ scanner import (Nessus/OpenVAS/Burp)** | ✅ |
 | **Shell completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
 
@@ -53,7 +54,7 @@ commands itself**.
 - Attack-path graph rendered visually in the dashboard
 - Richer screenshot handling (e.g. direct capture/annotation)
 
-The full roadmap, with rationale and deliberate non-goals, lives in [`ROADMAP.md`](ROADMAP.md).
+The full roadmap, with rationale and deliberate non-goals, lives in [`ROADMAP.en.md`](ROADMAP.en.md).
 
 ---
 
@@ -98,7 +99,7 @@ pentos report --html                      # branded HTML (also --pdf, --explain)
 ```
 
 That is the core flow. All commands grouped by area in the
-**[command reference (COMMANDS.md)](COMMANDS.md)**, or live via `pentos --help`
+**[command reference (COMMANDS.en.md)](COMMANDS.en.md)**, or live via `pentos --help`
 and `pentos <group> --help` (e.g. `pentos finding --help`).
 
 ---
@@ -136,7 +137,28 @@ Execution is always without a shell and with a per-tool timeout. PentOS runs not
 on its own and chains no attacks automatically.
 
 The concrete commands (tools, profiles, `sweep`, playbooks, RAG, scope) are in the
-**[command reference (COMMANDS.md)](COMMANDS.md)**.
+**[command reference (COMMANDS.en.md)](COMMANDS.en.md)**.
+
+---
+
+## AI configuration
+
+Without a backend, everything runs in offline fallback. For real answers, connect
+a backend, most easily via the CLI:
+
+```bash
+pentos ai config --provider ollama --base-url http://127.0.0.1:11434 --model llama3.1
+pentos ai status          # checks reachability + lists models
+```
+
+Providers: `ollama` | `lmstudio` | `openai` | `none`. Reasoning models (e.g.
+`deepseek-r1`) are supported; PentOS strips their internal `<think>…</think>`
+blocks from the answer.
+
+**Reaching Ollama from a VM:** have Ollama listen on the network on the host
+(`OLLAMA_HOST=0.0.0.0:11434 ollama serve`), open port 11434 in the firewall, and
+set `--base-url http://<host-ip>:11434` inside the VM. Bridged or host-only
+networking works directly; with plain NAT you may need port forwarding.
 
 ---
 
@@ -172,6 +194,33 @@ Data model: one SQLite DB per project under `<project>/database/pentos.db`.
 PentOS orchestrates and documents. It runs **no** scans or exploits itself.
 Recommendations are suggestions, the AI analyzes only. Use only in authorized
 environments (your own labs, CTF/THM, signed-off tests).
+
+---
+
+## Installation (from this repo)
+
+```bash
+git clone https://github.com/kaldox/pentos.git
+cd pentos
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[pdf,web,mcp,tui]"  # all extras: PDF + web dashboard + MCP server + TUI; minimal: pip install -e .
+pentos --help
+```
+
+First steps:
+```bash
+pentos project new demo
+pentos scope add 10.10.10.0/24       # CIDR or hostname (e.g. box.thm)
+pentos sweep 10.10.10.5 --run        # guided recon/enumeration
+pentos template seed                 # pre-fill finding templates
+pentos report --pdf                  # branded report (branding optional via config)
+```
+
+Configuration: on first start, `~/.config/pentos/config.yaml` is created from the
+defaults. A commented template lives in [`config.example.yaml`](config.example.yaml).
+An optional OpenAI key is **never** stored in the config; it is only read from the
+environment variable named in `api_key_env` (the default AI is local Ollama).
 
 ---
 
@@ -243,7 +292,22 @@ Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 
 ---
 
+## TUI – terminal interface (optional)
+
+`pentos tui` opens a keyboard-driven dashboard of the active project right in the
+terminal. Tabs for overview, hosts, services, findings, tasks, loot and journal;
+navigate with arrow keys and Tab. Press `s` to cycle the status of the selected
+finding or task (written back to the project), `r` refreshes, `q` quits. View and
+status editing only, nothing is executed.
+
+```bash
+pip install -e ".[tui]"
+pentos tui                 # or: pentos tui --project myproject
+```
+
+---
+
 ## Changelog
 
-All versions and changes are documented in [`CHANGELOG.md`](CHANGELOG.md).
-Current version: **2.24.0**.
+All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
+Current version: **2.25.1**.

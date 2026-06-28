@@ -5,6 +5,31 @@ Alle nennenswerten Änderungen an PentOS werden hier festgehalten.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/),
 die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
+> English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
+
+## [2.25.1] – 2026-06-28
+### Geändert
+- **Dokumentation internationalisiert:** Die englische Seite ist jetzt vollständig
+  und eigenständig - README, CHANGELOG, ROADMAP und COMMANDS gibt es auf Englisch
+  (`*.en.md`), aus der englischen README verlinkt. Die englische README wurde auf
+  Feature-Parität zur deutschen gebracht (u.a. KI-Konfiguration und Installation
+  aus dem Repo ergänzt).
+### Entfernt
+- Baseldütsch-README (`README.bl.md`) entfernt; PentOS wird ab jetzt auf Deutsch
+  und Englisch gepflegt.
+
+## [2.25.0] – 2026-06-28
+### Hinzugefügt
+- **Terminal-UI (TUI):** `pentos tui` öffnet ein tastaturgesteuertes Lagebild
+  des aktiven Projekts (Textual). Tabs für Übersicht, Hosts, Dienste, Findings,
+  Tasks, Loot und Journal; Navigation per Pfeiltasten/Tab. Finding- und
+  Task-Status lassen sich direkt per Taste `s` durchschalten (schreibt ins
+  Projekt), `r` aktualisiert, `q` beendet. Reine Ansicht und Status-Pflege - es
+  wird nichts ausgeführt. Neues Extra: `pip install -e ".[tui]"` (Textual).
+### Geändert
+- Die Datenschicht der TUI (`pentos/tui/data.py`) ist bewusst von der Oberfläche
+  getrennt und ohne laufendes Terminal testbar.
+
 ## [2.24.0] – 2026-06-28
 ### Hinzugefügt
 - **Scan-Diff:** `pentos scan diff <nmap.xml>` vergleicht einen frischen

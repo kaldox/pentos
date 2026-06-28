@@ -1088,6 +1088,27 @@ def dashboard_cmd():
         console.print(table)
 
 
+@app.command("tui", rich_help_panel="Reporting & Übersicht")
+def tui_cmd(project: Optional[str] = typer.Option(None, "--project", "-p",
+                                                  help="Projekt (sonst aktives)")):
+    """Interaktives Terminal-Lagebild (Textual).
+
+    Durch Hosts, Dienste, Findings, Tasks, Loot und Journal blättern;
+    Finding- und Task-Status per Taste durchschalten. Es wird nichts
+    ausgeführt - reine Ansicht und Status-Pflege.
+
+    Benötigt die TUI-Extras: pip install -e ".\\[tui]"
+    """
+    proj = project or _active_or_exit()
+    try:
+        from ..tui import app as tui_app
+    except ModuleNotFoundError:
+        console.print('[red]TUI-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".\\[tui]"[/cyan]')
+        raise typer.Exit(1)
+    tui_app.run(proj)
+
+
+
 # ── KI-Mentor ────────────────────────────────────────────────────────────────
 ai_app = typer.Typer(help="KI-Mentor (lokal, nur Analyse)")
 app.add_typer(ai_app, name="ai", rich_help_panel="KI & Integration")

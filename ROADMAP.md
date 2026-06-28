@@ -5,6 +5,8 @@ Was erledigt ist, steht im [Changelog](CHANGELOG.md); hier geht es um das, was
 noch kommt. Reihenfolge und Umfang können sich ändern. PentOS ist ein
 Hobby-Projekt, kein Produkt mit Liefertermin.
 
+> English version: [`ROADMAP.en.md`](ROADMAP.en.md)
+
 ## Kürzlich umgesetzt
 
 Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
@@ -18,6 +20,7 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Scan-Diff: einen nmap-Scan gegen den Projektstand vergleichen (`scan diff`)
 - Loot-/Credential-Matching: Loot gegen passende Dienste vorschlagen (`loot match`)
 - Projektweite Folge-Tool-Vorschläge nach Import und via `recommend` ohne Argument
+- Terminal-UI (`pentos tui`): tastaturgesteuertes Lagebild mit Status-Pflege
 
 ## Als Nächstes
 
