@@ -17,6 +17,10 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 ### Entfernt
 - Baseldütsch-README (`README.bl.md`) entfernt; PentOS wird ab jetzt auf Deutsch
   und Englisch gepflegt.
+### Behoben
+- `pentos graph mermaid` und `graph dot` stürzten bei der Ausgabe auf stdout ab,
+  wenn Loot-/Knoten-Labels Klammern enthielten (die Mermaid-Form `[/"…"/]` wurde
+  als Rich-Markup fehlinterpretiert). Die Ausgabe erfolgt jetzt ohne Markup.
 
 ## [2.25.0] – 2026-06-28
 ### Hinzugefügt

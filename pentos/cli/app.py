@@ -925,7 +925,7 @@ def graph_mermaid(out: Optional[Path] = typer.Option(None, "--out", help="Datei 
         out.write_text(text, encoding="utf-8")
         console.print(f"[green]Mermaid geschrieben:[/green] {out}")
     else:
-        console.print(text)
+        console.print(text, markup=False)
 
 
 @graph_app.command("dot")
@@ -937,7 +937,7 @@ def graph_dot(out: Optional[Path] = typer.Option(None, "--out", help="Datei stat
         console.print(f"[green]DOT geschrieben:[/green] {out}  "
                       f"([dim]Render: dot -Tpng {out} -o graph.png[/dim])")
     else:
-        console.print(text)
+        console.print(text, markup=False)
 
 
 # ── Obsidian ─────────────────────────────────────────────────────────────────

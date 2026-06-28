@@ -17,6 +17,10 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 ### Removed
 - Baseldütsch README (`README.bl.md`) removed; PentOS is now maintained in German
   and English.
+### Fixed
+- `pentos graph mermaid` and `graph dot` crashed when printing to stdout if
+  loot/node labels contained brackets (the Mermaid shape `[/"…"/]` was
+  misinterpreted as Rich markup). Output is now printed without markup.
 
 ## [2.25.0] – 2026-06-28
 ### Added
