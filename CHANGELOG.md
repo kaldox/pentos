@@ -7,6 +7,15 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.27.1] – 2026-07-13
+### Behoben
+- **Report-Export unter Python 3.10/3.11:** Ein verschachtelter f-string mit
+  maskierten Anführungszeichen in `export.py` ist erst ab Python 3.12 gültig
+  und führte auf 3.10/3.11 zu einem `SyntaxError` – das gesamte `export`-Modul
+  ließ sich nicht importieren (HTML-/PDF-Report defekt). Der Ausdruck wird nun
+  vorab in einer Variablen aufgebaut; damit ist der Export wieder mit der in
+  `pyproject.toml` deklarierten Mindestversion (3.10) lauffähig.
+
 ## [2.27.0] – 2026-06-28
 ### Hinzugefügt
 - **KI-Ausgabesprache:** wählbar (Deutsch, English, Español, Français, 中文, हिन्दी,

@@ -7,6 +7,14 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.27.1] – 2026-07-13
+### Fixed
+- **Report export on Python 3.10/3.11:** a nested f-string with escaped quotes in
+  `export.py` is only valid from Python 3.12 onwards and raised a `SyntaxError` on
+  3.10/3.11 – the whole `export` module failed to import (HTML/PDF report broken).
+  The expression is now built into a variable beforehand, so export works again
+  with the minimum version declared in `pyproject.toml` (3.10).
+
 ## [2.27.0] – 2026-06-28
 ### Added
 - **AI output language:** selectable (Deutsch, English, Español, Français, 中文, हिन्दी,
