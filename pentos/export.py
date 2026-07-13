@@ -120,6 +120,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
             cvss = f' · CVSS {f.cvss_score}{vec}'
         remediation = (f'<p class="remediation"><strong>Remediation:</strong> '
                        f'{e(f.remediation)}</p>') if f.remediation else ""
+        loc_html = f' <span class="muted">— {e(loc)}</span>' if loc else ""
         # Evidence einbetten: Bilder inline (base64), übrige als Liste
         ev_html = ""
         evs = d["evidence_by_finding"].get(f.id, [])
@@ -143,7 +144,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
         rows_find.append(
             f'<div class="finding">'
             f'<div class="fhead"><span class="badge" style="background:{_SEV_COLOR[f.severity]}">{e(f.severity.value)}</span>'
-            f'<strong>{e(f.title)}</strong>{f" <span class=\"muted\">— {e(loc)}</span>" if loc else ""}</div>'
+            f'<strong>{e(f.title)}</strong>{loc_html}</div>'
             f'<div class="meta">Kategorie: {e(f.category.value)} · Status: {e(f.status.value)}{cvss} · '
             f'{"automatisch" if f.auto else "manuell"} erkannt</div>'
             f'<p>{e(f.description or "Keine Beschreibung.")}</p>'
