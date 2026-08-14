@@ -127,6 +127,7 @@ def ingest(repo: Repository, spec: ToolSpec, target: str, result: RunResult,
         else:
             hits = _parse_feroxbuster(text)
         summary["notes"] += _paths_note(repo, spec, target, host_id, hits)
+        summary["findings"] += _paths_findings(repo, spec, target, host_id, hits)
         return summary
 
     # ── nxc / netexec: Credentials + Pwn3d ──────────────────────────────────
@@ -287,6 +288,80 @@ def _paths_note(repo: Repository, spec: ToolSpec, target: str,
     repo.add_note(Note(title=f"{spec.name} · {target} — {len(hits)} Pfade",
                        body=body, category=spec.category, host_id=host_id))
     return 1
+
+
+# Nur Pfade mit einem dieser Status-Codes gelten als "erreichbar" (403 zeigt
+# Existenz trotz Sperre, 401 zeigt Existenz hinter Auth).
+_REACHABLE_STATUS = {200, 204, 301, 302, 401, 403}
+
+# (Muster, Titel, Severity, Kategorie, Beschreibung) – erster Treffer pro Pfad zählt.
+_SENSITIVE_PATH_PATTERNS: list[tuple[re.Pattern, str, "Severity", "FindingCategory", str]] = [
+    (re.compile(r"id_rsa$|id_ed25519$|id_dsa$", re.IGNORECASE),
+     "Privater SSH-Schlüssel erreichbar", Severity.CRITICAL, FindingCategory.CREDENTIAL,
+     "Eine Datei, die wie ein privater SSH-Schlüssel benannt ist, ist über HTTP erreichbar."),
+    (re.compile(r"\.git(/|$)", re.IGNORECASE),
+     "Exponiertes .git-Verzeichnis", Severity.HIGH, FindingCategory.EXPOSURE,
+     "Das .git-Verzeichnis ist erreichbar. Repository-Historie (ggf. Quellcode/Secrets) "
+     "kann daraus rekonstruiert werden (z.B. mit git-dumper)."),
+    (re.compile(r"(^|/)\.svn(/|$)|(^|/)\.hg(/|$)", re.IGNORECASE),
+     "Exponiertes VCS-Verzeichnis", Severity.HIGH, FindingCategory.EXPOSURE,
+     "Ein Versionskontroll-Verzeichnis (SVN/Mercurial) ist erreichbar."),
+    (re.compile(r"\.env$", re.IGNORECASE),
+     "Exponierte .env-Datei", Severity.HIGH, FindingCategory.CREDENTIAL,
+     "Eine .env-Datei ist erreichbar. Enthält häufig Zugangsdaten/API-Keys."),
+    (re.compile(r"\.htpasswd$", re.IGNORECASE),
+     "Exponierte .htpasswd", Severity.HIGH, FindingCategory.CREDENTIAL,
+     ".htpasswd ist erreichbar und kann Passwort-Hashes offenlegen."),
+    (re.compile(r"\.(sql|sqlite3?|bak|backup|old|zip|tar\.gz|tgz|swp)$", re.IGNORECASE),
+     "Backup-/Altdatei erreichbar", Severity.MEDIUM, FindingCategory.INFO_DISCLOSURE,
+     "Eine Backup-/Altdatei ist erreichbar und kann Quellcode, Konfiguration oder "
+     "Datenbankinhalte offenlegen."),
+    (re.compile(r"web\.config$", re.IGNORECASE),
+     "Exponierte web.config", Severity.MEDIUM, FindingCategory.INFO_DISCLOSURE,
+     "web.config ist erreichbar und kann Konfigurationsdetails offenlegen."),
+    (re.compile(r"(^|/)(phpmyadmin|adminer)(/|$)", re.IGNORECASE),
+     "Datenbank-Admin-Interface erreichbar", Severity.MEDIUM, FindingCategory.EXPOSURE,
+     "Ein Datenbank-Verwaltungsinterface (phpMyAdmin/Adminer) ist erreichbar."),
+    (re.compile(r"(^|/)(admin|administrator|manager/html|wp-admin)(/|$)", re.IGNORECASE),
+     "Admin-Interface erreichbar", Severity.LOW, FindingCategory.EXPOSURE,
+     "Ein Admin-/Management-Interface ist erreichbar."),
+]
+
+
+def _paths_findings(repo: Repository, spec: ToolSpec, target: str,
+                    host_id: Optional[int], hits: list[tuple]) -> int:
+    """Erkennt sicherheitsrelevante Pfade (VCS, Secrets, Backups, Admin-Interfaces)
+    aus Web-Pfad-Enumeration und legt dafür Findings an – strukturiert statt nur
+    als Rohnotiz (Vorbild: nuclei-/enum4linux-ng-Parser)."""
+    matched: dict[str, list[str]] = {}
+    for url, status, _size in hits:
+        if status not in _REACHABLE_STATUS:
+            continue
+        for pattern, title, _sev, _cat, _desc in _SENSITIVE_PATH_PATTERNS:
+            if pattern.search(url):
+                matched.setdefault(title, []).append(url)
+                break  # erstes passendes Muster pro Pfad reicht
+
+    find_n = 0
+    for _pattern, title, sev, cat, desc in _SENSITIVE_PATH_PATTERNS:
+        urls = matched.get(title)
+        if not urls:
+            continue
+        full_title = f"{title} ({target})"
+        if repo.finding_exists(full_title, host_id=host_id):
+            continue
+        shown = urls[:20]
+        urls_txt = "\n".join(f"- {u}" for u in shown)
+        if len(urls) > len(shown):
+            urls_txt += f"\n... (+{len(urls) - len(shown)} weitere, siehe Notiz)"
+        repo.add_finding(Finding(
+            title=full_title, severity=sev, category=cat,
+            status=FindingStatus.UNVERIFIED,
+            description=f"{desc}\n\nGefundene Pfade ({len(urls)}):\n{urls_txt}",
+            host_id=host_id, auto=True,
+        ))
+        find_n += 1
+    return find_n
 
 
 # ── nxc / netexec: Credentials + Pwn3d ────────────────────────────────────────

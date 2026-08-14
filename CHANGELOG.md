@@ -7,6 +7,19 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.28.0] – 2026-08-14
+### Hinzugefügt
+- **Strukturierter Web-Pfad-Parser** (`gobuster`/`ffuf`/`feroxbuster`): Treffer
+  wurden bisher nur als Rohnotiz abgelegt. Jetzt erkennt PentOS
+  sicherheitsrelevante Pfade – exponierte `.git`/`.svn`/`.hg`-Verzeichnisse,
+  `.env`/`.htpasswd`/private SSH-Schlüssel, Backup-/Altdateien
+  (`.sql`/`.bak`/`.zip`/…), `web.config` sowie Admin-/DB-Verwaltungsinterfaces
+  (phpMyAdmin, Adminer, wp-admin, …) – und legt dafür automatisch Findings mit
+  passender Severity/Kategorie an (nur bei erreichbaren Status-Codes
+  200/204/301/302/401/403; Duplikate werden übersprungen). Vorbild: die
+  bestehenden nuclei-/enum4linux-ng-Parser. Neuer Test
+  `tests/test_gobuster_parser.py`.
+
 ## [2.27.2] – 2026-08-14
 ### Behoben
 - **MCP-Server mit aktuellem SDK:** `mcp.server.fastmcp.FastMCP` wurde im
