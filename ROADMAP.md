@@ -25,13 +25,17 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Dashboard-Detailansicht pro Finding mit Status-Zeitleiste
 - Attack-Path-Graph visuell im Web-Dashboard (Reiter „Angriffspfad")
 - KI-Ausbau: Ausgabesprache, Auto-Modellwahl/Fallback, Persona, Streaming, Temperatur/Verbosity, Vision (analyze-image) und KI-Panel im Dashboard
+- Strukturierte Web-Parser für gobuster/ffuf/feroxbuster: sicherheitsrelevante
+  Pfade (VCS-Verzeichnisse, Secrets, Backups, Admin-Interfaces) werden
+  automatisch zu Findings statt nur als Rohnotiz abgelegt
 
 ## Als Nächstes
 
 Konkret geplant, baut auf Bestehendem auf:
 
-- **Strukturierte Web-Parser** (gobuster/ffuf/feroxbuster/nikto), damit deren
-  Ausgabe automatisch zu Findings/Pfaden wird statt nur als Capture.
+- **Strukturierter nikto-Parser**, damit dessen Treffer ebenfalls automatisch
+  zu Findings werden statt nur als Capture (Vorbild: der neue gobuster-/ffuf-/
+  feroxbuster-Parser).
 - **Detailansicht pro Host** im Dashboard, analog zur Finding-Detailansicht, mit
   Verlinkung zu Diensten, Findings und Notizen.
 - **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).

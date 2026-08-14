@@ -25,13 +25,16 @@ For context, what was added most recently (details in the changelog):
 - Dashboard detail view per finding with a status timeline
 - Attack-path graph rendered visually in the web dashboard ("Attack path" tab)
 - AI overhaul: output language, auto model-per-task/fallback, persona, streaming, temperature/verbosity, vision (analyze-image) and an AI panel in the dashboard
+- Structured web parsers for gobuster/ffuf/feroxbuster: security-relevant paths
+  (VCS directories, secrets, backups, admin interfaces) automatically become
+  findings instead of just a raw note
 
 ## Next
 
 Concretely planned, building on what exists:
 
-- **Structured web parsers** (gobuster/ffuf/feroxbuster/nikto), so their output
-  automatically becomes findings/paths instead of just a capture.
+- **Structured nikto parser**, so its hits also automatically become findings
+  instead of just a capture (following the new gobuster/ffuf/feroxbuster parser).
 - **Per-host detail view** in the dashboard, analogous to the finding detail view,
   with links to services, findings and notes.
 - **Status history in the HTML/PDF report too** (currently in the Markdown report).

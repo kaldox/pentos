@@ -2,7 +2,7 @@
 
 **🇩🇪 Deutsch** · [🇬🇧 English](README.en.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.27.2-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.28.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -30,7 +30,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | Geführte Recon-/Enum-Kette (`sweep`, regelbasiert, Rückfrage je Schritt) | ✅ |
 | Opt-in Runner-Layer (23 Tools, kein Shell-Eval, Scope-Guard, Timeout) | ✅ |
 | Methodik-/Playbook-Bibliothek (Web/AD/Linux-/Windows-PrivEsc) | ✅ |
-| Automatische Findings (regelbasiert) + strukturierte Parser (enum4linux-ng, nuclei) | ✅ |
+| Automatische Findings (regelbasiert) + strukturierte Parser (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster) | ✅ |
 | Attack-Path-Graph (Mermaid + Graphviz-DOT) | ✅ |
 | Obsidian-Integration (Vault mit `[[Wikilinks]]`) | ✅ |
 | Loot-Management (Credentials/Hashes/Tokens/…) | ✅ |
@@ -53,7 +53,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 
 **Roadmap (offen):**
 - KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
-- Strukturierte Web-Parser (gobuster/ffuf/feroxbuster/nikto) zu Findings
+- Strukturierter nikto-Parser zu Findings (gobuster/ffuf/feroxbuster bereits umgesetzt)
 - Reicheres Screenshot-Handling (z.B. direkte Aufnahme/Annotation)
 
 Die vollständige Roadmap mit Begründungen und bewussten Nicht-Zielen steht in [`ROADMAP.md`](ROADMAP.md).
@@ -321,4 +321,4 @@ pentos tui                 # oder: pentos tui --project meinprojekt
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.27.0**.
+Aktuelle Version: **2.28.0**.

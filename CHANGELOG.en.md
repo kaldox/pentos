@@ -7,6 +7,18 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.28.0] – 2026-08-14
+### Added
+- **Structured web-path parser** (`gobuster`/`ffuf`/`feroxbuster`): hits used
+  to be stored only as a raw note. PentOS now recognizes security-relevant
+  paths – exposed `.git`/`.svn`/`.hg` directories, `.env`/`.htpasswd`/private
+  SSH keys, backup/legacy files (`.sql`/`.bak`/`.zip`/…), `web.config`, and
+  admin/DB management interfaces (phpMyAdmin, Adminer, wp-admin, …) – and
+  automatically creates findings with matching severity/category for them
+  (only for reachable status codes 200/204/301/302/401/403; duplicates are
+  skipped). Modeled after the existing nuclei/enum4linux-ng parsers. New test
+  `tests/test_gobuster_parser.py`.
+
 ## [2.27.2] – 2026-08-14
 ### Fixed
 - **MCP server with the current SDK:** `mcp.server.fastmcp.FastMCP` was removed in
