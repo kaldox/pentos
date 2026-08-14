@@ -28,6 +28,7 @@ For context, what was added most recently (details in the changelog):
 - Structured web parsers for gobuster/ffuf/feroxbuster: security-relevant paths
   (VCS directories, secrets, backups, admin interfaces) automatically become
   findings instead of just a raw note
+- Host detail view in the dashboard (drawer with services, findings, notes, loot)
 
 ## Next
 
@@ -35,8 +36,6 @@ Concretely planned, building on what exists:
 
 - **Structured nikto parser**, so its hits also automatically become findings
   instead of just a capture (following the new gobuster/ffuf/feroxbuster parser).
-- **Per-host detail view** in the dashboard, analogous to the finding detail view,
-  with links to services, findings and notes.
 - **Status history in the HTML/PDF report too** (currently in the Markdown report).
 
 ## Later

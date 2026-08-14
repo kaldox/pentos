@@ -135,6 +135,72 @@ def test_status_post_records_note():
     assert any(h["note"] == "Retest ok" for h in d["history"])
 
 
+# ── Host-Detailansicht ────────────────────────────────────────────────────
+def _client_with_host_detail_data():
+    tmp = tempfile.mkdtemp()
+    os.environ["PENTOS_CONFIG"] = os.path.join(tmp, "config.yaml")
+    open(os.environ["PENTOS_CONFIG"], "w").write(
+        f"projects_dir: {tmp}/projects\nlanguage: de\n"
+        'ai: {provider: none, base_url: "", model: "", embed_model: x, api_key_env: X, timeout: 5}\n'
+    )
+    import importlib
+    from pentos import config
+    importlib.reload(config)
+    from pentos import db as db_mod
+    from pentos.repository import Repository
+    from pentos.models import (Host, Service, Finding, Severity, FindingCategory,
+                               FindingStatus, Loot, LootType, Note)
+    config.project_path("Box").mkdir(parents=True, exist_ok=True)
+    db_mod.init_db(config.db_path("Box"))
+    r = Repository(config.db_path("Box"))
+    h1 = r.add_host(Host(address="10.10.10.5", hostname="kenobi", os_guess="Linux", status="up"))
+    h2 = r.add_host(Host(address="10.10.10.6", status="up"))
+    svc = r.add_service(Service(host_id=h1.id, port=80, protocol="tcp", name="http"))
+    # Finding direkt am Host + Finding über den Dienst -> beide müssen im Host-Detail auftauchen.
+    r.add_finding(Finding(title="Host-Finding", severity=Severity.HIGH,
+                          category=FindingCategory.EXPOSURE,
+                          status=FindingStatus.UNVERIFIED, host_id=h1.id))
+    r.add_finding(Finding(title="Service-Finding", severity=Severity.CRITICAL,
+                          category=FindingCategory.VULN,
+                          status=FindingStatus.UNVERIFIED, service_id=svc.id))
+    # Finding an einem anderen Host darf NICHT auftauchen.
+    r.add_finding(Finding(title="Anderer Host", severity=Severity.LOW,
+                          category=FindingCategory.VULN,
+                          status=FindingStatus.UNVERIFIED, host_id=h2.id))
+    r.add_note(Note(title="gobuster-Notiz", body="…", category="web", host_id=h1.id))
+    r.add_note(Note(title="Notiz ohne Host", body="…"))
+    r.add_loot(Loot(type=LootType.CREDENTIAL, label="admin:pw", host_id=h1.id))
+    from pentos.web.server import create_app
+    return TestClient(create_app("Box")), h1.id, h2.id
+
+
+def test_host_detail_includes_direct_and_service_findings():
+    c, h1, _h2 = _client_with_host_detail_data()
+    d = c.get(f"/api/project/Box/host/{h1}").json()
+    assert d["address"] == "10.10.10.5"
+    titles = {f["title"] for f in d["findings"]}
+    assert titles == {"Host-Finding", "Service-Finding"}
+    # Nach Severity sortiert: Critical vor High
+    assert d["findings"][0]["title"] == "Service-Finding"
+    assert d["findings"][0]["service"] == "80/tcp"
+
+
+def test_host_detail_scopes_notes_and_loot_to_host():
+    c, h1, h2 = _client_with_host_detail_data()
+    d1 = c.get(f"/api/project/Box/host/{h1}").json()
+    assert [n["title"] for n in d1["notes"]] == ["gobuster-Notiz"]
+    assert [l["label"] for l in d1["loot"]] == ["admin:pw"]
+    d2 = c.get(f"/api/project/Box/host/{h2}").json()
+    # h2 hat sein eigenes Finding, aber keine Notizen/Loot von h1.
+    assert [f["title"] for f in d2["findings"]] == ["Anderer Host"]
+    assert d2["notes"] == [] and d2["loot"] == []
+
+
+def test_host_detail_404():
+    c, _h1, _h2 = _client_with_host_detail_data()
+    assert c.get("/api/project/Box/host/999").status_code == 404
+
+
 # ── 2.27.0: KI-Endpoints ─────────────────────────────────────────────────
 def test_ai_config_get_defaults():
     c = _client_with_data()

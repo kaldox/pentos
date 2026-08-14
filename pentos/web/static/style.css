@@ -134,7 +134,9 @@ body{
 /* Host-Karten */
 .host-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:14px; overflow:hidden}
 .host-head{display:flex; align-items:center; gap:14px; padding:15px 18px; border-bottom:1px solid var(--line)}
-.host-ip{font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text)}
+.host-ip{font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text);
+  cursor:pointer; border-bottom:1px dotted var(--faint)}
+.host-ip:hover{color:var(--brand); border-bottom-color:var(--brand)}
 .host-meta{color:var(--muted); font-size:12.5px}
 .host-status{margin-left:auto; font-size:11px; color:var(--brand); font-family:var(--mono)}
 .ports{display:flex; flex-wrap:wrap; gap:8px; padding:14px 18px}

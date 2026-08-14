@@ -46,6 +46,7 @@ commands itself**.
 | Reporting: Markdown, **branded HTML & PDF**, didactic learning report | ✅ |
 | **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
 | **Finding detail view + attack-path graph** in the dashboard (SVG, clickable) | ✅ |
+| **Host detail view** in the dashboard (linked services, findings, notes, loot) | ✅ |
 | **Status history / retest tracking** (`finding history`, timeline in the report) | ✅ |
 | **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
 | **Terminal UI** (`pentos tui`: keyboard-driven dashboard, status editing) | ✅ |
