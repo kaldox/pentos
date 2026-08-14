@@ -1,0 +1,135 @@
+"""
+Regressionstest für Rich-Ausgaben auf nicht-UTF-8-Konsolen (Windows).
+
+Hintergrund: `pentos project list` markierte das aktive Projekt mit "●"
+(U+25CF). Läuft stdout unter Windows in einer nicht-UTF-8-Codepage - z.B.
+cp1252 als Konsolen-Default, oder wenn `pentos`/`python -m pentos` als
+Subprozess ohne PYTHONUTF8=1 / PYTHONIOENCODING=utf-8 aufgerufen wird -,
+schreibt Rich roh in den Stream und ein striktes UnicodeEncodeError lässt
+den Befehl abstürzen, statt die Tabelle auszugeben:
+
+    UnicodeEncodeError: 'charmap' codec can't encode character '\\u25cf'
+
+Die Tests hier bilden genau diese Situation nach (ein Rich-Console-Stream
+mit encoding="cp1252", errors="strict") und rufen die betroffenen Befehle
+direkt auf. Vor dem Fix schlägt bereits der erste Test mit dem obigen
+UnicodeEncodeError fehl.
+"""
+from __future__ import annotations
+
+import io
+import os
+import pathlib
+import tempfile
+
+from rich.console import Console
+
+
+def _cp1252_console() -> tuple[Console, io.BytesIO]:
+    """Rich-Console, deren Ausgabestream Zeichen ausserhalb von cp1252 (z.B.
+    ●, →, ✓, ⚠, Emoji) mit einem strikten UnicodeEncodeError quittiert - so
+    wie eine nicht-UTF-8-Windows-Konsole es auch tut."""
+    buf = io.BytesIO()
+    stream = io.TextIOWrapper(buf, encoding="cp1252", errors="strict", newline="")
+    console = Console(file=stream, force_terminal=False, no_color=True, width=120)
+    return console, buf
+
+
+def _project(name: str, active: bool = True):
+    """Legt ein frisches, isoliertes Projekt an (eigene PENTOS_CONFIG) und
+    liefert (app-Modul, Repository) - Muster aus tests/test_cli_fixes.py."""
+    cfg = tempfile.mkdtemp()
+    os.environ["PENTOS_CONFIG"] = os.path.join(cfg, "config.yaml")
+    open(os.environ["PENTOS_CONFIG"], "w").write(
+        f"projects_dir: {cfg}/projects\nlanguage: de\n"
+        'ai: {provider: none, base_url: "", model: "", embed_model: x, api_key_env: X, timeout: 5}\n'
+    )
+    import importlib
+    from pentos import config
+    importlib.reload(config)
+    from pentos import db as db_mod
+    from pentos.repository import Repository
+    config.project_path(name).mkdir(parents=True, exist_ok=True)
+    db_mod.init_db(config.db_path(name))
+    if active:
+        config.set_active_project(name)
+    import importlib as il
+    from pentos.cli import app as app_mod
+    il.reload(app_mod)
+    return app_mod, Repository(config.db_path(name))
+
+
+def test_project_list_survives_non_utf8_console():
+    """Exakter Repro-Fall aus dem Bugreport: `pentos project list` darf auf
+    einer cp1252-Konsole nicht crashen (war: '●'-Marker fürs aktive Projekt)."""
+    app_mod, repo = _project("alpha")
+    repo.close()
+    from pentos import config
+    config.project_path("beta").mkdir(parents=True, exist_ok=True)  # zweites, inaktives Projekt
+
+    console, buf = _cp1252_console()
+    app_mod.console = console
+    app_mod.project_list()  # löste vor dem Fix UnicodeEncodeError aus
+
+    out = buf.getvalue().decode("cp1252")
+    assert "alpha" in out and "beta" in out
+    assert app_mod.SYM_BULLET in out
+    assert app_mod.SYM_BULLET.isascii()
+
+
+def test_dashboard_tools_and_findings_survive_non_utf8_console():
+    """Weitere Befehle, die vormals Unicode-only-Glyphen ausgaben: ●/⚠ im
+    Dashboard-Prioritätspanel, ✓/✗ in der Tools-Tabelle, ✓ in der
+    Findings-Tabelle, Fortschrittsbalken (█/░)."""
+    app_mod, repo = _project("gamma")
+    from pentos.models import Finding, Severity, Host, Task
+    repo.add_host(Host(address="10.0.0.5"))
+    repo.add_finding(Finding(title="Kritischer Fund", severity=Severity.CRITICAL, auto=True))
+    repo.add_task(Task(title="Nachschauen"))
+    repo.close()
+
+    console, buf = _cp1252_console()
+    app_mod.console = console
+    app_mod.dashboard_cmd()
+    app_mod.tools_cmd()
+    app_mod.finding_list()
+
+    out = buf.getvalue().decode("cp1252")
+    assert "Kritischer Fund" in out
+
+
+def test_playbook_show_check_status_survive_non_utf8_console():
+    """playbook show/check/status: vormals ✓/»/○-Marker, (P)/(E)/(M)-Icons
+    (früher Emoji) und Fortschrittsbalken."""
+    app_mod, repo = _project("delta")
+    repo.close()
+
+    console, buf = _cp1252_console()
+    app_mod.console = console
+    app_mod.playbook_show("web", target=None)
+    app_mod.playbook_check("web", "ports", note=None, skip=False)
+    app_mod.playbook_status()
+
+    out = buf.getvalue().decode("cp1252")
+    assert "Web" in out
+
+
+def test_no_non_ascii_status_glyphs_in_console_output_sources():
+    """Statischer Wächter gegen Regressionen: In den console.print()/Table/
+    Panel-Strings von app.py, runners/base.py und tui/app.py dürfen keine
+    Zeichen ausserhalb von cp1252 auftauchen (Kommentare mit Box-Drawing-
+    Trennern wie '# ── Foo ──' sind ausgenommen, die landen nie auf stdout)."""
+    repo_root = pathlib.Path(__file__).resolve().parents[1]
+    offenders: list[str] = []
+    for rel in ("pentos/cli/app.py", "pentos/runners/base.py", "pentos/tui/app.py"):
+        path = repo_root / rel
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            for ch in line:
+                if ord(ch) > 127:
+                    try:
+                        ch.encode("cp1252")
+                    except UnicodeEncodeError:
+                        offenders.append(f"{rel}:{lineno}: {ch!r} in {line.strip()[:80]!r}")
+    assert not offenders, "nicht cp1252-kodierbare Zeichen ausserhalb von Kommentaren:\n" + "\n".join(offenders)

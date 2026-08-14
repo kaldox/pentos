@@ -30,7 +30,9 @@ _SEV_ORDER = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, S
 
 def _bar(value: int, total: int, width: int = 16) -> str:
     filled = int(round((value / total) * width)) if total else 0
-    return "█" * filled + "░" * (width - filled)
+    # ASCII statt Block-Elementen: bleibt auch auf einer nicht-UTF-8-Windows-
+    # Konsole (z.B. cp1252) darstellbar, siehe pentos/cli/app.py.
+    return "#" * filled + "-" * (width - filled)
 
 
 class PentosTUI(App):
@@ -135,9 +137,9 @@ class PentosTUI(App):
         ]
         prio = s.open_priority(8)
         if prio:
-            lines += ["", "[bold red]⚠ Priorität (offene High/Critical)[/bold red]"]
+            lines += ["", "[bold red]! Priorität (offene High/Critical)[/bold red]"]
             for f in prio:
-                lines.append(f"  [{_SEV_STYLE[f.severity]}]●[/] [{f.severity.value}] {f.title} "
+                lines.append(f"  [{_SEV_STYLE[f.severity]}]*[/] [{f.severity.value}] {f.title} "
                              f"[dim]({f.status.value})[/]")
         lines += ["", "[dim]r = aktualisieren · s = Status wechseln (Findings/Tasks) · q = beenden[/dim]"]
         self.query_one("#overview", Static).update("\n".join(lines))
@@ -217,7 +219,7 @@ class PentosTUI(App):
             repo.close()
         self.load()
         t.move_cursor(row=min(row, max(len(self._finding_ids) - 1, 0)))
-        self.notify(f"Finding #{fid} → {new.value}", timeout=2)
+        self.notify(f"Finding #{fid} -> {new.value}", timeout=2)
 
     def _cycle_task(self) -> None:
         t = self.query_one("#t-tasks", DataTable)
@@ -236,7 +238,7 @@ class PentosTUI(App):
             repo.close()
         self.load()
         t.move_cursor(row=min(row, max(len(self._task_ids) - 1, 0)))
-        self.notify(f"Task #{tid} → {new.value}", timeout=2)
+        self.notify(f"Task #{tid} -> {new.value}", timeout=2)
 
 
 def run(project: str) -> None:

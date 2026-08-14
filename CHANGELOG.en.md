@@ -7,6 +7,23 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.28.1] – 2026-08-14
+### Fixed
+- **Crash on non-UTF-8 Windows consoles:** `pentos project list` marked the
+  active project with "●" (U+25CF). When stdout runs under a non-UTF-8
+  codepage (e.g. cp1252, the Windows default – or when `pentos`/
+  `python -m pentos` is invoked as a subprocess without `PYTHONUTF8=1`/
+  `PYTHONIOENCODING=utf-8`), Rich wrote the character raw to the stream and
+  a `UnicodeEncodeError` made the command crash instead of showing the
+  table. Replaced every Unicode-only marker in `pentos/cli/app.py`
+  (●/→/▶/✓/✗/⚠/█/░ plus three emoji icons in the playbook legend) and the
+  equivalent spots in `pentos/runners/base.py` (live spinner, ⏱, ✓) and
+  `pentos/tui/app.py` (●, ⚠, →, █/░) with ASCII substitutes (`*`, `->`,
+  `>>`, `x`, `!`, `#`/`-`, …). New test `tests/test_cli_encoding.py`:
+  reproduces the cp1252 console directly (failed with the same
+  `UnicodeEncodeError` as the bug report before the fix) plus a static
+  guard against future non-ASCII markers in the three files.
+
 ## [2.28.0] – 2026-08-14
 ### Added
 - **Structured web-path parser** (`gobuster`/`ffuf`/`feroxbuster`): hits used
