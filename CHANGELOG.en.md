@@ -7,6 +7,16 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.28.0] – 2026-08-14
+### Added
+- **Host detail view in the web dashboard:** clicking a host address under
+  "Hosts & Services" opens a drawer (following the existing finding detail
+  view) with all its services, linked findings (directly on the host as well
+  as via its services), notes and loot. New API endpoint
+  `GET /api/project/{name}/host/{hid}` in `pentos/web/server.py`; findings
+  inside the drawer are themselves clickable and open the full finding
+  detail view. Three new tests in `tests/test_web_dashboard.py`.
+
 ## [2.27.2] – 2026-08-14
 ### Fixed
 - **MCP server with the current SDK:** `mcp.server.fastmcp.FastMCP` was removed in

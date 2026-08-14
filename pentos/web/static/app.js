@@ -239,13 +239,14 @@ async function renderHosts(c) {
       || `<div class="ps" style="color:var(--muted);padding:4px 4px">keine Dienste erfasst</div>`;
     return `<div class="host-card">
       <div class="host-head">
-        <span class="host-ip">${esc(h.address)}</span>
+        <a class="host-ip h-link" data-id="${h.id}">${esc(h.address)}</a>
         <span class="host-meta">${esc(h.hostname || "")} ${h.os_guess ? "· " + esc(h.os_guess) : ""}</span>
         <span class="host-status">${esc(h.status || "")}</span>
       </div>
       <div class="ports">${ports}</div>
     </div>`;
   }).join("");
+  c.querySelectorAll(".h-link").forEach((a) => { a.onclick = () => openHostDetail(+a.dataset.id); });
 }
 
 // ── Loot ───────────────────────────────────────────────────────────────
@@ -368,7 +369,58 @@ async function openFindingDetail(fid) {
 function closeDrawer() {
   $("#drawer").hidden = true;
   document.onkeydown = null;
-  if (state.view === "findings") render();   // Tabelle ggf. mit neuem Status
+  if (state.view === "findings" || state.view === "hosts") render();
+}
+
+// ── Host-Detail (Drawer mit Diensten, Findings, Notizen, Loot) ─────────
+async function openHostDetail(hid) {
+  const drawer = $("#drawer"), panel = $("#drawer-panel");
+  drawer.hidden = false;
+  panel.innerHTML = `<div class="loading">Lade …</div>`;
+  $("#drawer-back").onclick = closeDrawer;
+  document.onkeydown = (e) => { if (e.key === "Escape") closeDrawer(); };
+  let d;
+  try {
+    d = await api(`/api/project/${encodeURIComponent(state.project)}/host/${hid}`);
+  } catch (e) { panel.innerHTML = emptyState("Fehler", esc(e.message)); return; }
+
+  const services = (d.services || []).map((s) => `
+    <div class="port"><span class="pn">${s.port}/${esc(s.protocol)}</span>
+    <span class="ps">${esc(s.name || "")} ${esc(s.product || "")} ${esc(s.version || "")}</span></div>`
+  ).join("") || `<div class="fd" style="color:var(--muted)">Keine Dienste erfasst.</div>`;
+
+  const findings = (d.findings || []).map((f) => `
+    <div class="ev-row"><span class="badge sev-${f.severity.toLowerCase()}">${esc(f.severity)}</span>
+    <a class="f-link" data-id="${f.id}">${esc(f.title)}</a>
+    ${f.service ? `<span class="mono" style="color:var(--muted)"> · ${esc(f.service)}</span>` : ""}</div>`
+  ).join("") || `<div class="fd" style="color:var(--muted)">Keine Findings.</div>`;
+
+  const notes = (d.notes || []).map((n) => `
+    <div class="ev-row">${esc(n.title)}${n.category ? ` <span style="color:var(--muted)">· ${esc(n.category)}</span>` : ""}</div>`
+  ).join("") || `<div class="fd" style="color:var(--muted)">Keine Notizen.</div>`;
+
+  const loot = (d.loot || []).map((l) => `
+    <div class="ev-row"><span class="badge" style="color:var(--brand);background:rgba(45,212,191,.1)">${esc(l.type)}</span> ${esc(l.label)}</div>`
+  ).join("");
+
+  panel.innerHTML = `
+    <div class="dr-head">
+      <span class="badge">${esc(d.status || "")}</span>
+      <button class="dr-close" id="dr-x">✕</button>
+    </div>
+    <h2 class="dr-title mono">${esc(d.address)}</h2>
+    <div class="dr-meta">${esc(d.hostname || "")}${d.os_guess ? ` · ${esc(d.os_guess)}` : ""}</div>
+    ${d.notes_text ? `<p class="dr-desc">${esc(d.notes_text)}</p>` : ""}
+
+    <div class="dr-section"><h3>Dienste (${(d.services || []).length})</h3><div class="ports">${services}</div></div>
+    <div class="dr-section"><h3>Findings (${(d.findings || []).length})</h3>${findings}</div>
+    <div class="dr-section"><h3>Notizen (${(d.notes || []).length})</h3>${notes}</div>
+    ${(d.loot || []).length ? `<div class="dr-section"><h3>Loot (${d.loot.length})</h3>${loot}</div>` : ""}`;
+
+  $("#dr-x").onclick = closeDrawer;
+  panel.querySelectorAll(".f-link").forEach((a) => {
+    a.onclick = () => openFindingDetail(+a.dataset.id);
+  });
 }
 
 // ── Angriffspfad (SVG, drei Spalten: Host -> Dienst -> Finding) ─────────
