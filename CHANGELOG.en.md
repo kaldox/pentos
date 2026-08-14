@@ -23,6 +23,22 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
   without `database/pentos.db` as invalid. Note: evidence files outside the
   project folder are not included. 14 new tests in `tests/test_archive.py`
   (module and CLI level).
+- **Command palette (Ctrl+K) in the web dashboard:** global fuzzy search over
+  the active project's hosts, findings and notes plus quick actions
+  (currently "add a new note"), the way Linear/Vercel/Raycast do it — the
+  web counterpart to the already keyboard-driven TUI. Open with
+  `Ctrl+K`/`Cmd+K` or by clicking the new "Jump to …" button in the topbar;
+  navigate with arrow keys, select with Enter, close with Escape or a click
+  outside. Results cover views (overview/findings/hosts/…), findings (jumps
+  to the finding detail view), hosts (jumps to the host detail view) and
+  notes; data is reloaded fresh every time it opens. Frontend-only
+  (`pentos/web/static/{index.html,app.js,style.css}`), no new backend
+  endpoints — reuses the existing `findings`/`hosts`/`notes` routes.
+  Functionally verified against a real browser (fuzzy search across every
+  entry type, keyboard navigation, all three open/close paths, no console
+  errors); since the project has no JS test runner, the new test
+  `test_command_palette_markup_and_wiring_served` at least checks that the
+  markup and core functions are actually served.
 
 ## [2.28.0] – 2026-08-14
 ### Added

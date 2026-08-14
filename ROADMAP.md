@@ -31,6 +31,8 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Host-Detailansicht im Dashboard (Drawer mit Diensten, Findings, Notizen, Loot)
 - Projekt-Export/-Import (`project export`/`project import`): kompletter
   Workspace als eine ZIP-Datei, zum Sichern, Umziehen oder Teilen
+- Command Palette (Strg+K) im Web-Dashboard: globale Fuzzy-Suche über
+  Hosts/Findings/Notizen plus Schnellaktionen
 
 ## Als Nächstes
 
@@ -40,10 +42,6 @@ Konkret geplant, baut auf Bestehendem auf:
   zu Findings werden statt nur als Capture (Vorbild: der neue gobuster-/ffuf-/
   feroxbuster-Parser).
 - **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).
-- **Command Palette (Strg+K) im Web-Dashboard**: globale Fuzzy-Suche über
-  Hosts/Findings/Notizen plus Schnellaktionen (Status setzen, Notiz anlegen),
-  wie bei Linear/Vercel/Raycast üblich. Passt zur bereits tastaturorientierten
-  TUI – das wäre das Pendant fürs Web.
 - **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): alle drei können nativ
   JSON ausgeben, das macht die Parser robuster als das gobuster-Textformat.
   `httpx` liefert Tech-Detection direkt mit, `naabu` ist eine sehr schnelle

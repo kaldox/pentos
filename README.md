@@ -46,6 +46,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
 | **Finding-Detailansicht + Angriffspfad-Graph** im Dashboard (SVG, anklickbar) | ✅ |
 | **Host-Detailansicht** im Dashboard (Dienste, Findings, Notizen, Loot verlinkt) | ✅ |
+| **Command Palette (Strg+K)** im Dashboard: Fuzzy-Suche über Hosts/Findings/Notizen + Schnellaktionen | ✅ |
 | **Status-Historie / Retest-Tracking** (`finding history`, Zeitleiste im Report) | ✅ |
 | **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
 | **Terminal-UI** (`pentos tui`: tastaturgesteuertes Lagebild, Status-Pflege) | ✅ |
@@ -56,6 +57,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 **Roadmap (offen):**
 - KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
 - Strukturierter nikto-Parser zu Findings (gobuster/ffuf/feroxbuster bereits umgesetzt)
+- ProjectDiscovery-Parser (httpx/naabu/dnsx) und EPSS-Anreicherung für Findings
 - Reicheres Screenshot-Handling (z.B. direkte Aufnahme/Annotation)
 
 Die vollständige Roadmap mit Begründungen und bewussten Nicht-Zielen steht in [`ROADMAP.md`](ROADMAP.md).

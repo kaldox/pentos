@@ -67,9 +67,18 @@ body{
   background:var(--surface); color:var(--text); border:1px solid var(--line);
   border-radius:8px; padding:7px 12px; font-family:var(--mono); font-size:13px; cursor:pointer;
 }
-.topbar-meta{color:var(--muted); font-size:13px; display:flex; gap:10px; align-items:center}
+.topbar-meta{color:var(--muted); font-size:13px; display:flex; gap:10px; align-items:center; margin-right:auto}
 .topbar-meta .sep{color:var(--faint)}
 .mono{font-family:var(--mono)}
+
+.kbd{background:var(--ink); border:1px solid var(--line); color:var(--muted);
+  border-radius:5px; padding:1px 6px; font-family:var(--mono); font-size:10.5px; letter-spacing:.03em}
+.palette-trigger{
+  display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--muted);
+  border:1px solid var(--line); border-radius:8px; padding:7px 10px 7px 12px; cursor:pointer;
+  font-family:inherit; font-size:12.5px; transition:border-color .15s,color .15s;
+}
+.palette-trigger:hover{color:var(--text); border-color:var(--brand)}
 
 .content{padding:28px; overflow:auto}
 .loading{color:var(--muted); padding:40px; text-align:center; font-family:var(--mono)}
@@ -222,6 +231,39 @@ body{
 .ev-row{padding:5px 0;font-size:13px;border-bottom:1px solid var(--line)}
 .f-link{color:var(--text);cursor:pointer;border-bottom:1px dotted var(--faint)}
 .f-link:hover{color:var(--brand);border-bottom-color:var(--brand)}
+
+/* ── Befehlspalette (Strg+K) ───────────────────────────────────────────── */
+.palette{position:fixed;inset:0;z-index:60}
+.palette-back{position:absolute;inset:0;background:rgba(5,9,18,.6);backdrop-filter:blur(3px)}
+.palette-box{
+  position:relative;max-width:600px;width:92vw;margin:12vh auto 0;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:0 24px 70px rgba(0,0,0,.5);overflow:hidden;animation:paldrop .14s ease;
+}
+@keyframes paldrop{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+.palette-input-wrap{
+  display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);
+}
+.palette-ic{color:var(--brand);font-size:15px}
+.palette-input{
+  flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:15px;
+}
+.palette-input::placeholder{color:var(--faint)}
+.palette-list{max-height:52vh;overflow-y:auto;padding:8px}
+.pal-group{color:var(--faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;
+  padding:10px 12px 4px}
+.pal-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:8px;cursor:pointer;
+}
+.pal-item.sel{background:var(--surface-2)}
+.pal-item .pal-ic{width:18px;text-align:center;color:var(--faint);font-size:14px;flex:none}
+.pal-item.sel .pal-ic{color:var(--brand)}
+.pal-item .pal-main{flex:1;min-width:0}
+.pal-item .pal-label{color:var(--text);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-item .pal-sub{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-item .pal-enter{color:var(--faint);font-size:10.5px;opacity:0;transition:opacity .1s}
+.pal-item.sel .pal-enter{opacity:1}
+.pal-empty{color:var(--muted);text-align:center;padding:28px;font-size:13px}
 
 /* ── Angriffspfad-Graph ────────────────────────────────────────────────── */
 .ap-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--text);margin-bottom:10px}

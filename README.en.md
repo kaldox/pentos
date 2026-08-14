@@ -47,6 +47,7 @@ commands itself**.
 | **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
 | **Finding detail view + attack-path graph** in the dashboard (SVG, clickable) | ✅ |
 | **Host detail view** in the dashboard (linked services, findings, notes, loot) | ✅ |
+| **Command palette (Ctrl+K)** in the dashboard: fuzzy search over hosts/findings/notes + quick actions | ✅ |
 | **Status history / retest tracking** (`finding history`, timeline in the report) | ✅ |
 | **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
 | **Terminal UI** (`pentos tui`: keyboard-driven dashboard, status editing) | ✅ |
@@ -57,6 +58,7 @@ commands itself**.
 **Roadmap (open):**
 - AI flashcards & note summaries (from your own data only, no hallucination)
 - Structured nikto parser into findings (gobuster/ffuf/feroxbuster already shipped)
+- ProjectDiscovery parsers (httpx/naabu/dnsx) and EPSS enrichment for findings
 - Richer screenshot handling (e.g. direct capture/annotation)
 
 The full roadmap, with rationale and deliberate non-goals, lives in [`ROADMAP.en.md`](ROADMAP.en.md).

@@ -31,6 +31,8 @@ For context, what was added most recently (details in the changelog):
 - Host detail view in the dashboard (drawer with services, findings, notes, loot)
 - Project export/import (`project export`/`project import`): whole workspace
   as a single ZIP file, for backup, migration or sharing
+- Command palette (Ctrl+K) in the web dashboard: global fuzzy search over
+  hosts/findings/notes plus quick actions
 
 ## Next
 
@@ -39,10 +41,6 @@ Concretely planned, building on what exists:
 - **Structured nikto parser**, so its hits also automatically become findings
   instead of just a capture (following the new gobuster/ffuf/feroxbuster parser).
 - **Status history in the HTML/PDF report too** (currently in the Markdown report).
-- **Command palette (Ctrl+K) in the web dashboard**: global fuzzy search over
-  hosts/findings/notes plus quick actions (set status, add note), the way
-  Linear/Vercel/Raycast do it. Matches the already keyboard-driven TUI – this
-  would be its counterpart on the web.
 - **ProjectDiscovery parsers** (`httpx`/`naabu`/`dnsx`): all three can output
   native JSON, which makes for more robust parsers than gobuster's text
   format. `httpx` includes tech detection, `naabu` is very fast port
