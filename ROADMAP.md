@@ -29,6 +29,8 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   Pfade (VCS-Verzeichnisse, Secrets, Backups, Admin-Interfaces) werden
   automatisch zu Findings statt nur als Rohnotiz abgelegt
 - Host-Detailansicht im Dashboard (Drawer mit Diensten, Findings, Notizen, Loot)
+- Projekt-Export/-Import (`project export`/`project import`): kompletter
+  Workspace als eine ZIP-Datei, zum Sichern, Umziehen oder Teilen
 
 ## Als Nächstes
 
@@ -61,8 +63,6 @@ Größere Brocken, die einen frischen Kopf verdienen:
 - **Reicheres Screenshot-Handling**, etwa automatisierte Screenshots über
   `gowitness` (Headless-Chrome-Screenshot-Tool, passt ins Runner/Parser-Muster)
   statt nur manuell angehängter Dateien.
-- **Projekt-Export und -Import** als eine Datei, zum Sichern, Umziehen oder
-  Teilen eines kompletten Workspace.
 - **gitleaks-Integration**: Secret-Scanning als eigene Findings-Quelle –
   thematischer Anschluss an den `.git`-Exposure-Detector aus 2.28.0: wird ein
   offenes `.git` gefunden, `gitleaks` gegen einen Dump vorschlagen und dessen

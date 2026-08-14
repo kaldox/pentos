@@ -15,6 +15,8 @@ identical in every language version.
 pentos project new <name>            # create a project workspace (becomes active)
 pentos project list                  # all projects
 pentos project use <name>            # switch the active project
+pentos project export [name]         # back up the whole workspace as one ZIP file
+pentos project import <file.zip>     # restore an export as a project (--name, --force)
 pentos scope add 10.10.10.0/24       # allowed target (CIDR or hostname)
 pentos scope list                    # show scope
 pentos host list                     # hosts

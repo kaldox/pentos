@@ -29,6 +29,8 @@ For context, what was added most recently (details in the changelog):
   (VCS directories, secrets, backups, admin interfaces) automatically become
   findings instead of just a raw note
 - Host detail view in the dashboard (drawer with services, findings, notes, loot)
+- Project export/import (`project export`/`project import`): whole workspace
+  as a single ZIP file, for backup, migration or sharing
 
 ## Next
 
@@ -59,8 +61,6 @@ Larger chunks that deserve a fresh head:
 - **Richer screenshot handling**, e.g. automated screenshots via `gowitness`
   (headless-Chrome screenshot tool, fits the runner/parser pattern) instead of
   only manually attached files.
-- **Project export and import** as a single file, for backup, migration or
-  sharing a complete workspace.
 - **gitleaks integration**: secret scanning as its own findings source –
   a thematic follow-up to the `.git` exposure detector from 2.28.0: when an
   open `.git` is found, suggest running `gitleaks` against a dump and turn its

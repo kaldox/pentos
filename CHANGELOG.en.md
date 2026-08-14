@@ -7,6 +7,23 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.29.0] – 2026-08-14
+### Added
+- **Project export/import:** `pentos project export [name]` packs the whole
+  workspace (database + all subfolders: scans/, screenshots/, evidence/,
+  notes/, loot/, findings/, reports/, ...) into a single ZIP file — for
+  backup, moving to another machine, or sharing a project. `pentos project
+  import <file.zip>` restores such a file as a (new) project, with `--name`
+  for a different target name and `--force` to overwrite a project of the
+  same name; `--no-activate` skips setting it active after import. New
+  module `pentos/archive.py`: export writes to a temporary file first
+  (prevents a destination path inside the project folder from packing
+  itself), import checks every entry for zip-slip (paths that escape the
+  destination folder) before extracting anything, and rejects archives
+  without `database/pentos.db` as invalid. Note: evidence files outside the
+  project folder are not included. 14 new tests in `tests/test_archive.py`
+  (module and CLI level).
+
 ## [2.28.0] – 2026-08-14
 ### Added
 - **Structured web-path parser** (`gobuster`/`ffuf`/`feroxbuster`): hits used

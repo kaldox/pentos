@@ -7,6 +7,24 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.29.0] – 2026-08-14
+### Hinzugefügt
+- **Projekt-Export/-Import:** `pentos project export [name]` packt den
+  kompletten Workspace (Datenbank + alle Unterordner: scans/, screenshots/,
+  evidence/, notes/, loot/, findings/, reports/, ...) als eine einzelne
+  ZIP-Datei — zum Sichern, Umziehen auf einen anderen Rechner oder Teilen
+  eines Projekts. `pentos project import <datei.zip>` spielt eine solche
+  Datei wieder als (neues) Projekt ein, mit `--name` für einen abweichenden
+  Zielnamen und `--force` zum Überschreiben eines gleichnamigen Projekts;
+  `--no-activate` verhindert das automatische Aktivsetzen nach dem Import.
+  Neues Modul `pentos/archive.py`: Export schreibt zunächst in eine temporäre
+  Datei (verhindert, dass ein Zielpfad innerhalb des Projektordners sich
+  selbst mit einpackt), Import prüft vor jeder Extraktion auf Zip-Slip
+  (Pfade, die aus dem Zielordner ausbrechen) und lehnt Archive ohne
+  `database/pentos.db` als ungültig ab. Hinweis: Evidence-Dateien ausserhalb
+  des Projektordners werden nicht mitverpackt. 14 neue Tests in
+  `tests/test_archive.py` (Modul- und CLI-Ebene).
+
 ## [2.28.0] – 2026-08-14
 ### Hinzugefügt
 - **Strukturierter Web-Pfad-Parser** (`gobuster`/`ffuf`/`feroxbuster`): Treffer
