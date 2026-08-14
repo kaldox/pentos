@@ -9,6 +9,7 @@ Attack-Path-Graph, Obsidian-Export, Reporting und KI-Mentor.
 from __future__ import annotations
 
 import shlex
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +20,7 @@ from rich.columns import Columns
 from rich.panel import Panel
 from rich.table import Table
 
+from .. import archive as archive_mod
 from .. import config
 from ..ai import AIClient
 from .. import findings_rules, graph as graph_mod, obsidian as obsidian_mod, recommend, report as report_mod
@@ -151,6 +153,61 @@ def project_show():
         f"Aufgaben: {done}/{len(t)} erledigt\n"
         f"Pfad: {config.project_path(name)}",
         title="Projekt"))
+
+
+@project_app.command("export")
+def project_export(
+    name: Optional[str] = typer.Argument(None, help="Projekt (Default: aktives Projekt)"),
+    out: Optional[Path] = typer.Option(
+        None, "--out", "-o",
+        help="Zieldatei (Default: <projekt>/exports/<name>_<zeitstempel>.pentos.zip)"),
+):
+    """Packt den kompletten Projekt-Workspace (Datenbank + alle Ordner) als eine ZIP-Datei.
+
+    Zum Sichern, Umziehen auf einen anderen Rechner oder Teilen eines Projekts.
+    Evidence-Dateien ausserhalb des Projektordners werden nicht mit verpackt –
+    für volle Portabilität Evidence im Workspace ablegen (z.B. unter evidence/).
+    """
+    target_name = name or config.get_active_project()
+    if not target_name:
+        console.print("[red]Kein Projekt angegeben und kein aktives Projekt.[/red]")
+        raise typer.Exit(1)
+    if target_name not in list_projects():
+        console.print(f"[red]Projekt '{target_name}' existiert nicht.[/red]")
+        raise typer.Exit(1)
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    dest = out or (config.project_path(target_name) / "exports" / f"{target_name}_{ts}.pentos.zip")
+    try:
+        path = archive_mod.export_project(target_name, dest)
+    except archive_mod.ArchiveError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+    repo = Repository(config.db_path(target_name))
+    repo.log("Projekt exportiert", str(path))
+    repo.close()
+    size_mb = path.stat().st_size / (1024 * 1024)
+    console.print(f"[green]Projekt exportiert:[/green] {path} ({size_mb:.1f} MB)")
+
+
+@project_app.command("import")
+def project_import(
+    archive: Path = typer.Argument(..., help="Pfad zur .pentos.zip-Exportdatei"),
+    name: Optional[str] = typer.Option(None, "--name", help="Zielname (Default: Name aus dem Archiv)"),
+    force: bool = typer.Option(False, "--force", help="Existierendes Projekt gleichen Namens überschreiben"),
+    activate: bool = typer.Option(True, "--activate/--no-activate", help="Nach dem Import aktiv setzen"),
+):
+    """Importiert einen mit 'project export' erzeugten Workspace als (neues) Projekt."""
+    try:
+        imported = archive_mod.import_project(archive, name=name, force=force)
+    except archive_mod.ArchiveError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+    repo = Repository(config.db_path(imported))
+    repo.log("Projekt importiert", str(archive))
+    repo.close()
+    if activate:
+        config.set_active_project(imported)
+    console.print(f"[green]Projekt importiert:[/green] {imported}" + (" (aktiv)" if activate else ""))
 
 
 # ── Hosts ────────────────────────────────────────────────────────────────────

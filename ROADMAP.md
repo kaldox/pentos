@@ -29,6 +29,8 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   Pfade (VCS-Verzeichnisse, Secrets, Backups, Admin-Interfaces) werden
   automatisch zu Findings statt nur als Rohnotiz abgelegt
 - Host-Detailansicht im Dashboard (Drawer mit Diensten, Findings, Notizen, Loot)
+- Projekt-Export/-Import (`project export`/`project import`): kompletter
+  Workspace als eine ZIP-Datei, zum Sichern, Umziehen oder Teilen
 
 ## Als Nächstes
 
@@ -47,8 +49,6 @@ Größere Brocken, die einen frischen Kopf verdienen:
   Projektdaten, ohne Halluzination. Lernen aus dem, was man selbst gefunden hat.
 - **Reicheres Screenshot-Handling**, etwa direkte Aufnahme oder Annotation statt
   nur Dateien anhängen.
-- **Projekt-Export und -Import** als eine Datei, zum Sichern, Umziehen oder
-  Teilen eines kompletten Workspace.
 - **Mehr strukturierte Parser** für weitere Tools, damit deren Ausgabe
   automatisch zu Hosts, Diensten und Findings wird.
 

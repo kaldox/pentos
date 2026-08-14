@@ -2,7 +2,7 @@
 
 **🇩🇪 Deutsch** · [🇬🇧 English](README.en.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.28.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.29.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -51,6 +51,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | **Terminal-UI** (`pentos tui`: tastaturgesteuertes Lagebild, Status-Pflege) | ✅ |
 | Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp)** | ✅ |
 | **Shell-Completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
+| **Projekt-Export/-Import** (`project export`/`project import`, kompletter Workspace als eine ZIP-Datei) | ✅ |
 
 **Roadmap (offen):**
 - KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
@@ -322,4 +323,4 @@ pentos tui                 # oder: pentos tui --project meinprojekt
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.28.0**.
+Aktuelle Version: **2.29.0**.

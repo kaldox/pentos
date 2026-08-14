@@ -29,6 +29,8 @@ For context, what was added most recently (details in the changelog):
   (VCS directories, secrets, backups, admin interfaces) automatically become
   findings instead of just a raw note
 - Host detail view in the dashboard (drawer with services, findings, notes, loot)
+- Project export/import (`project export`/`project import`): whole workspace
+  as a single ZIP file, for backup, migration or sharing
 
 ## Next
 
@@ -46,8 +48,6 @@ Larger chunks that deserve a fresh head:
   without hallucination. Learning from what you found yourself.
 - **Richer screenshot handling**, e.g. direct capture or annotation instead of
   just attaching files.
-- **Project export and import** as a single file, for backup, migration or
-  sharing a complete workspace.
 - **More structured parsers** for additional tools, so their output automatically
   becomes hosts, services and findings.
 

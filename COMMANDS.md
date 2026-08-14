@@ -15,6 +15,8 @@ Befehle sind in jeder Sprachversion identisch.
 pentos project new <name>            # Projekt-Workspace anlegen (wird aktiv)
 pentos project list                  # alle Projekte
 pentos project use <name>            # aktives Projekt wechseln
+pentos project export [name]         # kompletten Workspace als eine ZIP-Datei sichern
+pentos project import <datei.zip>    # Export wieder als Projekt einspielen (--name, --force)
 pentos scope add 10.10.10.0/24       # erlaubtes Ziel (CIDR oder Hostname)
 pentos scope list                    # Scope anzeigen
 pentos host list                     # Hosts
