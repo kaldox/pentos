@@ -126,7 +126,9 @@ def _run_with_live(cmd, shell: bool, eff_timeout: int, label: str):
     for t in threads:
         t.start()
 
-    spin = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    # ASCII-Spinner: Braille-Frames können auf einer nicht-UTF-8-Windows-Konsole
+    # (z.B. cp1252) einen UnicodeEncodeError auslösen, siehe pentos/cli/app.py.
+    spin = "-\\|/"
     start = time.monotonic()
     timed_out = False
 
@@ -171,9 +173,9 @@ def _run_with_live(cmd, shell: bool, eff_timeout: int, label: str):
     elapsed = time.monotonic() - start
     if timed_out:
         err += f"\n[Timeout nach {eff_timeout}s abgebrochen]"
-        console.print(f"[yellow]⏱  Timeout nach {_format_dur(eff_timeout)} – abgebrochen.[/yellow]")
+        console.print(f"[yellow]! Timeout nach {_format_dur(eff_timeout)} – abgebrochen.[/yellow]")
     else:
-        mark = "[green]✓[/green]" if rc == 0 else f"[yellow]rc={rc}[/yellow]"
+        mark = "[green]x[/green]" if rc == 0 else f"[yellow]rc={rc}[/yellow]"
         console.print(f"{mark}  {label} fertig in {_format_dur(elapsed)}.")
     return rc, out, err, timed_out
 

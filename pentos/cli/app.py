@@ -52,6 +52,23 @@ console = Console()
 app = typer.Typer(help="PentOS – Knowledge-Driven Offensive Security Workspace",
                   no_args_is_help=True, add_completion=True)
 
+# Auf Windows läuft stdout gerne in einer nicht-UTF-8-Codepage (z.B. cp1252 als
+# Konsolen-Default, oder wenn `pentos`/`python -m pentos` als Subprozess ohne
+# PYTHONUTF8=1 / PYTHONIOENCODING=utf-8 aufgerufen wird). Rich schreibt in dem
+# Fall roh in den Stream, und ein UnicodeEncodeError für Zeichen wie ●, →, ✓
+# oder ⚠ lässt den Befehl abstürzen statt die Ausgabe zu zeigen. Deshalb hier
+# durchgängig ASCII-Ersatzzeichen für Marker/Status-Symbole in Rich-Ausgaben.
+SYM_BULLET = "*"     # aktives Projekt / Prioritäts-Bullet
+SYM_ARROW = "->"     # Statuswechsel / Wertübergänge
+SYM_NEXT = ">>"      # "Nächste Schritte"-Panels
+SYM_WARN = "!"       # Warnhinweis
+SYM_OK = "x"         # erledigt / installiert (grün)
+SYM_MISSING = "-"    # fehlt / nicht installiert (rot)
+SYM_SKIP = ">"       # übersprungen (gelb)
+SYM_PENDING = "."    # offen / ausstehend (dim)
+BAR_FULL = "#"       # Fortschrittsbalken: gefüllt
+BAR_EMPTY = "-"      # Fortschrittsbalken: leer
+
 
 # ── Hilfsfunktionen ──────────────────────────────────────────────────────────
 def _active_or_exit() -> str:
@@ -123,7 +140,7 @@ def project_list():
     table.add_column("Aktiv", justify="center")
     table.add_column("Name")
     for p in list_projects():
-        table.add_row("●" if p == active else "", p)
+        table.add_row(SYM_BULLET if p == active else "", p)
     console.print(table)
 
 
@@ -210,7 +227,7 @@ def service_add(host_id: int, port: int,
             repo.add_finding(f); findings += 1
     repo.close()
     console.print(f"[green]Service #{svc.id}:[/green] {svc.port}/{svc.protocol} {svc.name or ''} "
-                  f"→ {created} Aufgaben, {findings} Auto-Findings")
+                  f"{SYM_ARROW} {created} Aufgaben, {findings} Auto-Findings")
 
 
 @service_app.command("list")
@@ -289,7 +306,7 @@ def scan_import_nmap(xml_file: Path = typer.Argument(..., exists=True, readable=
         if missing:
             body += ("\n\n" if ready else "") + f"[dim]Nicht installiert: {', '.join(missing)}[/dim]"
         body += "\n\n[dim]Vorschläge - nichts wird automatisch ausgeführt.[/dim]"
-        console.print(Panel.fit(body, title="▶ Nächste Schritte (Runner)"))
+        console.print(Panel.fit(body, title=f"{SYM_NEXT} Nächste Schritte (Runner)"))
 
 
 @scan_app.command("import-scanner")
@@ -371,7 +388,7 @@ def scan_diff(xml_file: Path = typer.Argument(..., exists=True, readable=True,
         lines += [f"  + {s.host}  {s.port}/{s.protocol}  {s.banner()}" for s in d.new_services]
     if d.changed_services:
         lines.append("[bold yellow]Versionswechsel:[/bold yellow]")
-        lines += [f"  ~ {c.host}  {c.port}/{c.protocol}  {c.before} → {c.after}"
+        lines += [f"  ~ {c.host}  {c.port}/{c.protocol}  {c.before} {SYM_ARROW} {c.after}"
                   for c in d.changed_services]
     if d.missing_hosts:
         lines.append("[bold red]Im neuen Scan nicht gesehen (Hosts):[/bold red]")
@@ -416,7 +433,7 @@ def recommend_cmd(service_id: Optional[int] = typer.Argument(
         if missing:
             body += ("\n\n" if ready else "") + f"[dim]Nicht installiert: {', '.join(missing)}[/dim]"
         body += "\n\n[dim]Vorschläge - nichts wird automatisch ausgeführt.[/dim]"
-        console.print(Panel.fit(body, title="▶ Nächste Schritte (projektweit)"))
+        console.print(Panel.fit(body, title=f"{SYM_NEXT} Nächste Schritte (projektweit)"))
         return
 
     # ── Einzelner Dienst ─────────────────────────────────────────────────────
@@ -438,7 +455,7 @@ def recommend_cmd(service_id: Optional[int] = typer.Argument(
         body = "[green]Bereit (installiert):[/green]\n" + "\n".join(f"  {cmd}" for _t, cmd in ready)
         if missing:
             body += f"\n\n[dim]Nicht installiert: {', '.join(missing)}[/dim]"
-        console.print(Panel.fit(body, title="▶ Ausführen via Runner"))
+        console.print(Panel.fit(body, title=f"{SYM_NEXT} Ausführen via Runner"))
     elif missing:
         console.print(f"[dim]Passende Tools nicht installiert: {', '.join(missing)}[/dim]")
 
@@ -484,14 +501,14 @@ def task_add(title: str, host_id: Optional[int] = typer.Option(None, "--host"),
 def task_start(task_id: int):
     repo, _ = _repo()
     ok = repo.set_task_status(task_id, TaskStatus.IN_PROGRESS); repo.close()
-    console.print(f"[green]#{task_id} → In Bearbeitung[/green]" if ok else "[red]Nicht gefunden.[/red]")
+    console.print(f"[green]#{task_id} {SYM_ARROW} In Bearbeitung[/green]" if ok else "[red]Nicht gefunden.[/red]")
 
 
 @task_app.command("done")
 def task_done(task_id: int):
     repo, _ = _repo()
     ok = repo.set_task_status(task_id, TaskStatus.DONE); repo.close()
-    console.print(f"[green]#{task_id} → Erledigt[/green]" if ok else "[red]Nicht gefunden.[/red]")
+    console.print(f"[green]#{task_id} {SYM_ARROW} Erledigt[/green]" if ok else "[red]Nicht gefunden.[/red]")
 
 
 # ── Findings ─────────────────────────────────────────────────────────────────
@@ -533,7 +550,7 @@ def finding_list():
         table.add_row(str(f.id),
                       f"[{SEV_STYLE[f.severity]}]{f.severity.value}[/]",
                       f.title, f.category.value, f.status.value, host_label,
-                      "✓" if f.auto else "")
+                      SYM_OK if f.auto else "")
     console.print(table)
 
 
@@ -574,7 +591,7 @@ def finding_status(finding_id: int,
     if not st:
         console.print("[red]Unbekannter Status.[/red]"); repo.close(); raise typer.Exit(1)
     ok = repo.set_finding_status(finding_id, st.value, note=note); repo.close()
-    console.print(f"[green]#{finding_id} → {st.value}[/green]" if ok else "[red]Nicht gefunden.[/red]")
+    console.print(f"[green]#{finding_id} {SYM_ARROW} {st.value}[/green]" if ok else "[red]Nicht gefunden.[/red]")
 
 
 @finding_app.command("history")
@@ -587,7 +604,7 @@ def finding_history(finding_id: int):
     hist = repo.finding_history(finding_id); repo.close()
     lines = []
     for h in hist:
-        arrow = f"{h.old_status} → {h.new_status}" if h.old_status else h.new_status
+        arrow = f"{h.old_status} {SYM_ARROW} {h.new_status}" if h.old_status else h.new_status
         note = f"  [dim]{h.note}[/dim]" if h.note else ""
         lines.append(f"[dim]{h.ts}[/dim]  {arrow}{note}")
     body = "\n".join(lines) if lines else "[dim]Keine Historie erfasst.[/dim]"
@@ -832,7 +849,7 @@ def loot_match(loot_id: Optional[int] = typer.Argument(
         for m in ms:
             where = f"{m.host}:{m.port}/{m.protocol}" if m.host != "-" else "(offline)"
             tool = f"  [dim](pentos run {m.tool} …)[/dim]" if m.tool else ""
-            lines.append(f"[bold]{m.method}[/bold] → {where}{tool}\n    {m.hint}")
+            lines.append(f"[bold]{m.method}[/bold] {SYM_ARROW} {where}{tool}\n    {m.hint}")
         console.print(Panel.fit(
             "\n".join(lines),
             title=f"Loot #{l.id} [{l.type.value}] {l.label}"))
@@ -867,7 +884,7 @@ def evidence_add(path: str,
     e = repo.add_evidence(Evidence(path=path, kind=kind, description=description,
                                    finding_id=finding_id, host_id=host_id))
     repo.close()
-    console.print(f"[green]Evidence #{e.id}:[/green] {e.kind} → {e.path}")
+    console.print(f"[green]Evidence #{e.id}:[/green] {e.kind} {SYM_ARROW} {e.path}")
 
 
 @evidence_app.command("list")
@@ -1037,7 +1054,7 @@ _SEV_BAR = {
 
 def _bar(n: int, total: int, color: str, width: int = 16) -> str:
     filled = int(round((n / total) * width)) if total else 0
-    return f"[{color}]" + "█" * filled + "[/]" + "[grey30]" + "░" * (width - filled) + "[/]"
+    return f"[{color}]" + BAR_FULL * filled + "[/]" + "[grey30]" + BAR_EMPTY * (width - filled) + "[/]"
 
 
 @app.command("dashboard", rich_help_panel="Reporting & Übersicht")
@@ -1095,9 +1112,9 @@ def dashboard_cmd():
     crit = [f for f in findings if f.severity in (Severity.CRITICAL, Severity.HIGH)
             and f.status != FindingStatus.CLOSED]
     if crit:
-        lines = [f"[{_SEV_BAR[f.severity]}]●[/] [{f.severity.value}] {f.title}  "
+        lines = [f"[{_SEV_BAR[f.severity]}]{SYM_BULLET}[/] [{f.severity.value}] {f.title}  "
                  f"[grey50]({f.status.value})[/]" for f in crit[:8]]
-        console.print(Panel("\n".join(lines), title="⚠ Priorität", border_style="red"))
+        console.print(Panel("\n".join(lines), title=f"{SYM_WARN} Priorität", border_style="red"))
 
     # Letzte Läufe
     if runs:
@@ -1342,7 +1359,7 @@ def _ensure_language() -> None:
 
 def _stream_to_console(title: str):
     """Gibt einen on_token-Callback zurück, der live in ein Rich-Panel/Plain schreibt."""
-    console.print(f"[dim]── {title} ──[/dim]")
+    console.print(f"[dim]-- {title} --[/dim]")
 
     def on_token(t: str):
         console.print(t, end="", markup=False, highlight=False)
@@ -1606,7 +1623,7 @@ def tools_cmd():
         table.add_column(c)
     for name in runner_registry.names():
         spec = runner_registry.get(name)
-        present = "[green]✓[/green]" if shutil.which(spec.binary) else "[red]✗[/red]"
+        present = f"[green]{SYM_OK}[/green]" if shutil.which(spec.binary) else f"[red]{SYM_MISSING}[/red]"
         table.add_row(spec.name, spec.category, spec.binary, present,
                       "ja" if spec.needs_wordlist else "-", spec.parser or "capture")
     console.print(table)
@@ -1639,7 +1656,7 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
                       f"[cyan]pentos scope add {host}[/cyan]")
         repo.close(); raise typer.Exit(2)
     if shell and not dry_run:
-        console.print("[yellow]⚠ Shell-Modus:[/yellow] Argumente werden durch die Shell "
+        console.print(f"[yellow]{SYM_WARN} Shell-Modus:[/yellow] Argumente werden durch die Shell "
                       "interpretiert (Metazeichen, Quoting). Nur mit vertrauenswürdiger Eingabe verwenden.")
         if not args:
             console.print("[red]--shell benötigt --args \"...\" mit dem vollständigen Tool-Aufruf.[/red]")
@@ -1662,7 +1679,7 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
     repo.close()
     status = "[yellow]Timeout[/yellow]" if result.timed_out else f"rc={result.returncode}"
     console.print(Panel.fit(
-        f"[bold]{spec.name}[/bold] → {target}   ({status}, {result.duration_ms} ms)\n"
+        f"[bold]{spec.name}[/bold] {SYM_ARROW} {target}   ({status}, {result.duration_ms} ms)\n"
         f"Ausgabe: {result.output_path}\n"
         f"Neu: {summary['hosts']} Hosts · {summary['services']} Services · "
         f"{summary['tasks']} Tasks · {summary['findings']} Findings · "
@@ -1694,7 +1711,7 @@ def _run_and_ingest(repo, name, spec, target, profile=None, timeout=None) -> boo
         return False
     s = runner_parsers.ingest(repo, spec, target, result, name)
     status = "Timeout" if result.timed_out else f"rc={result.returncode}"
-    console.print(f"   [green]✓[/green] {spec.name} ({status}, {result.duration_ms} ms) – "
+    console.print(f"   [green]{SYM_OK}[/green] {spec.name} ({status}, {result.duration_ms} ms) – "
                   f"+{s['findings']}F +{s['loot']}L +{s['notes']}N +{s['services']}S +{s['tasks']}T")
     return True
 
@@ -1761,7 +1778,7 @@ def sweep_cmd(target: str = typer.Argument(..., help="Ziel: IP oder Host"),
     console.print(f"\n[bold]Schritt 2 – Auto-Enumeration[/bold] ({len(auto)} sichere Recon/Enum-Schritte):")
     for spec, tgt, svc in auto:
         if run:
-            if yes or typer.confirm(f"→ {spec.name} gegen {tgt} (Dienst {svc.name or svc.port})?", default=True):
+            if yes or typer.confirm(f"{SYM_ARROW} {spec.name} gegen {tgt} (Dienst {svc.name or svc.port})?", default=True):
                 _run_and_ingest(repo, name, spec, tgt, timeout=timeout)
             else:
                 console.print(f"   [dim]übersprungen: {spec.name}[/dim]")
@@ -1800,7 +1817,7 @@ def runs_cmd():
 playbook_app = typer.Typer(help="Methodik-Playbooks (Checklisten)")
 app.add_typer(playbook_app, name="playbook", rich_help_panel="Recon & Import")
 
-_KIND_ICON = {"pentos": "🔧", "external": "🌐", "manual": "📝"}
+_KIND_ICON = {"pentos": "(P)", "external": "(E)", "manual": "(M)"}
 
 
 @playbook_app.command("list")
@@ -1815,7 +1832,7 @@ def playbook_list():
     for name, pb in sorted(pbs.items()):
         table.add_row(name, pb.title, str(len(pb.steps)))
     console.print(table)
-    console.print("[dim]Legende: 🔧 PentOS-Tool · 🌐 externes Tool · 📝 manuell[/dim]")
+    console.print("[dim]Legende: (P) PentOS-Tool · (E) externes Tool · (M) manuell[/dim]")
     console.print("[dim]Details: [cyan]pentos playbook show <name> [--target <ziel>][/cyan][/dim]")
 
 
@@ -1835,8 +1852,8 @@ def playbook_show(name: str,
         lines.append(f"[dim]{pb.description}[/dim]\n")
     for s in pb.steps:
         st = prog.get(s.id)
-        mark = "[green]✓[/green]" if st and st["status"] == "done" else \
-               "[yellow]»[/yellow]" if st and st["status"] == "skip" else "[dim]○[/dim]"
+        mark = f"[green]{SYM_OK}[/green]" if st and st["status"] == "done" else \
+               f"[yellow]{SYM_SKIP}[/yellow]" if st and st["status"] == "skip" else f"[dim]{SYM_PENDING}[/dim]"
         icon = _KIND_ICON.get(s.kind, "")
         lines.append(f"{mark} {icon} [bold]{s.id}[/bold] — {s.title}")
         if s.tool:
@@ -1867,7 +1884,7 @@ def playbook_check(name: str, step_id: str,
         raise typer.Exit(1)
     repo, _ = _repo()
     repo.set_playbook_step(name, step_id, "skip" if skip else "done", note); repo.close()
-    console.print(f"[green]{name}/{step_id} → {'übersprungen' if skip else 'erledigt'}.[/green]")
+    console.print(f"[green]{name}/{step_id} {SYM_ARROW} {'übersprungen' if skip else 'erledigt'}.[/green]")
 
 
 @playbook_app.command("uncheck")
@@ -1891,7 +1908,7 @@ def playbook_status():
         done = sum(1 for s in pb.steps if s.id in prog)
         total = len(pb.steps)
         pct = int(done / total * 100) if total else 0
-        bar = "█" * (pct // 10) + "░" * (10 - pct // 10)
+        bar = BAR_FULL * (pct // 10) + BAR_EMPTY * (10 - pct // 10)
         table.add_row(name, pb.title, f"{bar} {done}/{total}")
     repo.close()
     console.print(table)
