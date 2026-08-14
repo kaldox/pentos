@@ -148,6 +148,50 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
         finally:
             repo.close()
 
+    @app.get("/api/project/{name}/host/{hid}")
+    def api_host_detail(name: str, hid: int):
+        name = resolve(name)
+        repo = _repo(name)
+        try:
+            h = repo.get_host(hid)
+            if not h:
+                raise HTTPException(404, f"Host {hid} nicht gefunden.")
+            d = {
+                "id": h.id, "address": h.address, "hostname": h.hostname,
+                "os_guess": h.os_guess, "status": h.status,
+                "notes_text": h.notes, "created_at": h.created_at,
+            }
+            services = sorted(repo.list_services(host_id=hid), key=lambda s: s.port or 0)
+            svc_by_id = {s.id: s for s in services}
+            d["services"] = [{
+                "id": s.id, "port": s.port, "protocol": s.protocol, "name": s.name,
+                "product": s.product, "version": s.version, "tunnel": s.tunnel,
+            } for s in services]
+            findings = [f for f in repo.list_findings()
+                       if f.host_id == hid or f.service_id in svc_by_id]
+            findings.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 9))
+            d["findings"] = [{
+                "id": f.id, "title": f.title, "severity": f.severity.value,
+                "status": f.status.value, "category": f.category.value,
+                "service_id": f.service_id,
+                "service": (f"{svc_by_id[f.service_id].port}/{svc_by_id[f.service_id].protocol}"
+                           if f.service_id in svc_by_id else None),
+            } for f in findings]
+            d["notes"] = [{
+                "id": n.id, "title": n.title, "category": n.category,
+                "created_at": n.created_at,
+            } for n in repo.list_notes() if n.host_id == hid]
+            d["loot"] = [{
+                "id": l.id, "type": l.type.value if hasattr(l.type, "value") else l.type,
+                "label": l.label, "value": l.value, "source": l.source,
+            } for l in repo.list_loot() if l.host_id == hid]
+            d["evidence"] = [{
+                "id": e.id, "kind": e.kind, "path": e.path, "description": e.description,
+            } for e in repo.list_evidence() if e.host_id == hid]
+            return d
+        finally:
+            repo.close()
+
     @app.get("/api/project/{name}/loot")
     def api_loot(name: str):
         name = resolve(name)
