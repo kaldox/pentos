@@ -38,6 +38,19 @@ Konkret geplant, baut auf Bestehendem auf:
   zu Findings werden statt nur als Capture (Vorbild: der neue gobuster-/ffuf-/
   feroxbuster-Parser).
 - **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).
+- **Command Palette (Strg+K) im Web-Dashboard**: globale Fuzzy-Suche über
+  Hosts/Findings/Notizen plus Schnellaktionen (Status setzen, Notiz anlegen),
+  wie bei Linear/Vercel/Raycast üblich. Passt zur bereits tastaturorientierten
+  TUI – das wäre das Pendant fürs Web.
+- **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): alle drei können nativ
+  JSON ausgeben, das macht die Parser robuster als das gobuster-Textformat.
+  `httpx` liefert Tech-Detection direkt mit, `naabu` ist eine sehr schnelle
+  Port-Discovery, `dnsx` löst auf.
+- **EPSS-Anreicherung für Findings**: Findings mit CVE/CVSS bekommen
+  zusätzlich einen EPSS-Score (kostenlose FIRST-API) – CVSS sagt, wie schlimm
+  eine Lücke wäre, EPSS sagt, wie wahrscheinlich sie in den nächsten 30 Tagen
+  tatsächlich ausgenutzt wird. Wie bei Cloud-KI-Aufrufen mit explizitem
+  Hinweis, dass dafür eine Anfrage nach aussen geht (opt-in).
 
 ## Später
 
@@ -45,10 +58,23 @@ Größere Brocken, die einen frischen Kopf verdienen:
 
 - **KI-Lernkarten und Notiz-Zusammenfassungen**, ausschließlich aus den eigenen
   Projektdaten, ohne Halluzination. Lernen aus dem, was man selbst gefunden hat.
-- **Reicheres Screenshot-Handling**, etwa direkte Aufnahme oder Annotation statt
-  nur Dateien anhängen.
+- **Reicheres Screenshot-Handling**, etwa automatisierte Screenshots über
+  `gowitness` (Headless-Chrome-Screenshot-Tool, passt ins Runner/Parser-Muster)
+  statt nur manuell angehängter Dateien.
 - **Projekt-Export und -Import** als eine Datei, zum Sichern, Umziehen oder
   Teilen eines kompletten Workspace.
+- **gitleaks-Integration**: Secret-Scanning als eigene Findings-Quelle –
+  thematischer Anschluss an den `.git`-Exposure-Detector aus 2.28.0: wird ein
+  offenes `.git` gefunden, `gitleaks` gegen einen Dump vorschlagen und dessen
+  Treffer zu Credential-/Info-Disclosure-Findings machen.
+- **BloodHound-Datenimport**: SharpHound-/AzureHound-JSON einlesen und daraus
+  Findings ("Kerberoastable Accounts", Domain-Admin-Anzahl, AS-REP-Roasting
+  möglich) plus Link zur echten BloodHound-Ansicht bauen – PentOS wertet aus,
+  statt BloodHound nachzubauen.
+- **Engagement-Zeitplan/Timeline**: Der Workspace legt pro Projekt schon einen
+  `timelines/`-Ordner an, der aber noch von keinem Feature genutzt wird –
+  Rules-of-Engagement-Eckdaten (Zeitfenster, Blackout-Zeiten, Eskalationspfad)
+  und Projekt-Meilensteine dort strukturiert festhalten.
 - **Mehr strukturierte Parser** für weitere Tools, damit deren Ausgabe
   automatisch zu Hosts, Diensten und Findings wird.
 
