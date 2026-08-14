@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.27.1-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.27.2-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 

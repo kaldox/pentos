@@ -7,6 +7,16 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.27.2] – 2026-08-14
+### Fixed
+- **MCP server with the current SDK:** `mcp.server.fastmcp.FastMCP` was removed in
+  MCP SDK 2.0; since `pyproject.toml` allowed `mcp>=1.0`, 2.x got installed and
+  `pentos mcp` aborted with "MCP-SDK fehlt". Constrained the dependency to
+  `mcp>=1.0,<2.0` until the code is migrated to the 2.x API.
+### Added
+- **CI workflow** (`.github/workflows/ci.yml`): matrix build against Python 3.10,
+  3.11 and 3.12 with `compileall` (syntax guard) and `pytest`.
+
 ## [2.27.1] – 2026-07-13
 ### Fixed
 - **Report export on Python 3.10/3.11:** a nested f-string with escaped quotes in

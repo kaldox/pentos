@@ -7,6 +7,16 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.27.2] – 2026-08-14
+### Behoben
+- **MCP-Server mit aktuellem SDK:** `mcp.server.fastmcp.FastMCP` wurde im
+  MCP-SDK 2.0 entfernt; da `pyproject.toml` `mcp>=1.0` erlaubte, wurde 2.x
+  installiert und `pentos mcp` brach mit „MCP-SDK fehlt" ab. Abhängigkeit auf
+  `mcp>=1.0,<2.0` eingegrenzt, bis auf die 2.x-API migriert ist.
+### Hinzugefügt
+- **CI-Workflow** (`.github/workflows/ci.yml`): Matrix-Build gegen Python 3.10,
+  3.11 und 3.12 mit `compileall` (Syntax-Guard) und `pytest`.
+
 ## [2.27.1] – 2026-07-13
 ### Behoben
 - **Report-Export unter Python 3.10/3.11:** Ein verschachtelter f-string mit
