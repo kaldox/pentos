@@ -37,6 +37,18 @@ Concretely planned, building on what exists:
 - **Structured nikto parser**, so its hits also automatically become findings
   instead of just a capture (following the new gobuster/ffuf/feroxbuster parser).
 - **Status history in the HTML/PDF report too** (currently in the Markdown report).
+- **Command palette (Ctrl+K) in the web dashboard**: global fuzzy search over
+  hosts/findings/notes plus quick actions (set status, add note), the way
+  Linear/Vercel/Raycast do it. Matches the already keyboard-driven TUI – this
+  would be its counterpart on the web.
+- **ProjectDiscovery parsers** (`httpx`/`naabu`/`dnsx`): all three can output
+  native JSON, which makes for more robust parsers than gobuster's text
+  format. `httpx` includes tech detection, `naabu` is very fast port
+  discovery, `dnsx` resolves DNS.
+- **EPSS enrichment for findings**: findings with a CVE/CVSS also get an EPSS
+  score (free FIRST API) – CVSS says how bad a flaw could be, EPSS says how
+  likely it actually gets exploited in the next 30 days. Like cloud AI calls,
+  with an explicit notice that a request leaves the machine (opt-in).
 
 ## Later
 
@@ -44,10 +56,23 @@ Larger chunks that deserve a fresh head:
 
 - **AI flashcards and note summaries**, exclusively from your own project data,
   without hallucination. Learning from what you found yourself.
-- **Richer screenshot handling**, e.g. direct capture or annotation instead of
-  just attaching files.
+- **Richer screenshot handling**, e.g. automated screenshots via `gowitness`
+  (headless-Chrome screenshot tool, fits the runner/parser pattern) instead of
+  only manually attached files.
 - **Project export and import** as a single file, for backup, migration or
   sharing a complete workspace.
+- **gitleaks integration**: secret scanning as its own findings source –
+  a thematic follow-up to the `.git` exposure detector from 2.28.0: when an
+  open `.git` is found, suggest running `gitleaks` against a dump and turn its
+  hits into credential/info-disclosure findings.
+- **BloodHound data import**: ingest SharpHound/AzureHound JSON and turn it
+  into findings ("kerberoastable accounts", domain admin count, AS-REP
+  roasting possible) plus a link to the real BloodHound view – PentOS
+  interprets the data instead of rebuilding BloodHound.
+- **Engagement timeline**: every project workspace already gets a
+  `timelines/` folder that no feature uses yet – capture rules-of-engagement
+  basics (time windows, blackout periods, escalation path) and project
+  milestones there in a structured way.
 - **More structured parsers** for additional tools, so their output automatically
   becomes hosts, services and findings.
 
