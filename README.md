@@ -45,6 +45,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 | Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
 | **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
 | **Finding-Detailansicht + Angriffspfad-Graph** im Dashboard (SVG, anklickbar) | ✅ |
+| **Host-Detailansicht** im Dashboard (Dienste, Findings, Notizen, Loot verlinkt) | ✅ |
 | **Status-Historie / Retest-Tracking** (`finding history`, Zeitleiste im Report) | ✅ |
 | **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
 | **Terminal-UI** (`pentos tui`: tastaturgesteuertes Lagebild, Status-Pflege) | ✅ |

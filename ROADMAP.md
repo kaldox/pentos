@@ -28,6 +28,7 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Strukturierte Web-Parser für gobuster/ffuf/feroxbuster: sicherheitsrelevante
   Pfade (VCS-Verzeichnisse, Secrets, Backups, Admin-Interfaces) werden
   automatisch zu Findings statt nur als Rohnotiz abgelegt
+- Host-Detailansicht im Dashboard (Drawer mit Diensten, Findings, Notizen, Loot)
 
 ## Als Nächstes
 
@@ -36,8 +37,6 @@ Konkret geplant, baut auf Bestehendem auf:
 - **Strukturierter nikto-Parser**, damit dessen Treffer ebenfalls automatisch
   zu Findings werden statt nur als Capture (Vorbild: der neue gobuster-/ffuf-/
   feroxbuster-Parser).
-- **Detailansicht pro Host** im Dashboard, analog zur Finding-Detailansicht, mit
-  Verlinkung zu Diensten, Findings und Notizen.
 - **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).
 
 ## Später

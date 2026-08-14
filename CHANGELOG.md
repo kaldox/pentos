@@ -19,6 +19,14 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
   200/204/301/302/401/403; Duplikate werden übersprungen). Vorbild: die
   bestehenden nuclei-/enum4linux-ng-Parser. Neuer Test
   `tests/test_gobuster_parser.py`.
+- **Host-Detailansicht im Web-Dashboard:** Klick auf eine Host-Adresse in
+  „Hosts & Dienste" öffnet einen Drawer (analog zur bestehenden
+  Finding-Detailansicht) mit allen Diensten, verknüpften Findings (direkt am
+  Host sowie über dessen Dienste), Notizen und Loot des Hosts. Neuer
+  API-Endpoint `GET /api/project/{name}/host/{hid}` in
+  `pentos/web/server.py`; Findings innerhalb des Drawers sind wiederum
+  anklickbar und öffnen die volle Finding-Detailansicht. Drei neue Tests in
+  `tests/test_web_dashboard.py`.
 
 ## [2.27.2] – 2026-08-14
 ### Behoben

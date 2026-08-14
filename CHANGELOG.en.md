@@ -18,6 +18,13 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
   (only for reachable status codes 200/204/301/302/401/403; duplicates are
   skipped). Modeled after the existing nuclei/enum4linux-ng parsers. New test
   `tests/test_gobuster_parser.py`.
+- **Host detail view in the web dashboard:** clicking a host address under
+  "Hosts & Services" opens a drawer (following the existing finding detail
+  view) with all its services, linked findings (directly on the host as well
+  as via its services), notes and loot. New API endpoint
+  `GET /api/project/{name}/host/{hid}` in `pentos/web/server.py`; findings
+  inside the drawer are themselves clickable and open the full finding
+  detail view. Three new tests in `tests/test_web_dashboard.py`.
 
 ## [2.27.2] – 2026-08-14
 ### Fixed
