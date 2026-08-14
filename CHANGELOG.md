@@ -7,6 +7,26 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.29.0] – 2026-08-14
+### Hinzugefügt
+- **Command Palette (Strg+K) im Web-Dashboard:** globale Fuzzy-Suche über
+  Hosts, Findings und Notizen des aktiven Projekts plus Schnellaktionen
+  (aktuell „Neue Notiz anlegen"), wie bei Linear/Vercel/Raycast üblich —
+  Pendant zur bereits tastaturorientierten TUI. Öffnen per `Strg+K`/`Cmd+K`
+  oder Klick auf den neuen „Springe zu …"-Button in der Topbar; Navigation
+  mit Pfeiltasten, Auswahl mit Enter, Schliessen mit Escape oder Klick
+  ausserhalb. Ergebnisse aus Ansichten (Lagebild/Findings/Hosts/…), Findings
+  (springt in die Finding-Detailansicht), Hosts (springt in die
+  Host-Detailansicht) und Notizen; Daten werden bei jedem Öffnen frisch
+  geladen. Reines Frontend (`pentos/web/static/{index.html,app.js,style.css}`),
+  keine neuen Backend-Endpoints — nutzt die bestehenden `findings`/`hosts`/
+  `notes`-Routen. Funktional gegen einen echten Browser verifiziert (Fuzzy-
+  Suche über alle Eintragstypen, Tastaturnavigation, alle drei Öffnen-/
+  Schliessen-Wege, keine Konsolenfehler); da es im Projekt keinen
+  JS-Testrunner gibt, prüft der neue Test
+  `test_command_palette_markup_and_wiring_served` zumindest, dass Markup und
+  Kernfunktionen ausgeliefert werden.
+
 ## [2.28.0] – 2026-08-14
 ### Hinzugefügt
 - **Strukturierter Web-Pfad-Parser** (`gobuster`/`ffuf`/`feroxbuster`): Treffer

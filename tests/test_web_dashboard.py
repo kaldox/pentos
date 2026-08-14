@@ -93,6 +93,23 @@ def test_frontend_served():
     assert c.get("/static/app.js").status_code == 200
 
 
+def test_command_palette_markup_and_wiring_served():
+    """Kein JS-Testrunner im Projekt -> zumindest sicherstellen, dass die
+    Befehlspaletten-Elemente (Strg+K) tatsächlich ausgeliefert werden und die
+    Kernfunktionen im Frontend-Code vorhanden sind. Funktional gegen einen
+    echten Browser verifiziert (Fuzzy-Suche, Tastatur, Klick) - siehe
+    Commit-Message."""
+    c = _client_with_data()
+    html = c.get("/").text
+    assert 'id="palette"' in html
+    assert 'id="palette-input"' in html
+    assert 'id="palette-trigger"' in html
+    js = c.get("/static/app.js").text
+    for fn in ("initPalette", "openPalette", "closePalette", "filterPalette",
+              "fuzzyScore", "runSelected", "switchView"):
+        assert fn in js, f"{fn} fehlt in app.js"
+
+
 # ── #3: Finding-Detail, Graph, Status-Notiz ──────────────────────────────
 def test_finding_detail_with_history():
     c = _client_with_data()

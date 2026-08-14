@@ -53,14 +53,9 @@ async function boot() {
     if (state.project) sel.value = state.project;
     sel.onchange = () => { state.project = sel.value; render(); };
     document.querySelectorAll(".nav-item").forEach((b) => {
-      b.onclick = () => {
-        document.querySelectorAll(".nav-item").forEach((x) => x.classList.remove("active"));
-        b.classList.add("active");
-        state.view = b.dataset.view;
-        $("#view-title").textContent = b.textContent.trim();
-        render();
-      };
+      b.onclick = () => switchView(b.dataset.view);
     });
+    initPalette();
     if (!state.project) { $("#content").innerHTML = emptyState("Kein Projekt", "Lege eins mit <code>pentos project new</code> an."); return; }
     render();
   } catch (e) {
@@ -71,6 +66,14 @@ async function boot() {
 
 function emptyState(title, sub) {
   return `<div class="empty"><b>${title}</b>${sub || ""}</div>`;
+}
+
+function switchView(view) {
+  document.querySelectorAll(".nav-item").forEach((x) => x.classList.toggle("active", x.dataset.view === view));
+  const btn = document.querySelector(`.nav-item[data-view="${view}"]`);
+  state.view = view;
+  $("#view-title").textContent = btn ? btn.textContent.trim() : view;
+  render();
 }
 
 // ── Render-Dispatch ────────────────────────────────────────────────────
@@ -577,6 +580,173 @@ async function renderAI(c) {
       $("#set-msg").innerHTML = `<span style="color:var(--crit)">${esc(e.message)}</span>`;
     } finally { btn.disabled = false; setTimeout(() => { $("#set-msg").innerHTML = ""; }, 2500); }
   };
+}
+
+// ── Befehlspalette (Strg+K) ──────────────────────────────────────────────
+// Springt per Fuzzy-Suche zu Hosts/Findings/Notizen oder löst eine
+// Schnellaktion aus. Daten werden bei jedem Öffnen frisch geladen, damit
+// Palette und Projektstand nicht auseinanderlaufen.
+const NAV_COMMANDS = [
+  { view: "overview", ic: "◉", label: "Lagebild" },
+  { view: "findings", ic: "⚑", label: "Findings" },
+  { view: "hosts", ic: "⊞", label: "Hosts & Dienste" },
+  { view: "graph", ic: "⌖", label: "Angriffspfad" },
+  { view: "loot", ic: "⚿", label: "Loot" },
+  { view: "notes", ic: "≡", label: "Notizen" },
+  { view: "ai", ic: "✦", label: "KI" },
+];
+const pal = { items: [], filtered: [], sel: 0, loaded: false };
+
+// Subsequenz-Fuzzy-Match: alle Query-Zeichen müssen in Reihenfolge vorkommen,
+// zusammenhängende Treffer zählen mehr. -1 = kein Treffer.
+function fuzzyScore(query, text) {
+  if (!query) return 0;
+  const q = query.toLowerCase(), t = (text || "").toLowerCase();
+  let qi = 0, score = 0, last = -1;
+  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) {
+      score += last === ti - 1 ? 3 : 1;
+      last = ti;
+      qi++;
+    }
+  }
+  return qi === q.length ? score : -1;
+}
+
+function initPalette() {
+  $("#palette-trigger").onclick = openPalette;
+  $("#palette-back").onclick = closePalette;
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      $("#palette").hidden ? openPalette() : closePalette();
+    }
+  });
+  const input = $("#palette-input");
+  input.addEventListener("input", () => filterPalette(input.value));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closePalette(); return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); return; }
+    if (e.key === "ArrowUp") { e.preventDefault(); moveSel(-1); return; }
+    if (e.key === "Enter") { e.preventDefault(); runSelected(); }
+  });
+}
+
+async function openPalette() {
+  $("#palette").hidden = false;
+  const input = $("#palette-input");
+  input.value = "";
+  input.focus();
+  await loadPaletteItems();
+  filterPalette("");
+}
+
+function closePalette() {
+  $("#palette").hidden = true;
+}
+
+async function loadPaletteItems() {
+  const items = NAV_COMMANDS.map((c) => ({
+    kind: "nav", ic: c.ic, label: c.label, sub: "Ansicht wechseln", run: () => switchView(c.view),
+  }));
+  items.push({
+    kind: "action", ic: "+", label: "Neue Notiz anlegen", sub: "Schnellaktion",
+    run: () => { switchView("notes"); setTimeout(() => $("#nf-title")?.focus(), 80); },
+  });
+  if (state.project) {
+    const p = encodeURIComponent(state.project);
+    try {
+      const [f, h, n] = await Promise.all([
+        api(`/api/project/${p}/findings`).catch(() => ({ findings: [] })),
+        api(`/api/project/${p}/hosts`).catch(() => ({ hosts: [] })),
+        api(`/api/project/${p}/notes`).catch(() => ({ notes: [] })),
+      ]);
+      (f.findings || []).forEach((x) => items.push({
+        kind: "finding", ic: "⚑", label: x.title, sub: `${x.severity} · ${x.status}`,
+        run: () => openFindingDetail(x.id),
+      }));
+      (h.hosts || []).forEach((x) => items.push({
+        kind: "host", ic: "⊞", label: x.address, sub: x.hostname || "Host",
+        run: () => openHostDetail(x.id),
+      }));
+      (n.notes || []).forEach((x) => items.push({
+        kind: "note", ic: "≡", label: x.title, sub: x.category || "Notiz",
+        run: () => switchView("notes"),
+      }));
+    } catch (e) { /* Palette bleibt mit den statischen Einträgen nutzbar */ }
+  }
+  pal.items = items;
+  pal.loaded = true;
+}
+
+function filterPalette(query) {
+  const q = query.trim();
+  let list;
+  if (!q) {
+    list = pal.items.filter((x) => x.kind === "nav" || x.kind === "action");
+  } else {
+    list = pal.items
+      .map((x) => ({ x, score: Math.max(fuzzyScore(q, x.label), fuzzyScore(q, x.sub) - 2) }))
+      .filter((r) => r.score >= 0)
+      .sort((a, b) => b.score - a.score)
+      .map((r) => r.x);
+  }
+  pal.filtered = list.slice(0, 40);
+  pal.sel = 0;
+  drawPalette();
+}
+
+const PAL_GROUP_LABEL = {
+  nav: "Ansichten", action: "Aktionen", finding: "Findings", host: "Hosts", note: "Notizen",
+};
+
+function drawPalette() {
+  const box = $("#palette-list");
+  if (!pal.filtered.length) {
+    box.innerHTML = `<div class="pal-empty">Keine Treffer.</div>`;
+    return;
+  }
+  let html = "", lastKind = null;
+  pal.filtered.forEach((item, i) => {
+    if (item.kind !== lastKind) {
+      html += `<div class="pal-group">${PAL_GROUP_LABEL[item.kind] || item.kind}</div>`;
+      lastKind = item.kind;
+    }
+    html += `<div class="pal-item${i === pal.sel ? " sel" : ""}" data-i="${i}">
+      <span class="pal-ic">${item.ic}</span>
+      <span class="pal-main">
+        <div class="pal-label">${esc(item.label)}</div>
+        <div class="pal-sub">${esc(item.sub || "")}</div>
+      </span>
+      <span class="pal-enter">Enter ↵</span>
+    </div>`;
+  });
+  box.innerHTML = html;
+  box.querySelectorAll(".pal-item").forEach((el) => {
+    el.onmouseenter = () => { pal.sel = +el.dataset.i; highlightSel(); };
+    el.onclick = () => runSelected();
+  });
+}
+
+function highlightSel() {
+  $("#palette-list").querySelectorAll(".pal-item").forEach((el) => {
+    el.classList.toggle("sel", +el.dataset.i === pal.sel);
+  });
+  const active = $("#palette-list").querySelector(".pal-item.sel");
+  if (active) active.scrollIntoView({ block: "nearest" });
+}
+
+function moveSel(delta) {
+  if (!pal.filtered.length) return;
+  pal.sel = (pal.sel + delta + pal.filtered.length) % pal.filtered.length;
+  highlightSel();
+}
+
+function runSelected() {
+  const item = pal.filtered[pal.sel];
+  if (!item) return;
+  closePalette();
+  item.run();
 }
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);

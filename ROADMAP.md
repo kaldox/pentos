@@ -29,6 +29,8 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   Pfade (VCS-Verzeichnisse, Secrets, Backups, Admin-Interfaces) werden
   automatisch zu Findings statt nur als Rohnotiz abgelegt
 - Host-Detailansicht im Dashboard (Drawer mit Diensten, Findings, Notizen, Loot)
+- Command Palette (Strg+K) im Web-Dashboard: globale Fuzzy-Suche über
+  Hosts/Findings/Notizen plus Schnellaktionen
 
 ## Als Nächstes
 

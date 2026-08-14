@@ -29,6 +29,8 @@ For context, what was added most recently (details in the changelog):
   (VCS directories, secrets, backups, admin interfaces) automatically become
   findings instead of just a raw note
 - Host detail view in the dashboard (drawer with services, findings, notes, loot)
+- Command palette (Ctrl+K) in the web dashboard: global fuzzy search over
+  hosts/findings/notes plus quick actions
 
 ## Next
 

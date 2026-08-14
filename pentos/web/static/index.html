@@ -38,6 +38,9 @@
         <span class="sep">/</span>
         <span id="proj-name" class="mono">—</span>
       </div>
+      <button id="palette-trigger" class="palette-trigger" title="Befehlspalette öffnen">
+        <span>Springe zu …</span><span class="kbd">Strg K</span>
+      </button>
     </header>
 
     <section id="content" class="content">
@@ -48,6 +51,19 @@
 <div id="drawer" class="drawer" hidden>
   <div class="drawer-back" id="drawer-back"></div>
   <aside class="drawer-panel" id="drawer-panel"></aside>
+</div>
+<div id="palette" class="palette" hidden>
+  <div class="palette-back" id="palette-back"></div>
+  <div class="palette-box">
+    <div class="palette-input-wrap">
+      <span class="palette-ic">⌘</span>
+      <input id="palette-input" class="palette-input" type="text"
+             placeholder="Springe zu einem Host, Finding, einer Notiz … oder wähle eine Aktion"
+             autocomplete="off" spellcheck="false"/>
+      <span class="kbd">Esc</span>
+    </div>
+    <div id="palette-list" class="palette-list"></div>
+  </div>
 </div>
 <script src="/static/app.js"></script>
 </body>
