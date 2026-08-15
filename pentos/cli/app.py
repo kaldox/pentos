@@ -683,6 +683,12 @@ def finding_add(title: str,
                 host_id: Optional[int] = typer.Option(None, "--host"),
                 service_id: Optional[int] = typer.Option(None, "--service")):
     repo, _ = _repo()
+    if host_id is not None and repo.get_host(host_id) is None:
+        repo.close()
+        console.print(f"[red]Host #{host_id} nicht im Projekt.[/red]"); raise typer.Exit(1)
+    if service_id is not None and repo.get_service(service_id) is None:
+        repo.close()
+        console.print(f"[red]Service #{service_id} nicht im Projekt.[/red]"); raise typer.Exit(1)
     f = repo.add_finding(Finding(
         title=title, severity=SEVERITY_MAP.get(severity, Severity.MEDIUM),
         category=CATEGORY_MAP.get(category, FindingCategory.OTHER),
@@ -1181,7 +1187,7 @@ def report_build(out: Optional[Path] = typer.Option(None, "--out",
 
     # HTML
     if html and not explain:
-        target = out if (out and out.suffix == ".html") else (reports_dir / "report.html")
+        target = out or (reports_dir / "report.html")  # --out gilt unabhängig von der Endung, wie bei --pdf
         target.write_text(export_mod.build_html(repo, name, cfg=config.load_config()), encoding="utf-8")
         repo.log("HTML-Report erstellt", str(target))
         console.print(f"[green]HTML-Report erstellt:[/green] {target}")
@@ -1426,7 +1432,8 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
 
 @ai_app.command("explain-finding")
 def ai_explain_finding(finding_id: int,
-                       lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache")):
+                       lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache"),
+                       yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden")):
     repo, _ = _repo()
     f = repo.get_finding(finding_id)
     repo.close()
@@ -1434,12 +1441,15 @@ def ai_explain_finding(finding_id: int,
         console.print("[red]Finding nicht gefunden.[/red]"); raise typer.Exit(1)
     _ensure_language()
     client = _ai_client(lang)
+    if not _confirm_ai_send(client, f"Finding #{finding_id} ('{f.title}')", yes):
+        console.print("Abgebrochen."); raise typer.Exit()
     console.print(Panel(client.explain_finding(f), title=f"KI-Mentor · Finding #{finding_id}"))
 
 
 @ai_app.command("enum")
 def ai_enum(service_id: int,
-            lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache")):
+            lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache"),
+            yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden")):
     repo, _ = _repo()
     svc = repo.get_service(service_id)
     repo.close()
@@ -1447,6 +1457,8 @@ def ai_enum(service_id: int,
         console.print("[red]Service nicht gefunden.[/red]"); raise typer.Exit(1)
     _ensure_language()
     client = _ai_client(lang)
+    if not _confirm_ai_send(client, f"Service {svc.port}/{svc.protocol}", yes):
+        console.print("Abgebrochen."); raise typer.Exit()
     console.print(Panel(client.enumeration_ideas(svc),
                         title=f"KI-Mentor · Enumeration {svc.port}/{svc.protocol}"))
 

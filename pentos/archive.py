@@ -83,6 +83,25 @@ def read_manifest(archive: Path) -> Optional[dict]:
         raise ArchiveError(f"'{archive}' ist keine gültige ZIP-Datei.") from exc
 
 
+def _safe_project_name(name: str) -> str:
+    """Validiert einen Projektnamen, bevor er als Zielordner-Komponente
+    verwendet wird -- der Name kann aus dem ZIP-Manifest stammen (nicht
+    vertrauenswürdig!), also muss er selbst geprüft werden, nicht erst die
+    einzelnen Archiv-Einträge relativ dazu (siehe _safe_members). Ein
+    Manifest mit z.B. "project": "../../../etc" oder einem absoluten Pfad
+    würde sonst den Zielordner selbst aus projects_dir() heraushebeln und
+    die Zip-Slip-Prüfung wirkungslos machen."""
+    name = (name or "").strip()
+    if not name:
+        raise ArchiveError("Ungültiger (leerer) Projektname im Archiv.")
+    if name in (".", "..") or "/" in name or "\\" in name or Path(name).is_absolute():
+        raise ArchiveError(
+            f"Unsicherer Projektname im Archiv-Manifest: '{name}'. "
+            "Ziel mit --name explizit setzen."
+        )
+    return name
+
+
 def _safe_members(zf: zipfile.ZipFile, dest: Path) -> list[str]:
     """Prüft alle Archiv-Einträge auf Zip-Slip (Pfade, die aus `dest` ausbrechen)."""
     dest_resolved = dest.resolve()
@@ -118,8 +137,13 @@ def import_project(archive: Path, name: Optional[str] = None, force: bool = Fals
                     "(database/pentos.db fehlt im Archiv)."
                 )
             manifest = read_manifest(archive)
-            target_name = name or (manifest or {}).get("project") or archive.stem
+            target_name = _safe_project_name(name or (manifest or {}).get("project") or archive.stem)
             dest = config.project_path(target_name)
+            # Doppelt genäht: selbst wenn _safe_project_name je eine Lücke hätte,
+            # muss dest am Ende trotzdem innerhalb von projects_dir() landen.
+            projects_root = config.projects_dir().resolve()
+            if projects_root != dest.resolve() and projects_root not in dest.resolve().parents:
+                raise ArchiveError(f"Unsicherer Zielpfad: '{dest}' liegt ausserhalb von {projects_root}.")
             if dest.exists() and not force:
                 raise ArchiveError(
                     f"Projekt '{target_name}' existiert bereits. Anderen Namen mit "

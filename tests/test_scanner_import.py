@@ -32,6 +32,15 @@ def test_nessus_parsing():
     assert any(s.port == 445 for s in pt.services)
 
 
+def test_nessus_cvss3_zero_is_not_replaced_by_cvss2():
+    """Regression: 'cvss = v3 or v2' behandelte einen echten CVSSv3-Score von
+    0.0 als falsy und fiel faelschlich auf den (hoeheren) v2-Score zurueck."""
+    fmt, targets = scanners.parse(FIX / "scan_nessus_cvss_zero.nessus")
+    assert fmt == "nessus"
+    f = targets[0].findings[0]
+    assert f.cvss_score == 0.0
+
+
 def test_openvas_parsing():
     fmt, targets = scanners.parse(FIX / "scan_openvas.xml")
     assert fmt == "openvas"

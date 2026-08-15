@@ -177,6 +177,37 @@ def test_import_rejects_path_traversal():
     assert not config.project_path("EvilProject").exists()
 
 
+def test_import_rejects_path_traversal_via_manifest_project_name():
+    """Regression: der Zielordner darf nicht aus dem ungeprüften Manifest
+    kommen. Ein Manifest mit "project": "../../../etc" (oder ein absoluter
+    Pfad) hebelte sonst die Zip-Slip-Prüfung selbst aus, weil _safe_members
+    nur noch prüfte, ob Archiv-Einträge INNERHALB des bereits kompromittierten
+    Zielordners liegen -- der Zielordner selbst war der Angriff."""
+    config = _fresh_config()
+    evil = config.projects_dir() / "evil-manifest.zip"
+    with zipfile.ZipFile(evil, "w") as zf:
+        zf.writestr("database/pentos.db", "fake")
+        zf.writestr("pentos-export.json",
+                   '{"pentos_export_version": 1, "project": "../../../../outside-evil"}')
+    from pentos import archive
+    with pytest.raises(archive.ArchiveError):
+        archive.import_project(evil)  # kein --name -> Name kommt aus dem Manifest
+    # nichts ausserhalb von projects_dir() wurde angelegt
+    assert not (config.projects_dir().parent.parent.parent / "outside-evil").exists()
+
+
+def test_import_rejects_absolute_path_as_project_name():
+    config = _fresh_config()
+    evil = config.projects_dir() / "evil-abs.zip"
+    abs_target = str(config.projects_dir().parent / "absolute-evil")
+    with zipfile.ZipFile(evil, "w") as zf:
+        zf.writestr("database/pentos.db", "fake")
+    from pentos import archive
+    with pytest.raises(archive.ArchiveError):
+        archive.import_project(evil, name=abs_target)
+    assert not (config.projects_dir().parent / "absolute-evil").exists()
+
+
 # ── CLI-Ebene (project export / project import) ─────────────────────────────
 def _cli_app():
     import importlib

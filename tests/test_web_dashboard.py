@@ -108,6 +108,14 @@ def test_command_palette_markup_and_wiring_served():
     for fn in ("initPalette", "openPalette", "closePalette", "filterPalette",
               "fuzzyScore", "runSelected", "switchView"):
         assert fn in js, f"{fn} fehlt in app.js"
+    # Regressionsguard: der additive Subtitle-Abschlag ("- 2") konnte einen
+    # echten kurzen Treffer unter 0 drücken und aus der Trefferliste werfen
+    # (z.B. verschwanden bei Eingabe von 'w' alle Nav-Eintraege, weil deren
+    # gemeinsames sub='Ansicht wechseln' nur Score 1 lieferte). Der Fix
+    # nutzt einen multiplikativen Abschlag (subScore * 0.5), der einen
+    # nichtnegativen Score nie negativ machen kann.
+    assert "fuzzyScore(q, x.sub) - 2" not in js
+    assert "subScore * 0.5" in js
 
 
 # ── #3: Finding-Detail, Graph, Status-Notiz ──────────────────────────────

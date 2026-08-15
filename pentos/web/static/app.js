@@ -685,8 +685,17 @@ function filterPalette(query) {
   if (!q) {
     list = pal.items.filter((x) => x.kind === "nav" || x.kind === "action");
   } else {
+    // Subtitle-Treffer zaehlen weniger als Label-Treffer, aber ein Treffer
+    // bleibt ein Treffer: ein multiplikativer statt additiver Abschlag,
+    // damit ein echter kurzer Subtitle-Match (Score 1) nicht unter 0 faellt
+    // und aus der Liste verschwindet.
     list = pal.items
-      .map((x) => ({ x, score: Math.max(fuzzyScore(q, x.label), fuzzyScore(q, x.sub) - 2) }))
+      .map((x) => {
+        const labelScore = fuzzyScore(q, x.label);
+        const subScore = fuzzyScore(q, x.sub);
+        const score = subScore >= 0 ? Math.max(labelScore, subScore * 0.5) : labelScore;
+        return { x, score };
+      })
       .filter((r) => r.score >= 0)
       .sort((a, b) => b.score - a.score)
       .map((r) => r.x);

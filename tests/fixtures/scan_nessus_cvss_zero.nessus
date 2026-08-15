@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Report name="Test">
+<ReportHost name="192.168.56.30">
+<HostProperties>
+<tag name="host-ip">192.168.56.30</tag>
+</HostProperties>
+<ReportItem port="443" svc_name="https" protocol="tcp" severity="1" pluginID="99999" pluginName="Informational finding with CVSSv3 0.0">
+<description>A finding whose CVSSv3 base score is genuinely 0.0.</description>
+<risk_factor>Low</risk_factor>
+<cvss_base_score>5.0</cvss_base_score>
+<cvss3_base_score>0.0</cvss3_base_score>
+</ReportItem>
+</ReportHost>
+</Report>
+</NessusClientData_v2>

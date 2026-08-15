@@ -574,13 +574,17 @@ def _parse_enum4linux_data(text: str) -> dict:
              "administrators", "domain controllers", "group policy creator owners"}
     d["priv_groups"] = [g for g in d["groups"] if g.lower() in _PRIV]
 
-    # Shares: Name/Typ aus Definitionsblock, Zugriff aus 'Testing share'-Zeilen
+    # Shares: Name/Typ aus Definitionsblock, Zugriff aus 'Testing share'-Zeilen.
+    # enum4linux-ng schreibt Default-Shares Backslash-escaped ('ADMIN\$:',
+    # 'IPC\$:'); die Namen werden normalisiert (Backslash entfernt), damit
+    # z.B. der IPC$-Ausschluss unten und finding-Titel den sauberen Namen
+    # ('IPC$') statt der escapten Rohform sehen.
     types: dict[str, str] = {}
     cur = None
     for line in t.splitlines():
-        m = re.match(r"^([A-Za-z0-9$_.\-]+):\s*$", line)
+        m = re.match(r"^([A-Za-z0-9$_.\\-]+):\s*$", line)
         if m:
-            cur = m.group(1)
+            cur = m.group(1).replace("\\", "")
             continue
         mt = re.match(r"^\s+type:\s*(\S+)", line)
         if mt and cur:
@@ -593,7 +597,7 @@ def _parse_enum4linux_data(text: str) -> dict:
         mt = re.match(r"\[\*\]\s*Testing share (.+)", line)
         if not mt:
             continue
-        name = mt.group(1).strip()
+        name = mt.group(1).strip().replace("\\", "")
         result_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
         if result_line.startswith("[+]"):
             access[name] = result_line[3:].strip()

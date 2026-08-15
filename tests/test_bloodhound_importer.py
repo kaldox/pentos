@@ -97,6 +97,23 @@ def test_invalid_zip_raises():
             parse_sharphound(bogus)
 
 
+def test_stray_non_dict_json_file_is_skipped_not_crashed():
+    """Regression: eine fremde *.json-Datei mit Top-Level-Array/Skalar im
+    Export-Ordner liess parse_sharphound vorher mit AttributeError
+    ('list' object has no attribute 'get') abstuerzen statt sie zu
+    ueberspringen, wie es die eigene Modul-Doku verspricht."""
+    from pentos.importers.bloodhound import parse_sharphound
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        for f in FIXTURES.glob("*.json"):
+            (tmp_path / f.name).write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
+        (tmp_path / "stray_array.json").write_text("[1, 2, 3]", encoding="utf-8")
+        (tmp_path / "stray_scalar.json").write_text('"just a string"', encoding="utf-8")
+        summary = parse_sharphound(tmp_path)  # darf nicht crashen
+        assert summary["domain"] == "CORP.LOCAL"
+        assert summary["kerberoastable"] == ["SVC-SQL@CORP.LOCAL"]
+
+
 def test_unrecognized_json_raises():
     """JSON-Dateien ohne SharpHound-data/meta-Struktur -> klare Fehlermeldung
     statt stillschweigend eine leere Zusammenfassung zurückzugeben."""

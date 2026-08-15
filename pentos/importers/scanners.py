@@ -148,8 +148,10 @@ def parse_nessus(path: Path) -> list[ParsedTarget]:
             # Info-Items (severity 0) nicht als Finding übernehmen
             if sev_raw == "0":
                 continue
-            cvss = (_float_or_none(_txt(item.find("cvss3_base_score")))
-                    or _float_or_none(_txt(item.find("cvss_base_score"))))
+            _cvss3 = _float_or_none(_txt(item.find("cvss3_base_score")))
+            # v3 bevorzugt (auch wenn 0.0) -- 'or' würde einen gültigen 0.0-Score
+            # fälschlich als falsy behandeln und auf den v2-Score zurückfallen.
+            cvss = _cvss3 if _cvss3 is not None else _float_or_none(_txt(item.find("cvss_base_score")))
             vector = (_txt(item.find("cvss3_vector")) or _txt(item.find("cvss_vector")) or None)
             desc = _txt(item.find("description")) or _txt(item.find("synopsis"))
             cve = ", ".join(_txt(c) for c in item.findall("cve"))

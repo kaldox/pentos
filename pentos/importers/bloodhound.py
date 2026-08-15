@@ -99,6 +99,8 @@ def parse_sharphound(path: Path) -> dict:
     seen_any = False
 
     for name, doc in _iter_json_members(path):
+        if not isinstance(doc, dict):
+            continue  # z.B. eine fremde *.json mit Top-Level-Array/Skalar -> überspringen statt abzustürzen
         items = doc.get("data")
         if not isinstance(items, list):
             continue

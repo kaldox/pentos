@@ -7,6 +7,58 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.31.1] – 2026-08-15
+### Behoben
+Systematischer Bug-Hunt über den gesamten Code (Multi-Agent-Review, 6
+Finder-Durchläufe + eigene Nachverifikation gegen echten Code/Fixtures). Alle
+zehn Funde mit Regressionstest abgesichert, 173/173 Tests grün.
+
+- **[Kritisch] Zip-Slip beim Projekt-Import (`pentos/archive.py`):**
+  `pentos project import <datei.zip>` ohne `--name` übernahm den Zielordner
+  aus dem **ungeprüften** `project`-Feld im ZIP-Manifest. Ein präpariertes
+  Archiv mit `"project": "../../../../fremder/pfad"` (oder einem absoluten
+  Pfad) konnte damit die komplette Zip-Slip-Prüfung aushebeln und Dateien
+  ausserhalb des Workspace schreiben — genau das Szenario „Export mit
+  jemandem teilen" macht das ausnutzbar. Der Projektname wird jetzt validiert
+  (keine Pfadtrenner, kein `..`, kein absoluter Pfad), zusätzlich wird der
+  fertige Zielpfad noch einmal gegen `projects_dir()` geprüft.
+- **KI-Cloud-Zustimmung fehlte bei zwei Befehlen:** `ai explain-finding` und
+  `ai enum` sendeten Finding-/Service-Daten direkt an die KI, ohne die für
+  alle anderen KI-Befehle geltende Rückfrage/Warnung vor dem Senden an einen
+  Cloud-Anbieter (`_confirm_ai_send`). Beide Befehle laufen jetzt über
+  dieselbe Zustimmungsabfrage wie `ai analyze`/`ai next`/`ai analyze-image`.
+- **SMB-Share-Erkennung bei Backslash-escapten Namen (`ADMIN\$`, `IPC\$`):**
+  Die Share-Header-Regex im enum4linux-ng-Parser kannte keinen Backslash, wie
+  ihn echte enum4linux-ng-Ausgabe für Default-Shares schreibt. Dadurch blieb
+  der Share-„Typ" immer bei `?`, und der Ausschluss von `IPC$` aus dem
+  „anonym lesbarer Share"-Finding griff nie (False-Positive-Finding für den
+  völlig normalen IPC$-Null-Session-Zugriff). Namen werden jetzt normalisiert.
+- **Offene SQLite-Transaktion nach Dubletten-Insert:** `add_host()`/
+  `add_service()` fingen `IntegrityError` bei Dubletten ab, riefen aber nie
+  `rollback()` auf — die Transaktion blieb offen und konnte eine zweite,
+  gleichzeitig laufende Verbindung (z.B. `pentos serve`/TUI neben einem
+  `scan import-nmap`) mit „database is locked" blockieren.
+- **`pentos scan import-bloodhound` stürzte bei fremden JSON-Dateien ab:**
+  Eine `*.json`-Datei mit Top-Level-Array/Skalar im Export-Ordner liess den
+  Import mit `AttributeError` abstürzen statt sie zu überspringen, wie es die
+  eigene Modul-Doku verspricht.
+- **`pentos finding add --host/--service` mit ungültiger ID:** stürzte mit
+  einem rohen `sqlite3.IntegrityError`-Traceback ab (Foreign-Key-Verletzung)
+  statt einer sauberen Fehlermeldung; die DB-Verbindung wurde dabei nicht
+  geschlossen. Wird jetzt vorab geprüft, analog zu `template apply --host`.
+- **`pentos report --html --out <pfad>` ignorierte den Pfad stillschweigend**,
+  wenn die Endung nicht exakt `.html` war, und schrieb stattdessen nach
+  `reports/report.html` — ohne jede Warnung. `--out` wird jetzt wie bei
+  `--pdf` immer respektiert.
+- **CVSS-Score 0.0 beim Nessus-Import:** `cvss = v3 or v2` behandelte einen
+  gültigen CVSSv3-Score von `0.0` als falsy und ersetzte ihn fälschlich durch
+  den (höheren) CVSSv2-Score.
+- **Command Palette (Strg+K) verlor kurze Subtitle-Treffer:** der additive
+  Abschlag für Subtitle-Treffer (`- 2`) konnte einen echten, aber kurzen
+  Treffer (z.B. Suche nach `w` bei Subtitle „Ansicht wechseln") unter 0
+  drücken und aus der Trefferliste werfen. Jetzt ein multiplikativer Abschlag
+  (`× 0.5`), der einen positiven Score nie negativ macht.
+
 ## [2.31.0] – 2026-08-15
 ### Hinzugefügt
 - **BloodHound-Datenimport** (`pentos scan import-bloodhound <export>`,

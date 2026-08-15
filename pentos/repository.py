@@ -65,6 +65,7 @@ class Repository:
             host.id = cur.lastrowid
             self.log("Host hinzugefügt", f"{host.address} (id={host.id})")
         except sqlite3.IntegrityError:
+            self.conn.rollback()  # sonst bleibt die Transaktion offen -> "database is locked"
             existing = self.get_host_by_address(host.address)
             if existing:
                 return existing
@@ -96,6 +97,7 @@ class Repository:
             svc.id = cur.lastrowid
             self.log("Service erkannt", f"{svc.port}/{svc.protocol} {svc.name or ''} (host={svc.host_id})")
         except sqlite3.IntegrityError:
+            self.conn.rollback()  # sonst bleibt die Transaktion offen -> "database is locked"
             row = self.conn.execute(
                 "SELECT * FROM services WHERE host_id=? AND port=? AND protocol=?",
                 (svc.host_id, svc.port, svc.protocol),

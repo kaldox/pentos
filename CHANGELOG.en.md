@@ -7,6 +7,58 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.31.1] – 2026-08-15
+### Fixed
+Systematic bug hunt across the whole codebase (multi-agent review, 6 finder
+passes + independent re-verification against real code/fixtures). All ten
+findings covered with a regression test, 173/173 tests green.
+
+- **[Critical] Zip-slip on project import (`pentos/archive.py`):**
+  `pentos project import <file.zip>` without `--name` took the destination
+  folder from the **unvalidated** `project` field in the ZIP manifest. A
+  crafted archive with `"project": "../../../../someone/elses/path"` (or an
+  absolute path) could bypass the entire zip-slip check and write files
+  outside the workspace — exactly the "share an export with someone"
+  scenario makes this exploitable. The project name is now validated (no
+  path separators, no `..`, no absolute path), and the resulting destination
+  is additionally re-checked against `projects_dir()`.
+- **AI cloud consent missing on two commands:** `ai explain-finding` and
+  `ai enum` sent finding/service data straight to the AI without the
+  confirm-before-sending-to-cloud prompt (`_confirm_ai_send`) every other AI
+  command goes through. Both commands now use the same consent gate as
+  `ai analyze`/`ai next`/`ai analyze-image`.
+- **SMB share detection broke on backslash-escaped names (`ADMIN\$`,
+  `IPC\$`):** the share-header regex in the enum4linux-ng parser didn't
+  allow a backslash, which real enum4linux-ng output uses for default
+  shares. Share "type" stayed `?` forever, and the exclusion of `IPC$` from
+  the "anonymously readable share" finding never fired (a false-positive
+  finding for perfectly normal IPC$ null-session access). Names are now
+  normalized.
+- **Open SQLite transaction after a duplicate insert:** `add_host()`/
+  `add_service()` caught `IntegrityError` on duplicates but never called
+  `rollback()` — the transaction stayed open and could block a second,
+  concurrently running connection (e.g. `pentos serve`/TUI next to a
+  `scan import-nmap`) with "database is locked".
+- **`pentos scan import-bloodhound` crashed on stray JSON files:** a
+  `*.json` file with a top-level array/scalar in the export folder made the
+  import crash with `AttributeError` instead of being skipped, as the
+  module's own docstring promises.
+- **`pentos finding add --host/--service` with an invalid ID:** crashed
+  with a raw `sqlite3.IntegrityError` traceback (foreign-key violation)
+  instead of a clean error message, and the DB connection wasn't closed.
+  Now validated upfront, matching `template apply --host`.
+- **`pentos report --html --out <path>` silently ignored the path** when
+  the extension wasn't exactly `.html`, writing to `reports/report.html`
+  instead with no warning. `--out` is now always honored, like `--pdf`.
+- **CVSS score 0.0 on Nessus import:** `cvss = v3 or v2` treated a valid
+  CVSSv3 score of `0.0` as falsy and wrongly replaced it with the (higher)
+  CVSSv2 score.
+- **Command palette (Ctrl+K) lost short subtitle matches:** the additive
+  penalty for subtitle matches (`- 2`) could push a genuine but short match
+  (e.g. searching `w` against the subtitle "switch view") below zero and
+  drop it from the results. Now a multiplicative penalty (`× 0.5`) that can
+  never turn a positive score negative.
+
 ## [2.31.0] – 2026-08-15
 ### Added
 - **BloodHound data import** (`pentos scan import-bloodhound <export>`,
