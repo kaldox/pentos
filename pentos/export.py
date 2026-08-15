@@ -15,7 +15,7 @@ import html as _html
 import mimetypes
 from pathlib import Path
 
-from .models import SEVERITY_ORDER, Severity, TaskStatus, _now
+from .models import SEVERITY_ORDER, Severity, TaskStatus, TimelineKind, _now
 from .repository import Repository
 from .risk import compute_risk
 
@@ -23,6 +23,9 @@ _IMG_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 _SEV_COLOR_MAP = {
     Severity.CRITICAL: "#c0392b", Severity.HIGH: "#e67e22",
     Severity.MEDIUM: "#f1c40f", Severity.LOW: "#3498db", Severity.INFO: "#95a5a6",
+}
+_TIMELINE_LABEL = {
+    TimelineKind.MILESTONE: "Meilenstein", TimelineKind.WINDOW: "Zeitfenster", TimelineKind.BLACKOUT: "Blackout",
 }
 
 
@@ -154,6 +157,7 @@ def _collect(repo: Repository) -> dict:
         "evidence_by_finding": _evidence_by_finding(repo),
         "history_by_finding": _history_by_finding(repo, findings),
         "risk": compute_risk(findings),
+        "timeline": repo.list_timeline_entries(),
     }
 
 
@@ -271,6 +275,19 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
     loot_html = (f'<table><thead><tr><th>Typ</th><th>Label</th><th>Wert</th><th>Quelle</th></tr></thead>'
                  f'<tbody>{loot_rows}</tbody></table>') if d["loot"] else '<p class="muted">Kein Loot erfasst.</p>'
 
+    tl_rows = "".join(
+        f"<tr><td>{e(_TIMELINE_LABEL.get(t.kind, str(t.kind)))}</td><td>{e(t.title)}</td>"
+        f"<td>{e(t.start_ts or '-')}</td><td>{e(t.end_ts or '-')}</td><td>{e(t.note or '-')}</td></tr>"
+        for t in d["timeline"]
+    )
+    timeline_section = ""
+    if d["timeline"]:
+        timeline_section = (
+            '<h2>Engagement-Zeitplan</h2>'
+            '<table><thead><tr><th>Art</th><th>Titel</th><th>Start</th><th>Ende</th><th>Notiz</th></tr></thead>'
+            f'<tbody>{tl_rows}</tbody></table>'
+        )
+
     return f"""<!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8">
 <title>Pentest-Report: {e(project)}</title>
@@ -347,6 +364,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
 
 <h2>Loot / Credentials</h2>
 {loot_html}
+{timeline_section}
 
 <footer>Erzeugt mit PentOS{f" · {e(b['company'])}" if b['company'] else ""} · Nur für autorisierte Sicherheitstests.</footer>
 </body></html>"""
@@ -527,6 +545,27 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         story.append(lt)
     else:
         story.append(Paragraph("Kein Loot erfasst.", styles["Meta"]))
+
+    # Engagement-Zeitplan (Meilensteine, Zeitfenster, Blackout-Zeiten)
+    if d["timeline"]:
+        story.append(Paragraph("Engagement-Zeitplan", styles["H2b"]))
+        cell = ParagraphStyle("TlCell", parent=styles["Normal"], fontSize=8, leading=10)
+        tldata = [["Art", "Titel", "Start", "Ende", "Notiz"]]
+        for t in d["timeline"]:
+            tldata.append([
+                Paragraph(e(_TIMELINE_LABEL.get(t.kind, str(t.kind))), cell),
+                Paragraph(e(t.title), cell),
+                Paragraph(e(t.start_ts or "-"), cell),
+                Paragraph(e(t.end_ts or "-"), cell),
+                Paragraph(e(t.note or "-"), cell),
+            ])
+        tlt = Table(tldata, colWidths=[2.5 * cm, 4 * cm, 3.5 * cm, 3.5 * cm, 2.5 * cm])
+        tlt.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f3f4f6")),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e5e7eb")),
+        ]))
+        story.append(tlt)
 
     def _footer(canvas, doc_):
         canvas.saveState()

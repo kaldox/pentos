@@ -8,10 +8,14 @@ Services und Attack-Path. Basis für spätere HTML-/PDF-Ausgabe.
 from __future__ import annotations
 
 from . import graph, knowledge
-from .models import SEVERITY_ORDER, Severity, TaskStatus, _now
+from .models import SEVERITY_ORDER, Severity, TaskStatus, TimelineKind, _now
 from .repository import Repository
 from .risk import compute_risk
 from .runners import registry as tool_registry
+
+_TIMELINE_LABEL = {
+    TimelineKind.MILESTONE: "Meilenstein", TimelineKind.WINDOW: "Zeitfenster", TimelineKind.BLACKOUT: "Blackout",
+}
 
 
 def build_markdown(repo: Repository, project: str) -> str:
@@ -54,6 +58,18 @@ def build_markdown(repo: Repository, project: str) -> str:
     md.append(f"- Aufgaben erledigt: **{done}/{len(tasks)}**")
     md.append(f"- Loot/Credentials: **{len(loot)}**")
     md.append("")
+
+    # Engagement-Zeitplan (Rules-of-Engagement-Zeitfenster, Blackout-Zeiten, Meilensteine)
+    timeline_entries = repo.list_timeline_entries()
+    if timeline_entries:
+        md.append("## Engagement-Zeitplan")
+        md.append("")
+        md.append("| Art | Titel | Start | Ende | Notiz |")
+        md.append("|-----|-------|-------|------|-------|")
+        for t in timeline_entries:
+            md.append(f"| {_TIMELINE_LABEL.get(t.kind, t.kind)} | {t.title} | "
+                      f"{t.start_ts or '-'} | {t.end_ts or '-'} | {t.note or '-'} |")
+        md.append("")
 
     # Findings
     md.append("## Findings")

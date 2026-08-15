@@ -7,6 +7,30 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.33.0] – 2026-08-15
+### Hinzugefügt
+- **BloodHound-Angriffspfad im Dashboard-Graphen:** Der SharpHound-Import
+  (`scan import-bloodhound`) landet jetzt zusätzlich zu Findings/Notiz auch
+  strukturiert in der Projekt-DB (neue Tabelle `bloodhound_imports`) und wird
+  im Web-Dashboard als eigener Graph-Abschnitt neben Hosts/Services/Findings
+  gerendert: Domain → Domain Admins / kerberoastbare Accounts / AS-REP-roastbare
+  Accounts / uneingeschränkte Delegation → betroffene Mitglieder. `GET
+  /api/project/{name}/graph` liefert dafür ein zusätzliches `ad`-Feld
+  (`null` ohne Import).
+- **Risk-Score mit Chart:** Neues Modul `pentos/risk.py` berechnet einen
+  transparenten, dokumentierten Risk-Score aus den aktuell offenen Findings
+  (Gewichtung je Severity: Critical=10/High=6/Medium=3/Low=1/Info=0,
+  aufsummiert; Geschlossen/False-Positive zählen bewusst nicht mit — reine
+  Arithmetik über Projektdaten, kein KI-/Cloud-Aufruf). Erscheint jetzt in
+  der Zusammenfassung aller drei Reportformate (Markdown-Zeile, HTML mit
+  inline-SVG-Donut-Chart, PDF mit nativem reportlab-Pie-Chart) sowie oben im
+  Web-Dashboard-Lagebild.
+- **Engagement-Zeitplan (`pentos timeline add/list/rm`):** Meilensteine,
+  Testzeitfenster und Blackout-Zeiten pro Projekt festhalten (Titel, Art,
+  Start/Ende, Notiz — z. B. Eskalationskontakt). Erscheint als eigener
+  Abschnitt in Markdown-, HTML- und PDF-Report, sofern Einträge vorhanden
+  sind.
+
 ## [2.32.0] – 2026-08-15
 ### Hinzugefügt
 - **Status-Historie auch im HTML-/PDF-Report:** Der Status-Verlauf eines

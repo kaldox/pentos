@@ -40,6 +40,15 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   oder Ordner) einlesen, daraus Findings für Kerberoastable/AS-REP-roastbare
   Accounts, uneingeschränkte Delegation und Domain-Admin-Mitgliedschaft bauen
 - Status-Historie auch im HTML-/PDF-Report (bisher nur im Markdown-Report)
+- BloodHound-Angriffspfad im Dashboard-Graphen: Domain Admins, kerberoastbare
+  und AS-REP-roastbare Accounts sowie uneingeschränkte Delegation als eigener
+  Graph-Abschnitt neben Hosts/Services/Findings
+- Risk-Score mit transparenter Formel (Severity-gewichtete Summe, geschlossene
+  Findings zählen nicht mit) plus Chart in Dashboard, Markdown-, HTML- und
+  PDF-Report
+- Engagement-Zeitplan (`pentos timeline add/list/rm`): Meilensteine,
+  Testzeitfenster und Blackout-Zeiten pro Projekt festhalten, erscheint in
+  allen drei Report-Formaten
 
 ## Als Nächstes
 
@@ -70,10 +79,6 @@ Größere Brocken, die einen frischen Kopf verdienen:
   Treffer zu Credential-/Info-Disclosure-Findings machen.
 - **AzureHound-Unterstützung** für den BloodHound-Import (Entra ID hat ein
   anderes Schema als SharpHound, bisher nicht abgedeckt).
-- **Engagement-Zeitplan/Timeline**: Der Workspace legt pro Projekt schon einen
-  `timelines/`-Ordner an, der aber noch von keinem Feature genutzt wird –
-  Rules-of-Engagement-Eckdaten (Zeitfenster, Blackout-Zeiten, Eskalationspfad)
-  und Projekt-Meilensteine dort strukturiert festhalten.
 - **Mehr strukturierte Parser** für weitere Tools, damit deren Ausgabe
   automatisch zu Hosts, Diensten und Findings wird.
 

@@ -7,6 +7,29 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.33.0] – 2026-08-15
+### Added
+- **BloodHound attack path in the dashboard graph:** the SharpHound import
+  (`scan import-bloodhound`) now also lands in the project DB in structured
+  form (new `bloodhound_imports` table) in addition to findings/notes, and
+  renders as its own graph section in the web dashboard next to
+  hosts/services/findings: domain → Domain Admins / kerberoastable accounts /
+  AS-REP-roastable accounts / unconstrained delegation → affected members.
+  `GET /api/project/{name}/graph` now returns an extra `ad` field (`null`
+  without an import).
+- **Risk score with chart:** new module `pentos/risk.py` computes a
+  transparent, documented risk score from the currently open findings
+  (severity weighting: Critical=10/High=6/Medium=3/Low=1/Info=0, summed;
+  closed/false-positive findings deliberately don't count — plain arithmetic
+  over project data, no AI/cloud call). Now shown in the summary of all three
+  report formats (Markdown line, HTML with an inline SVG donut chart, PDF
+  with a native reportlab pie chart) and at the top of the web dashboard
+  overview.
+- **Engagement timeline (`pentos timeline add/list/rm`):** track milestones,
+  test windows and blackout periods per project (title, kind, start/end,
+  note — e.g. an escalation contact). Shown as its own section in the
+  Markdown, HTML and PDF report whenever entries exist.
+
 ## [2.32.0] – 2026-08-15
 ### Added
 - **Status history in the HTML/PDF report too:** a finding's status history

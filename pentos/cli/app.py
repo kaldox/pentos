@@ -2126,5 +2126,63 @@ def scope_rm(scope_id: int):
     console.print("[green]Aus Scope entfernt.[/green]" if ok else "[red]Nicht gefunden.[/red]")
 
 
+# ── Engagement-Zeitplan ────────────────────────────────────────────────────
+timeline_app = typer.Typer(help="Engagement-Zeitplan verwalten (Meilensteine, Zeitfenster, Blackout-Zeiten)")
+app.add_typer(timeline_app, name="timeline", rich_help_panel="Workspace")
+
+_TIMELINE_KIND_MAP = {
+    "milestone": TimelineKind.MILESTONE, "window": TimelineKind.WINDOW, "blackout": TimelineKind.BLACKOUT,
+}
+_TIMELINE_KIND_LABEL = {
+    TimelineKind.MILESTONE: "Meilenstein", TimelineKind.WINDOW: "Zeitfenster", TimelineKind.BLACKOUT: "Blackout",
+}
+
+
+@timeline_app.command("add")
+def timeline_add(
+    title: str = typer.Argument(..., help="z.B. 'Kickoff', 'Testfenster Woche 1', 'Wartungsfenster Kunde'"),
+    kind: str = typer.Option("milestone", "--kind",
+                             help="milestone (Meilenstein) | window (Testfenster) | blackout (Sperrzeit)"),
+    start: Optional[str] = typer.Option(None, "--start", help="z.B. '2026-08-20 08:00'"),
+    end: Optional[str] = typer.Option(None, "--end", help="z.B. '2026-08-20 18:00'"),
+    note: Optional[str] = typer.Option(None, "--note", help="z.B. Eskalationskontakt, Grund der Sperrzeit"),
+):
+    """Legt einen Eintrag im Engagement-Zeitplan an (Rules-of-Engagement-Zeitfenster,
+    Blackout-/Sperrzeiten, Projekt-Meilensteine) -- erscheint im Report."""
+    k = _TIMELINE_KIND_MAP.get(kind)
+    if k is None:
+        console.print(f"[red]Ungültige --kind '{kind}'. Erlaubt: milestone|window|blackout[/red]")
+        raise typer.Exit(1)
+    repo, _ = _repo()
+    t = repo.add_timeline_entry(TimelineEntry(kind=k, title=title, start_ts=start, end_ts=end, note=note))
+    repo.close()
+    console.print(f"[green]Zeitplan-Eintrag #{t.id}:[/green] [{_TIMELINE_KIND_LABEL[k]}] {t.title}")
+
+
+@timeline_app.command("list")
+def timeline_list():
+    """Zeigt den Engagement-Zeitplan, chronologisch sortiert."""
+    repo, _ = _repo()
+    entries = repo.list_timeline_entries()
+    repo.close()
+    if not entries:
+        console.print("[dim]Noch kein Zeitplan erfasst. Anlegen mit 'pentos timeline add \"Titel\" --start ...'.[/dim]")
+        return
+    table = Table(title="Engagement-Zeitplan")
+    for c in ["ID", "Art", "Titel", "Start", "Ende", "Notiz"]:
+        table.add_column(c)
+    for t in entries:
+        table.add_row(str(t.id), _TIMELINE_KIND_LABEL.get(t.kind, str(t.kind)),
+                     t.title, t.start_ts or "-", t.end_ts or "-", t.note or "-")
+    console.print(table)
+
+
+@timeline_app.command("rm")
+def timeline_rm(entry_id: int):
+    repo, _ = _repo()
+    ok = repo.delete_timeline_entry(entry_id); repo.close()
+    console.print("[green]Aus dem Zeitplan entfernt.[/green]" if ok else "[red]Nicht gefunden.[/red]")
+
+
 if __name__ == "__main__":
     app()
