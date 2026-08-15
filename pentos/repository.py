@@ -13,6 +13,7 @@ from typing import Optional
 
 from . import db
 from .models import (
+    BloodHoundImport,
     Evidence,
     Finding,
     FindingCategory,
@@ -29,6 +30,7 @@ from .models import (
     Severity,
     Task,
     TaskStatus,
+    TimelineEntry,
     _now,
 )
 
@@ -503,6 +505,46 @@ class Repository:
     def list_runs(self) -> list[RunRecord]:
         rows = self.conn.execute("SELECT * FROM runs ORDER BY id").fetchall()
         return [RunRecord(**dict(r)) for r in rows]
+
+    # ── BloodHound-Importe ───────────────────────────────────────────────────
+    def add_bloodhound_import(self, bh: BloodHoundImport) -> BloodHoundImport:
+        cur = self.conn.execute(
+            "INSERT INTO bloodhound_imports (domain, summary_json, imported_at) VALUES (?, ?, ?)",
+            (bh.domain, bh.summary_json, bh.imported_at),
+        )
+        self.conn.commit()
+        bh.id = cur.lastrowid
+        return bh
+
+    def latest_bloodhound_import(self) -> Optional[BloodHoundImport]:
+        row = self.conn.execute(
+            "SELECT * FROM bloodhound_imports ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        return BloodHoundImport(**dict(row)) if row else None
+
+    # ── Timeline (Rules of Engagement / Meilensteine) ────────────────────────
+    def add_timeline_entry(self, t: TimelineEntry) -> TimelineEntry:
+        cur = self.conn.execute(
+            "INSERT INTO timeline_entries (kind, title, start_ts, end_ts, note, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (t.kind.value if hasattr(t.kind, "value") else t.kind, t.title,
+             t.start_ts, t.end_ts, t.note, t.created_at),
+        )
+        self.conn.commit()
+        t.id = cur.lastrowid
+        self.log("Zeitplan-Eintrag angelegt", f"{t.kind.value if hasattr(t.kind, 'value') else t.kind}: {t.title}")
+        return t
+
+    def list_timeline_entries(self) -> list[TimelineEntry]:
+        rows = self.conn.execute(
+            "SELECT * FROM timeline_entries ORDER BY COALESCE(start_ts, created_at), id"
+        ).fetchall()
+        return [TimelineEntry(**dict(r)) for r in rows]
+
+    def delete_timeline_entry(self, entry_id: int) -> bool:
+        cur = self.conn.execute("DELETE FROM timeline_entries WHERE id = ?", (entry_id,))
+        self.conn.commit()
+        return cur.rowcount > 0
 
     # ── Playbook-Fortschritt ─────────────────────────────────────────────────
     def set_playbook_step(self, playbook: str, step_id: str,

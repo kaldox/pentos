@@ -426,6 +426,71 @@ async function openHostDetail(hid) {
   });
 }
 
+// SVG-Bausteine, gemeinsam genutzt vom Host/Service/Finding-Graph und dem
+// AD-Angriffspfad-Ausschnitt (siehe unten).
+function gpEdge(x1, y1, x2, y2, dashed) {
+  const mx = (x1 + x2) / 2;
+  return `<path d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"
+    fill="none" stroke="var(--line)" stroke-width="1.5"${dashed ? ' stroke-dasharray="4 3"' : ""}/>`;
+}
+function gpClip(s, px) { const max = Math.floor(px / 6.2); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
+function gpNode(x, yy, w, label, cls, accent, fid) {
+  const click = fid != null ? ` class="g-node ${cls}" data-fid="${fid}" style="cursor:pointer"` : ` class="g-node ${cls}"`;
+  const bar = accent ? `<rect x="${x}" y="${yy}" width="4" height="22" rx="2" fill="${accent}"/>` : "";
+  const tx = accent ? x + 12 : x + 10;
+  return `<g${click}>
+    <rect x="${x}" y="${yy}" width="${w}" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    ${bar}
+    <text x="${tx}" y="${yy + 15}" font-size="11.5" fill="var(--text)">${gpClip(label, w - 18)}</text>
+  </g>`;
+}
+
+// ── AD-Angriffspfad-Ausschnitt (aus dem letzten BloodHound-Import) ──────
+// Zeigt Domain -> Kategorie (Domain Admins/Kerberoastable/...) -> einzelne
+// Konten als drei Spalten, analog zum Host/Service/Finding-Graph. Keine
+// echten Kanten zwischen z.B. 'Kerberoastable' und 'Domain Admins', weil
+// PentOS diese Beziehung nicht selbst berechnet (das bleibt BloodHounds Job)
+// -- nur die Rohkategorien aus dem Import, ehrlich als solche dargestellt.
+function buildAdGraphSvg(ad) {
+  if (!ad) return null;
+  const cats = [
+    { key: "domain_admins", label: "Domain Admins", color: "var(--crit)" },
+    { key: "kerberoastable", label: "Kerberoastable", color: "var(--high)" },
+    { key: "asrep_roastable", label: "AS-REP-roastbar", color: "var(--high)" },
+    { key: "unconstrained_delegation", label: "Uneingeschr. Delegation", color: "var(--med)" },
+  ].filter((c) => (ad[c.key] || []).length > 0);
+  if (!cats.length) return null;
+
+  const COLX = { dom: 90, cat: 330, mem: 590 };
+  const rowH = 28, padY = 40, gapCat = 16;
+  let y = padY;
+  const catY = {}, memY = {};
+  cats.forEach((c) => {
+    catY[c.key] = y;
+    (ad[c.key] || []).forEach((m, i) => { memY[`${c.key}:${i}`] = y + i * rowH; });
+    y += Math.max(rowH, (ad[c.key] || []).length * rowH) + gapCat;
+  });
+  const domY = Math.max(padY, padY + (y - padY) / 2 - rowH / 2);
+  const W = 900, H = Math.max(y, domY + rowH) + padY / 2;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="apgraph" preserveAspectRatio="xMidYMin meet">`;
+  cats.forEach((c) => {
+    svg += gpEdge(COLX.dom + 120, domY + 11, COLX.cat, catY[c.key] + 11);
+    (ad[c.key] || []).forEach((_m, i) => {
+      svg += gpEdge(COLX.cat + 190, catY[c.key] + 11, COLX.mem, memY[`${c.key}:${i}`] + 11);
+    });
+  });
+  svg += gpNode(COLX.dom, domY, 120, esc(ad.domain || "Domäne"), "g-host");
+  cats.forEach((c) => {
+    svg += gpNode(COLX.cat, catY[c.key], 190, `${esc(c.label)} (${ad[c.key].length})`, "g-svc", c.color);
+    (ad[c.key] || []).forEach((m, i) => {
+      svg += gpNode(COLX.mem, memY[`${c.key}:${i}`], 240, esc(m), "g-find", c.color);
+    });
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
 // ── Angriffspfad (SVG, drei Spalten: Host -> Dienst -> Finding) ─────────
 async function renderGraph(c) {
   const g = await api(`/api/project/${encodeURIComponent(state.project)}/graph`);
@@ -454,27 +519,39 @@ async function renderGraph(c) {
   // Kanten host->svc
   g.services.forEach((s) => {
     if (hostY[s.host_id] == null) return;
-    svg += edge(COLX.host + 120, hostY[s.host_id] + 11, COLX.svc, svcY[s.id] + 11);
+    svg += gpEdge(COLX.host + 120, hostY[s.host_id] + 11, COLX.svc, svcY[s.id] + 11);
   });
   // Kanten svc/host -> finding
   g.findings.forEach((f) => {
     if (f.service_id != null && svcY[f.service_id] != null)
-      svg += edge(COLX.svc + 150, svcY[f.service_id] + 11, COLX.find, findY[f.id] + 11);
+      svg += gpEdge(COLX.svc + 150, svcY[f.service_id] + 11, COLX.find, findY[f.id] + 11);
     else if (f.host_id != null && hostY[f.host_id] != null)
-      svg += edge(COLX.host + 120, hostY[f.host_id] + 11, COLX.find, findY[f.id] + 11, true);
+      svg += gpEdge(COLX.host + 120, hostY[f.host_id] + 11, COLX.find, findY[f.id] + 11, true);
   });
   // Knoten
   g.hosts.forEach((h) => {
-    svg += node(COLX.host, hostY[h.id], 120, esc(h.label), "g-host");
+    svg += gpNode(COLX.host, hostY[h.id], 120, esc(h.label), "g-host");
   });
   g.services.forEach((s) => {
-    svg += node(COLX.svc, svcY[s.id], 150, esc(s.label), "g-svc");
+    svg += gpNode(COLX.svc, svcY[s.id], 150, esc(s.label), "g-svc");
   });
   g.findings.forEach((f) => {
-    svg += node(COLX.find, findY[f.id], 190, esc(f.title), "g-find",
+    svg += gpNode(COLX.find, findY[f.id], 190, esc(f.title), "g-find",
       SEV_COLOR[f.severity.toLowerCase()] || "var(--line)", f.id);
   });
   svg += `</svg>`;
+
+  const adSvg = buildAdGraphSvg(g.ad);
+  const adBlock = adSvg ? `
+    <div class="panel-h" style="margin-top:22px"><h2>Active-Directory-Angriffspfad</h2>
+      <span class="mono" style="color:var(--muted)">${esc(g.ad.domain || "")}</span></div>
+    <div class="ap-legend">
+      <span><span class="sw" style="background:var(--brand)"></span>Domain</span>
+      <span><span class="sw" style="background:var(--crit)"></span>Domain Admins</span>
+      <span><span class="sw" style="background:var(--high)"></span>Kerberoastable / AS-REP-roastbar</span>
+      <span style="color:var(--muted)">· aus dem letzten BloodHound-Import, keine berechneten Kanten dazwischen</span>
+    </div>
+    <div class="ap-scroll">${adSvg}</div>` : "";
 
   c.innerHTML = `<div class="ap-legend">
       <span><span class="sw" style="background:var(--brand)"></span>Host</span>
@@ -482,26 +559,10 @@ async function renderGraph(c) {
       <span><span class="sw" style="background:var(--high)"></span>Finding (Severity-Farbe)</span>
       <span style="color:var(--muted)">· Finding anklicken für Details</span>
     </div>
-    <div class="ap-scroll">${svg}</div>`;
+    <div class="ap-scroll">${svg}</div>
+    ${adBlock}`;
   c.querySelectorAll("[data-fid]").forEach((n) =>
     n.addEventListener("click", () => openFindingDetail(+n.dataset.fid)));
-
-  function edge(x1, y1, x2, y2, dashed) {
-    const mx = (x1 + x2) / 2;
-    return `<path d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"
-      fill="none" stroke="var(--line)" stroke-width="1.5"${dashed ? ' stroke-dasharray="4 3"' : ""}/>`;
-  }
-  function node(x, yy, w, label, cls, accent, fid) {
-    const click = fid != null ? ` class="g-node ${cls}" data-fid="${fid}" style="cursor:pointer"` : ` class="g-node ${cls}"`;
-    const bar = accent ? `<rect x="${x}" y="${yy}" width="4" height="22" rx="2" fill="${accent}"/>` : "";
-    const tx = accent ? x + 12 : x + 10;
-    return `<g${click}>
-      <rect x="${x}" y="${yy}" width="${w}" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
-      ${bar}
-      <text x="${tx}" y="${yy + 15}" font-size="11.5" fill="var(--text)">${clip(label, w - 18)}</text>
-    </g>`;
-  }
-  function clip(s, px) { const max = Math.floor(px / 6.2); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
 }
 
 

@@ -42,6 +42,25 @@ def _findings():
     return findings
 
 
+def test_cli_import_persists_summary_for_graph():
+    """Regression: der Import muss die Zusammenfassung persistieren, damit
+    der Angriffspfad-Graph AD-Objekte (Domain Admins, Kerberoastable, ...)
+    anzeigen kann, ohne den Export erneut einzulesen."""
+    import json
+    from pentos import config
+    from pentos.repository import Repository
+    app, _hid = _project_with_host()
+    r = CliRunner().invoke(app, ["scan", "import-bloodhound", str(FIXTURES)])
+    assert r.exit_code == 0, r.output
+    repo = Repository(config.db_path("k"))
+    bh = repo.latest_bloodhound_import()
+    repo.close()
+    assert bh is not None
+    assert bh.domain == "CORP.LOCAL"
+    summary = json.loads(bh.summary_json)
+    assert summary["kerberoastable"] == ["SVC-SQL@CORP.LOCAL"]
+
+
 def test_cli_import_creates_expected_findings():
     app, _hid = _project_with_host()
     r = CliRunner().invoke(app, ["scan", "import-bloodhound", str(FIXTURES)])

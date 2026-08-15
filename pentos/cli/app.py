@@ -8,6 +8,7 @@ Attack-Path-Graph, Obsidian-Export, Reporting und KI-Mentor.
 """
 from __future__ import annotations
 
+import json
 import shlex
 from datetime import datetime
 from pathlib import Path
@@ -33,6 +34,7 @@ from ..importers import nmap as nmap_importer
 from ..importers import scanners as scanner_importer
 from ..runners import base as runner_base, parsers as runner_parsers, registry as runner_registry
 from ..models import (
+    BloodHoundImport,
     Evidence,
     Finding,
     FindingCategory,
@@ -47,6 +49,8 @@ from ..models import (
     Severity,
     Task,
     TaskStatus,
+    TimelineEntry,
+    TimelineKind,
 )
 from ..repository import Repository
 from ..workspace import create_workspace, list_projects
@@ -504,6 +508,9 @@ def scan_import_bloodhound(
         "den Export in BloodHound selbst öffnen."
     )
     repo.add_note(Note(title=f"BloodHound-Import · {dom}", body=body, category="ad", host_id=host_id))
+    # Zusammenfassung persistieren -> speist den AD-Angriffspfad im Graph-Dashboard
+    # (siehe pentos/graph.py und GET /api/project/{name}/graph)
+    repo.add_bloodhound_import(BloodHoundImport(domain=summary["domain"], summary_json=json.dumps(summary)))
     repo.log("BloodHound-Import", f"{path} ({dom}): {find_n} Findings")
     repo.close()
 

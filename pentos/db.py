@@ -158,6 +158,23 @@ CREATE TABLE IF NOT EXISTS finding_templates (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS bloodhound_imports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain TEXT,
+    summary_json TEXT NOT NULL,     -- JSON-Dump der parse_sharphound()-Zusammenfassung
+    imported_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS timeline_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,             -- milestone | window | blackout
+    title TEXT NOT NULL,
+    start_ts TEXT,
+    end_ts TEXT,
+    note TEXT,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS rag_index (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     doc_type TEXT NOT NULL,            -- finding | note | knowledge | loot | host | service

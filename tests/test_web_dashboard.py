@@ -116,6 +116,8 @@ def test_command_palette_markup_and_wiring_served():
     # nichtnegativen Score nie negativ machen kann.
     assert "fuzzyScore(q, x.sub) - 2" not in js
     assert "subScore * 0.5" in js
+    # AD-Angriffspfad-Ausschnitt (BloodHound-Import) muss mit ausgeliefert werden
+    assert "buildAdGraphSvg" in js
 
 
 # ── #3: Finding-Detail, Graph, Status-Notiz ──────────────────────────────
@@ -148,6 +150,32 @@ def test_graph_endpoint_structure():
     assert g["hosts"][0]["address"] == "10.10.10.5"
     # Findings nach Severity sortiert (Critical zuerst)
     assert g["findings"][0]["severity"] == "Critical"
+    # Kein BloodHound-Import in dieser Fixture -> AD-Abschnitt fehlt
+    assert g["ad"] is None
+
+
+def test_graph_endpoint_includes_ad_section_after_bloodhound_import():
+    import json
+    from pentos.models import BloodHoundImport
+    c = _client_with_data()
+    from pentos import config
+    from pentos.repository import Repository
+    repo = Repository(config.db_path("Box"))
+    summary = {
+        "domain": "CORP.LOCAL",
+        "domain_admins": ["ADMIN.BOB@CORP.LOCAL"],
+        "kerberoastable": ["SVC-SQL@CORP.LOCAL"],
+        "asrep_roastable": [],
+        "unconstrained_delegation": [],
+    }
+    repo.add_bloodhound_import(BloodHoundImport(domain="CORP.LOCAL", summary_json=json.dumps(summary)))
+    repo.close()
+
+    g = c.get("/api/project/Box/graph").json()
+    assert g["ad"] is not None
+    assert g["ad"]["domain"] == "CORP.LOCAL"
+    assert g["ad"]["domain_admins"] == ["ADMIN.BOB@CORP.LOCAL"]
+    assert g["ad"]["kerberoastable"] == ["SVC-SQL@CORP.LOCAL"]
 
 
 def test_status_post_records_note():

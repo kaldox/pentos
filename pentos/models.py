@@ -218,3 +218,29 @@ class RunRecord(BaseModel):
     output_path: Optional[str] = None
     duration_ms: Optional[int] = None
     started_at: str = Field(default_factory=_now)
+
+
+class BloodHoundImport(BaseModel):
+    """Persistierte Zusammenfassung eines SharpHound-Imports (siehe
+    pentos/importers/bloodhound.py), damit der Angriffspfad-Graph AD-Objekte
+    einbeziehen kann, ohne den Import erneut einzulesen."""
+    id: Optional[int] = None
+    domain: Optional[str] = None
+    summary_json: str                   # JSON-Dump von parse_sharphound()
+    imported_at: str = Field(default_factory=_now)
+
+
+class TimelineKind(str, Enum):
+    MILESTONE = "milestone"
+    WINDOW = "window"
+    BLACKOUT = "blackout"
+
+
+class TimelineEntry(BaseModel):
+    id: Optional[int] = None
+    kind: TimelineKind = TimelineKind.MILESTONE
+    title: str
+    start_ts: Optional[str] = None
+    end_ts: Optional[str] = None
+    note: Optional[str] = None
+    created_at: str = Field(default_factory=_now)

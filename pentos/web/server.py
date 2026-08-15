@@ -42,6 +42,29 @@ def _finding_dict(f) -> dict:
     }
 
 
+def _ad_graph_data(repo: Repository) -> Optional[dict]:
+    """Baut die Daten für den AD-Angriffspfad-Ausschnitt des Graphen aus dem
+    letzten BloodHound-Import (siehe pentos/importers/bloodhound.py). None,
+    wenn noch kein Import gelaufen ist -- das Dashboard blendet den
+    Abschnitt dann einfach aus."""
+    import json
+    bh = repo.latest_bloodhound_import()
+    if not bh:
+        return None
+    try:
+        summary = json.loads(bh.summary_json)
+    except (ValueError, TypeError):
+        return None
+    return {
+        "domain": summary.get("domain") or bh.domain,
+        "domain_admins": summary.get("domain_admins") or [],
+        "kerberoastable": summary.get("kerberoastable") or [],
+        "asrep_roastable": summary.get("asrep_roastable") or [],
+        "unconstrained_delegation": summary.get("unconstrained_delegation") or [],
+        "imported_at": bh.imported_at,
+    }
+
+
 def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
                _bind_port: int = 8787):
     try:
@@ -275,6 +298,7 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
                      "status": f.status.value, "host_id": f.host_id,
                      "service_id": f.service_id} for f in findings
                 ],
+                "ad": _ad_graph_data(repo),
             }
         finally:
             repo.close()
