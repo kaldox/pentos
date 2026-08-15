@@ -83,6 +83,13 @@ body{
 .content{padding:28px; overflow:auto}
 .loading{color:var(--muted); padding:40px; text-align:center; font-family:var(--mono)}
 
+/* ── Risk-Score ─────────────────────────────────────────────────────── */
+.risk-box{display:flex; align-items:center; gap:18px; background:var(--surface);
+  border:1px solid var(--line); border-left:5px solid var(--muted); border-radius:var(--radius);
+  padding:16px 20px; margin-bottom:18px}
+.risk-score{font-size:2.6rem; font-weight:800; line-height:1; font-family:var(--mono)}
+.risk-level{font-size:1rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em}
+
 /* ── Stat-Karten ────────────────────────────────────────────────────── */
 .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:24px}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px}

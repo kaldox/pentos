@@ -10,6 +10,7 @@ from __future__ import annotations
 from . import graph, knowledge
 from .models import SEVERITY_ORDER, Severity, TaskStatus, _now
 from .repository import Repository
+from .risk import compute_risk
 from .runners import registry as tool_registry
 
 
@@ -38,8 +39,12 @@ def build_markdown(repo: Repository, project: str) -> str:
     md.append("")
 
     # Management Summary
+    risk = compute_risk(findings)
     md.append("## Zusammenfassung")
     md.append("")
+    md.append(f"- **Risk-Score: {risk['score']} ({risk['level']})** "
+              f"— {risk['active_count']} offene Findings gehen in den Score ein "
+              "(Geschlossen/False Positive zählen nicht mit)")
     md.append(f"- Hosts: **{len(hosts)}**")
     md.append(f"- Services: **{len(services)}**")
     md.append(f"- Findings: **{len(findings)}** "

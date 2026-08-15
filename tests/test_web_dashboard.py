@@ -58,6 +58,9 @@ def test_summary_counts_and_severity():
     assert s["counts"]["findings"] == 2
     assert s["severity"]["Critical"] == 1
     assert s["severity"]["Low"] == 1
+    # Risk-Score: Critical(10) + Low(1) = 11 -> "Kritisch" (Critical vorhanden)
+    assert s["risk"]["score"] == 11
+    assert s["risk"]["level"] == "Kritisch"
 
 
 def test_findings_sorted_by_severity():

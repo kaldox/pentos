@@ -127,7 +127,18 @@ async function renderOverview(c) {
         ${a.detail ? `<div class="fd">${esc(a.detail)}</div>` : ""}</span>
     </div>`).join("") || `<div class="fd" style="color:var(--muted)">Noch keine Aktivität.</div>`;
 
+  const risk = s.risk || { score: 0, level: "Minimal", color: "#95a5a6", active_count: 0 };
+  const riskBox = `
+    <div class="risk-box" style="border-left-color:${risk.color}">
+      <div class="risk-score" style="color:${risk.color}">${risk.score}</div>
+      <div class="risk-text">
+        <div class="risk-level" style="color:${risk.color}">${esc(risk.level)}</div>
+        <div class="stat-sub">Risk-Score aus ${risk.active_count} offenen Findings</div>
+      </div>
+    </div>`;
+
   c.innerHTML = `
+    ${riskBox}
     <div class="stat-grid">${cards}</div>
     <div class="grid-2">
       <div class="card">

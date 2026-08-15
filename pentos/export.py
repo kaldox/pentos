@@ -17,8 +17,76 @@ from pathlib import Path
 
 from .models import SEVERITY_ORDER, Severity, TaskStatus, _now
 from .repository import Repository
+from .risk import compute_risk
 
 _IMG_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+_SEV_COLOR_MAP = {
+    Severity.CRITICAL: "#c0392b", Severity.HIGH: "#e67e22",
+    Severity.MEDIUM: "#f1c40f", Severity.LOW: "#3498db", Severity.INFO: "#95a5a6",
+}
+
+
+def _donut_svg(sev_count: dict, size: int = 148) -> str:
+    """Reines, abhängigkeitsfreies SVG-Donut-Chart (kein CDN, kein JS) --
+    dasselbe Prinzip wie donutSVG() im Web-Dashboard (app.js), nur als
+    Python-String für den statischen Report."""
+    import math
+    r, cx, cy = size * 0.39, size / 2, size / 2
+    circumference = 2 * math.pi * r
+    total = sum(sev_count.values())
+    if total == 0:
+        return (f'<svg viewBox="0 0 {size} {size}" width="{size}" height="{size}">'
+                f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="#e5e7eb" stroke-width="16"/>'
+                f'<text x="{cx}" y="{cy+5}" text-anchor="middle" fill="#9ca3af" font-size="12">keine</text></svg>')
+    arcs, offset = [], 0.0
+    for sev in Severity:
+        val = sev_count.get(sev, 0)
+        if not val:
+            continue
+        length = (val / total) * circumference
+        arcs.append(
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{_SEV_COLOR_MAP[sev]}" '
+            f'stroke-width="16" stroke-dasharray="{length:.2f} {circumference - length:.2f}" '
+            f'stroke-dashoffset="{-offset:.2f}" transform="rotate(-90 {cx} {cy})"/>'
+        )
+        offset += length
+    return (
+        f'<svg viewBox="0 0 {size} {size}" width="{size}" height="{size}">'
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="#e5e7eb" stroke-width="16"/>'
+        f'{"".join(arcs)}'
+        f'<text x="{cx}" y="{cy-2}" text-anchor="middle" fill="#1f2937" font-size="24" font-weight="700">{total}</text>'
+        f'<text x="{cx}" y="{cy+15}" text-anchor="middle" fill="#9ca3af" font-size="9" letter-spacing="1">FINDINGS</text>'
+        f'</svg>'
+    )
+
+
+def _pdf_severity_pie(sev_count: dict, colors_mod, drawing_cls, pie_cls, size: float = 100):
+    """Reportlab-natives Pie-Chart (reportlab.graphics) für die Severity-
+    Verteilung im PDF -- keine zusätzliche Abhängigkeit, reportlab ist für
+    den PDF-Export ohnehin Pflicht. None, wenn keine Findings vorhanden sind."""
+    data, sev_colors = [], []
+    for s in Severity:
+        v = sev_count.get(s, 0)
+        if v:
+            data.append(v)
+            sev_colors.append(colors_mod.HexColor(_SEV_COLOR_MAP[s]))
+    if not data:
+        return None
+    d = drawing_cls(size, size)
+    pie = pie_cls()
+    pie.x = 2
+    pie.y = 2
+    pie.width = size - 4
+    pie.height = size - 4
+    pie.data = data
+    pie.labels = None
+    pie.sideLabels = False
+    for i, c in enumerate(sev_colors):
+        pie.slices[i].fillColor = c
+        pie.slices[i].strokeColor = colors_mod.white
+        pie.slices[i].strokeWidth = 1
+    d.add(pie)
+    return d
 
 
 def _is_image(ev) -> bool:
@@ -85,6 +153,7 @@ def _collect(repo: Repository) -> dict:
         "tasks": tasks, "loot": loot, "sev_count": sev_count, "done": done,
         "evidence_by_finding": _evidence_by_finding(repo),
         "history_by_finding": _history_by_finding(repo, findings),
+        "risk": compute_risk(findings),
     }
 
 
@@ -217,7 +286,12 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
  h3 {{ margin-top:1.4em; }}
  .muted {{ color:#6b7280; font-weight:normal; }}
  .chip, .badge {{ color:#fff; padding:2px 10px; border-radius:12px; font-size:.8rem; font-weight:600; }}
- .summary-chips {{ display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }}
+ .summary-chips {{ display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; align-content:flex-start; }}
+ .risk-box {{ display:flex; align-items:center; gap:16px; background:#f9fafb; border:1px solid #e5e7eb;
+   border-left:6px solid #9ca3af; border-radius:8px; padding:14px 18px; margin:16px 0 8px; }}
+ .risk-score {{ font-size:2.4rem; font-weight:800; line-height:1; }}
+ .risk-level {{ font-size:1.05rem; font-weight:700; }}
+ .chart-row {{ display:flex; align-items:center; gap:20px; flex-wrap:wrap; }}
  .cards {{ display:flex; gap:16px; flex-wrap:wrap; margin:16px 0; }}
  .card {{ flex:1; min-width:120px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:14px; text-align:center; }}
  .card .num {{ font-size:1.6rem; font-weight:700; color:var(--brand); }}
@@ -248,6 +322,11 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
 </header>
 
 <h2>Zusammenfassung</h2>
+<div class="risk-box" style="border-left-color:{d['risk']['color']}">
+ <div class="risk-score" style="color:{d['risk']['color']}">{d['risk']['score']}</div>
+ <div class="risk-text"><div class="risk-level" style="color:{d['risk']['color']}">{e(d['risk']['level'])}</div>
+ <div class="muted">Risk-Score aus {d['risk']['active_count']} offenen Findings (Geschlossen/False Positive zählen nicht mit)</div></div>
+</div>
 <div class="cards">
  <div class="card"><div class="num">{len(d['hosts'])}</div><div class="lbl">Hosts</div></div>
  <div class="card"><div class="num">{len(d['services'])}</div><div class="lbl">Services</div></div>
@@ -255,7 +334,10 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
  <div class="card"><div class="num">{len(d['loot'])}</div><div class="lbl">Loot</div></div>
  <div class="card"><div class="num">{d['done']}/{len(d['tasks'])}</div><div class="lbl">Aufgaben</div></div>
 </div>
-<div class="summary-chips">{sev_chips}</div>
+<div class="chart-row">
+ {_donut_svg(d['sev_count'])}
+ <div class="summary-chips">{sev_chips}</div>
+</div>
 
 <h2>Findings</h2>
 {find_html}
@@ -282,6 +364,8 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         from reportlab.platypus import (HRFlowable, Image, Paragraph,
                                         SimpleDocTemplate, Spacer, Table, TableStyle)
         from reportlab.lib.utils import ImageReader
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.graphics.charts.piecharts import Pie
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "PDF-Export benötigt 'reportlab'. Installieren mit: pip install reportlab"
@@ -313,6 +397,16 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
 
     # Zusammenfassung als Tabelle
     story.append(Paragraph("Zusammenfassung", styles["H2b"]))
+    risk = d["risk"]
+    risk_color = colors.HexColor(risk["color"])
+    styles.add(ParagraphStyle("RiskScore", parent=styles["Normal"], fontSize=26,
+                              textColor=risk_color, fontName="Helvetica-Bold", spaceAfter=0))
+    story.append(Paragraph(f"Risk-Score: {risk['score']} — {e(risk['level'])}", styles["RiskScore"]))
+    story.append(Paragraph(
+        f"aus {risk['active_count']} offenen Findings (Geschlossen/False Positive zählen nicht mit)",
+        styles["Meta"]))
+    story.append(Spacer(1, 8))
+
     sev = d["sev_count"]
     summ = [
         ["Hosts", "Services", "Findings", "Loot", "Aufgaben"],
@@ -329,7 +423,13 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e5e7eb")),
         ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))
-    story.append(t)
+    pie = _pdf_severity_pie(sev, colors, Drawing, Pie)
+    if pie is not None:
+        combo = Table([[t, pie]], colWidths=[16 * cm, 3.6 * cm])
+        combo.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE")]))
+        story.append(combo)
+    else:
+        story.append(t)
     story.append(Spacer(1, 4))
     sevline = "  ".join(f"{s.value}: {sev[s]}" for s in Severity if sev[s] > 0) or "keine"
     story.append(Paragraph(f"Schweregrade — {e(sevline)}", styles["Meta"]))

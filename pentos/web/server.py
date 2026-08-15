@@ -16,6 +16,7 @@ from typing import Optional
 from .. import config
 from ..models import SEVERITY_ORDER, Severity
 from ..repository import Repository
+from ..risk import compute_risk
 from ..workspace import list_projects
 
 # Auf Modulebene, damit FastAPI die (durch `from __future__ import annotations`
@@ -123,6 +124,7 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
                 sev[f.severity.value] += 1
             done = sum(1 for t in tasks if t.status.value == "done")
             journal = repo.journal()[-12:][::-1]
+            risk = compute_risk(findings)
             return {
                 "project": name,
                 "counts": {
@@ -131,6 +133,8 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
                     "tasks_total": len(tasks), "tasks_done": done,
                 },
                 "severity": sev,
+                "risk": {"score": risk["score"], "level": risk["level"],
+                        "color": risk["color"], "active_count": risk["active_count"]},
                 "activity": [
                     {"action": j.action, "detail": j.detail, "at": j.ts}
                     for j in journal
