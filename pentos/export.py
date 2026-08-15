@@ -84,7 +84,21 @@ def _collect(repo: Repository) -> dict:
         "hosts": hosts, "services": services, "findings": findings,
         "tasks": tasks, "loot": loot, "sev_count": sev_count, "done": done,
         "evidence_by_finding": _evidence_by_finding(repo),
+        "history_by_finding": _history_by_finding(repo, findings),
     }
+
+
+def _history_by_finding(repo: Repository, findings: list) -> dict[int, list]:
+    """Status-Verlauf je Finding, nur echte Wechsel (Ersteintrag mit
+    old_status=None wird wie im Markdown-Report nicht mit ausgegeben)."""
+    out: dict[int, list] = {}
+    for f in findings:
+        if not f.id:
+            continue
+        changes = [h for h in repo.finding_history(f.id) if h.old_status is not None]
+        if changes:
+            out[f.id] = changes
+    return out
 
 
 def _loc(repo: Repository, f) -> str:
@@ -121,6 +135,16 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
         remediation = (f'<p class="remediation"><strong>Remediation:</strong> '
                        f'{e(f.remediation)}</p>') if f.remediation else ""
         loc_html = f' <span class="muted">— {e(loc)}</span>' if loc else ""
+        # Status-Verlauf (Retest-Tracking), wie im Markdown-Report
+        hist_html = ""
+        changes = d["history_by_finding"].get(f.id, [])
+        if changes:
+            items = "".join(
+                f'<li><code>{e(h.ts)}</code> {e(h.old_status)} → {e(h.new_status)}'
+                f'{f" — {e(h.note)}" if h.note else ""}</li>'
+                for h in changes
+            )
+            hist_html = f'<div class="history"><strong>Status-Verlauf:</strong><ul>{items}</ul></div>'
         # Evidence einbetten: Bilder inline (base64), übrige als Liste
         ev_html = ""
         evs = d["evidence_by_finding"].get(f.id, [])
@@ -149,6 +173,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
             f'{"automatisch" if f.auto else "manuell"} erkannt</div>'
             f'<p>{e(f.description or "Keine Beschreibung.")}</p>'
             f'{remediation}'
+            f'{hist_html}'
             f'{ev_html}'
             f'</div>'
         )
@@ -201,6 +226,9 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
  .finding .fhead {{ display:flex; align-items:center; gap:10px; }}
  .finding .meta {{ font-size:.8rem; color:#6b7280; margin:6px 0; }}
  .finding .remediation {{ font-size:.9rem; background:#f0fdfa; border-radius:4px; padding:6px 10px; margin-top:6px; }}
+ .finding .history {{ font-size:.85rem; margin-top:8px; }}
+ .finding .history ul {{ margin:4px 0 0; padding-left:1.2em; }}
+ .finding .history li {{ margin:2px 0; color:#374151; }}
  .evidence {{ margin-top:10px; font-size:.85rem; }}
  .evidence figure {{ margin:8px 0; }}
  .evidence img {{ max-width:100%; border:1px solid #d1d5db; border-radius:4px; }}
@@ -328,6 +356,14 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         story.append(Paragraph(e(f.description or "Keine Beschreibung."), body))
         if f.remediation:
             story.append(Paragraph(f"<b>Remediation:</b> {e(f.remediation)}", body))
+        # Status-Verlauf (Retest-Tracking), wie im Markdown-Report
+        changes = d["history_by_finding"].get(f.id, [])
+        if changes:
+            story.append(Paragraph("<b>Status-Verlauf:</b>", styles["Meta"]))
+            for h in changes:
+                note = f" — {e(h.note)}" if h.note else ""
+                story.append(Paragraph(
+                    f"{e(h.ts)}  {e(h.old_status)} → {e(h.new_status)}{note}", styles["Meta"]))
         # Evidence: Bilder einbetten (skaliert), übrige als Referenz
         evs = d["evidence_by_finding"].get(f.id, [])
         if evs:

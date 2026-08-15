@@ -7,6 +7,18 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.32.0] – 2026-08-15
+### Hinzugefügt
+- **Status-Historie auch im HTML-/PDF-Report:** Der Status-Verlauf eines
+  Findings (Retest-Tracking, bisher nur im Markdown-Report) erscheint jetzt
+  auch in `pentos report --html` und `--pdf` — jeder echte Statuswechsel mit
+  Zeitstempel, altem/neuem Status und optionaler Notiz, direkt unter der
+  Finding-Beschreibung. Der reine Ersteintrag beim Anlegen wird wie im
+  Markdown-Report nicht extra ausgegeben; ohne Statuswechsel bleibt der
+  Abschnitt ganz weg. Datensammlung einmalig in `export._collect()`
+  (`history_by_finding`), von HTML und PDF gemeinsam genutzt. 3 neue Tests
+  in `tests/test_status_history.py`.
+
 ## [2.31.1] – 2026-08-15
 ### Behoben
 Systematischer Bug-Hunt über den gesamten Code (Multi-Agent-Review, 6

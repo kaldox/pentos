@@ -77,3 +77,49 @@ def test_history_deleted_with_finding():
     hist = repo.finding_history(f.id)
     repo.close()
     assert hist == []
+
+
+# ── Status-Historie im HTML-/PDF-Report (bisher nur im Markdown-Report) ─────
+def _repo_with_history():
+    repo = _repo()
+    from pentos.models import Finding, FindingStatus
+    f = repo.add_finding(Finding(title="Anonymer FTP-Zugriff"))
+    repo.set_finding_status(f.id, FindingStatus.CONFIRMED.value, note="manuell verifiziert")
+    repo.set_finding_status(f.id, FindingStatus.CLOSED.value, note="Retest ok, gefixt")
+    return repo
+
+
+def test_html_report_includes_status_history():
+    from pentos import export
+    repo = _repo_with_history()
+    html = export.build_html(repo, "h", cfg={})
+    repo.close()
+    assert "Status-Verlauf" in html
+    assert "manuell verifiziert" in html
+    assert "Retest ok, gefixt" in html
+    assert "Zu verifizieren" in html and "Bestätigt" in html  # alter -> neuer Status
+
+
+def test_html_report_omits_history_block_without_changes():
+    """Nur der Ersteintrag (old_status=None) -> kein Status-Verlauf-Block,
+    genau wie im Markdown-Report."""
+    from pentos import export
+    from pentos.models import Finding
+    repo = _repo()
+    repo.add_finding(Finding(title="Frisches Finding, nie geändert"))
+    html = export.build_html(repo, "h", cfg={})
+    repo.close()
+    assert "Status-Verlauf" not in html
+
+
+def test_pdf_report_includes_status_history():
+    pytest = __import__("pytest")
+    pytest.importorskip("reportlab")
+    import tempfile
+    from pentos import export
+    repo = _repo_with_history()
+    out = tempfile.mktemp(suffix=".pdf")
+    export.build_pdf(repo, "h", out, cfg={})
+    repo.close()
+    with open(out, "rb") as fh:
+        assert fh.read(5) == b"%PDF-"

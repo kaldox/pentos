@@ -39,12 +39,12 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - BloodHound-Datenimport (`scan import-bloodhound`): SharpHound-Export (ZIP
   oder Ordner) einlesen, daraus Findings für Kerberoastable/AS-REP-roastbare
   Accounts, uneingeschränkte Delegation und Domain-Admin-Mitgliedschaft bauen
+- Status-Historie auch im HTML-/PDF-Report (bisher nur im Markdown-Report)
 
 ## Als Nächstes
 
 Konkret geplant, baut auf Bestehendem auf:
 
-- **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).
 - **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): alle drei können nativ
   JSON ausgeben, das macht die Parser robuster als das gobuster-Textformat.
   `httpx` liefert Tech-Detection direkt mit, `naabu` ist eine sehr schnelle
