@@ -33,14 +33,14 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   Workspace als eine ZIP-Datei, zum Sichern, Umziehen oder Teilen
 - Command Palette (Strg+K) im Web-Dashboard: globale Fuzzy-Suche über
   Hosts/Findings/Notizen plus Schnellaktionen
+- Strukturierter nikto-Parser (XML-Report): sicherheitsrelevante Treffer
+  werden automatisch zu Findings mit heuristischer Severity, Header-Rauschen
+  landet gesammelt als Notiz statt Findings zu spammen
 
 ## Als Nächstes
 
 Konkret geplant, baut auf Bestehendem auf:
 
-- **Strukturierter nikto-Parser**, damit dessen Treffer ebenfalls automatisch
-  zu Findings werden statt nur als Capture (Vorbild: der neue gobuster-/ffuf-/
-  feroxbuster-Parser).
 - **Status-Historie auch im HTML-/PDF-Report** (aktuell im Markdown-Report).
 - **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): alle drei können nativ
   JSON ausgeben, das macht die Parser robuster als das gobuster-Textformat.

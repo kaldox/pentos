@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.29.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.30.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -31,7 +31,7 @@ commands itself**.
 | Guided recon/enum chain (`sweep`, rule-based, prompts per step) | ✅ |
 | Opt-in runner layer (23 tools, no shell eval, scope guard, timeout) | ✅ |
 | Methodology / playbook library (web/AD/Linux/Windows privesc) | ✅ |
-| Automatic findings (rule-based) + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster) | ✅ |
+| Automatic findings (rule-based) + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto) | ✅ |
 | Attack-path graph (Mermaid + Graphviz DOT) | ✅ |
 | Obsidian integration (vault with `[[wikilinks]]`) | ✅ |
 | Loot management (credentials/hashes/tokens/…) | ✅ |
@@ -57,7 +57,6 @@ commands itself**.
 
 **Roadmap (open):**
 - AI flashcards & note summaries (from your own data only, no hallucination)
-- Structured nikto parser into findings (gobuster/ffuf/feroxbuster already shipped)
 - ProjectDiscovery parsers (httpx/naabu/dnsx) and EPSS enrichment for findings
 - Richer screenshot handling (e.g. direct capture/annotation)
 
@@ -317,4 +316,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.29.0**.
+Current version: **2.30.0**.

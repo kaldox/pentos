@@ -4,6 +4,7 @@ Ingest-Logik für PentOS-Runs.
 Verarbeitet die Rohausgabe eines Tool-Laufs in DB-Objekte:
 - nmap   -> volle Pipeline (Hosts/Services/Auto-Tasks/Auto-Findings)
 - nuclei -> Findings aus den Treffer-Zeilen
+- nikto  -> Findings aus dem XML-Report
 - sonst  -> Capture: Evidence + Notiz mit der Ausgabe
 
 Jeder Lauf wird zusätzlich als Evidence (Rohdatei) und im runs-Log erfasst.
@@ -13,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Optional
 
@@ -102,6 +104,19 @@ def ingest(repo: Repository, spec: ToolSpec, target: str, result: RunResult,
             body = (f"nuclei Info-Treffer ({len(info_lines)}) — Kontext, keine Findings:\n\n"
                     + "\n".join(f"- {ln}" for ln in info_lines[:200]))
             repo.add_note(Note(title=f"nuclei (info) · {target} — {len(info_lines)}",
+                               body=body, category="vuln", host_id=host_id))
+            summary["notes"] += 1
+        return summary
+
+    # ── nikto: strukturierte Findings + Info-Sammelnotiz ─────────────────────
+    if parser == "nikto" and result.output_path and Path(result.output_path).exists():
+        text = Path(result.output_path).read_text(encoding="utf-8", errors="ignore")
+        find_n, info_lines = _parse_nikto(repo, spec, target, text, host_id)
+        summary["findings"] += find_n
+        if info_lines:
+            body = (f"nikto Info-Treffer ({len(info_lines)}) — Kontext, keine Findings:\n\n"
+                    + "\n".join(f"- {ln}" for ln in info_lines[:200]))
+            repo.add_note(Note(title=f"nikto (info) · {target} — {len(info_lines)}",
                                body=body, category="vuln", host_id=host_id))
             summary["notes"] += 1
         return summary
@@ -252,6 +267,103 @@ def _parse_nuclei(repo: Repository, spec, target: str, text: str,
             desc += f"\nDetails: {rest}"
         repo.add_finding(Finding(
             title=title, severity=sev, category=FindingCategory.VULN,
+            status=FindingStatus.UNVERIFIED, description=desc,
+            host_id=host_id, auto=True,
+        ))
+        find_n += 1
+    return find_n, info_lines
+
+
+# ── nikto: XML-Report ("-o {outfile} -Format xml") -> Findings ──────────────
+# Vorbild: das offizielle nikto_report_xml.plugin (program/plugins/ im
+# sullo/nikto-Repo). <item id=".." method="..">-Elemente mit den
+# Kindelementen description/uri/namelink/iplink/references, beliebig tief
+# verschachtelt unter <scandetails> -- deshalb root.iter() statt fixer Pfade.
+
+# Häufige Low-Signal-Treffer (fehlende Security-Header etc.) werden NICHT zu
+# Findings, sondern gesammelt als eine Notiz abgelegt (wie nuclei-Info-Treffer).
+_NIKTO_NOISE = re.compile(
+    r"x-frame-options|x-content-type-options|x-xss-protection|"
+    r"strict-transport-security|content-security-policy|anti-clickjacking|"
+    r"uncommon header|referrer-policy|permissions-policy|"
+    r"cookie.*(httponly|secure)",
+    re.IGNORECASE,
+)
+
+# Reihenfolge = Priorität; erste passende Regel gewinnt. Kein CVSS von nikto
+# selbst verfügbar -> Severity wird heuristisch aus Text/Referenzen abgeleitet.
+_NIKTO_SEV_RULES: list[tuple[re.Pattern, "Severity"]] = [
+    (re.compile(r"remote (code|command) execution|backdoor", re.IGNORECASE), Severity.CRITICAL),
+    (re.compile(
+        r"sql injection|cross[- ]site scripting|\bxss\b|command injection|"
+        r"authentication bypass|default (account|credential|password)|"
+        r"cve-\d{4}-\d+", re.IGNORECASE), Severity.HIGH),
+    (re.compile(
+        r"outdated|vulnerable|directory (indexing|listing)|disclosure|"
+        r"backup|\.bak\b|phpinfo|shellshock|sensitive|config(uration)? file",
+        re.IGNORECASE), Severity.MEDIUM),
+]
+
+
+def _nikto_severity(text: str) -> Severity:
+    for pattern, sev in _NIKTO_SEV_RULES:
+        if pattern.search(text):
+            return sev
+    return Severity.LOW
+
+
+def _parse_nikto_xml(text: str) -> list[dict]:
+    """Parst nikto-XML-Output in eine Liste von Rohtreffern.
+
+    Robust gegen bekannte nikto-XML-Eigenheiten (z.B. leere/fehlerhafte
+    Dokumente bei Nicht-Webserver-Zielen) -- liefert dann [] statt zu werfen.
+    """
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return []
+    hits = []
+    for item in root.iter("item"):
+        desc = (item.findtext("description") or "").strip()
+        if not desc:
+            continue
+        hits.append({
+            "id": item.get("id", ""), "method": item.get("method", ""),
+            "description": desc,
+            "uri": (item.findtext("uri") or "").strip(),
+            "references": (item.findtext("references") or "").strip(),
+        })
+    return hits
+
+
+def _parse_nikto(repo: Repository, spec, target: str, text: str,
+                 host_id: Optional[int]) -> tuple[int, list[str]]:
+    """Strukturierter nikto-Parser (Vorbild: der nuclei-Parser).
+
+    Liefert (Anzahl angelegter Findings, Liste der Info-Treffer-Texte) genau
+    wie `_parse_nuclei`. Header-Rauschen wird gesammelt statt Findings zu
+    spammen; alles andere wird ein Finding mit heuristischer Severity.
+    """
+    find_n = 0
+    info_lines: list[str] = []
+    for h in _parse_nikto_xml(text):
+        combined = f"{h['description']} {h['references']}"
+        if _NIKTO_NOISE.search(combined):
+            info_lines.append(f"{h['uri'] or '/'} — {h['description']}")
+            continue
+        title_body = h["description"]
+        if len(title_body) > 100:
+            title_body = title_body[:97] + "…"
+        title = f"{title_body} ({target})"
+        if repo.finding_exists(title, host_id=host_id):
+            continue
+        desc = h["description"]
+        if h["uri"]:
+            desc += f"\nPfad: {h['uri']}"
+        if h["references"]:
+            desc += f"\nReferenzen: {h['references']}"
+        repo.add_finding(Finding(
+            title=title, severity=_nikto_severity(combined), category=FindingCategory.VULN,
             status=FindingStatus.UNVERIFIED, description=desc,
             host_id=host_id, auto=True,
         ))

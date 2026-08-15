@@ -33,13 +33,14 @@ For context, what was added most recently (details in the changelog):
   as a single ZIP file, for backup, migration or sharing
 - Command palette (Ctrl+K) in the web dashboard: global fuzzy search over
   hosts/findings/notes plus quick actions
+- Structured nikto parser (XML report): security-relevant hits automatically
+  become findings with a heuristic severity, header noise gets collected into
+  a note instead of spamming findings
 
 ## Next
 
 Concretely planned, building on what exists:
 
-- **Structured nikto parser**, so its hits also automatically become findings
-  instead of just a capture (following the new gobuster/ffuf/feroxbuster parser).
 - **Status history in the HTML/PDF report too** (currently in the Markdown report).
 - **ProjectDiscovery parsers** (`httpx`/`naabu`/`dnsx`): all three can output
   native JSON, which makes for more robust parsers than gobuster's text

@@ -7,6 +7,25 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.30.0] – 2026-08-15
+### Added
+- **Structured nikto parser:** `nikto` now runs with `-o {outfile} -Format
+  xml` instead of plain capture. The new parser (`_parse_nikto` in
+  `pentos/runners/parsers.py`) reads the XML report's `<item>` elements
+  (schema taken from the official `nikto_report_xml.plugin`, robust against
+  arbitrary nesting depth via `root.iter()` and against known nikto XML
+  quirks on malformed documents). Common header noise (missing
+  `X-Frame-Options`, `X-Content-Type-Options`, etc.) is collected into a
+  single note instead of spamming findings — same as the nuclei parser.
+  Everything else becomes a finding with a heuristically derived severity
+  (nikto itself provides no CVSS): CVE references, SQLi/XSS/command
+  injection etc. → High, RCE hints → Critical, outdated software/directory
+  listing/phpinfo/backup files → Medium, everything else → Low. New test
+  fixture `tests/fixtures/nikto_scan.xml` (built to match the confirmed
+  nikto XML schema) and `tests/test_nikto_parser.py` (6 tests: parsing,
+  noise filtering, severity heuristics, path/references in the
+  description, no duplicates on a second run).
+
 ## [2.29.0] – 2026-08-14
 ### Added
 - **Project export/import:** `pentos project export [name]` packs the whole

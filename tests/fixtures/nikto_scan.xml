@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<niktoscan>
+<niktoscan hoststest="1" options="-h 10.10.10.5 -o out.xml -Format xml" version="2.5.0"
+  scanstart="Mon Aug 17 10:00:00 2026" scanend="Mon Aug 17 10:05:00 2026" scanelapsed="300" nxmlversion="1.2">
+<scandetails targetip="10.10.10.5" targethostname="10.10.10.5" targetport="80"
+  targetbanner="Apache/2.4.41 (Ubuntu)" starttime="Mon Aug 17 10:00:00 2026"
+  sitename="10.10.10.5" siteip="10.10.10.5" hostheader="" errors="0" checks="7024">
+<item id="999100" method="GET">
+<description>The anti-clickjacking X-Frame-Options header is not present.</description>
+<uri>/</uri>
+<namelink>http://10.10.10.5/</namelink>
+<iplink>http://10.10.10.5/</iplink>
+<references></references>
+</item>
+<item id="999200" method="GET">
+<description>The X-Content-Type-Options header is not set.</description>
+<uri>/</uri>
+<namelink>http://10.10.10.5/</namelink>
+<iplink>http://10.10.10.5/</iplink>
+<references></references>
+</item>
+<item id="500123" method="GET">
+<description>/phpinfo.php: Output from the phpinfo() function was found.</description>
+<uri>/phpinfo.php</uri>
+<namelink>http://10.10.10.5/phpinfo.php</namelink>
+<iplink>http://10.10.10.5/phpinfo.php</iplink>
+<references>https://cwe.mitre.org/data/definitions/200.html</references>
+</item>
+<item id="500456" method="GET">
+<description>/backup/: Directory indexing found.</description>
+<uri>/backup/</uri>
+<namelink>http://10.10.10.5/backup/</namelink>
+<iplink>http://10.10.10.5/backup/</iplink>
+<references></references>
+</item>
+<item id="900100" method="GET">
+<description>This host may be vulnerable to CVE-2021-41773, potential remote command execution via mod_cgi.</description>
+<uri>/cgi-bin/.%2e/%2e%2e/%2e%2e/etc/passwd</uri>
+<namelink>http://10.10.10.5/cgi-bin/.%2e/%2e%2e/%2e%2e/etc/passwd</namelink>
+<iplink>http://10.10.10.5/cgi-bin/.%2e/%2e%2e/%2e%2e/etc/passwd</iplink>
+<references>CVE-2021-41773</references>
+</item>
+<item id="999999" method="GET">
+<description>Apache/2.4.41 appears to be outdated (current is at least Apache/2.4.54).</description>
+<uri>/</uri>
+<namelink>http://10.10.10.5/</namelink>
+<iplink>http://10.10.10.5/</iplink>
+<references></references>
+</item>
+<statistics elapsed="300" itemsfound="6" itemstested="7024" endtime="Mon Aug 17 10:05:00 2026" />
+</scandetails>
+</niktoscan>
+</niktoscan>

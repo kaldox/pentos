@@ -36,9 +36,10 @@ REGISTRY: dict[str, ToolSpec] = {
     ),
     "nikto": ToolSpec(
         name="nikto", binary="nikto", category="web",
-        argv=["nikto", "-h", "{target}"],
-        timeout=900, description="Web-Schwachstellen-Scan",
-        parser="capture",
+        argv=["nikto", "-h", "{target}", "-o", "{outfile}", "-Format", "xml"],
+        produces_outfile=True, outfile_ext="xml", timeout=900,
+        description="Web-Schwachstellen-Scan",
+        parser="nikto",
     ),
     "feroxbuster": ToolSpec(
         name="feroxbuster", binary="feroxbuster", category="web",
