@@ -36,6 +36,9 @@ For context, what was added most recently (details in the changelog):
 - Structured nikto parser (XML report): security-relevant hits automatically
   become findings with a heuristic severity, header noise gets collected into
   a note instead of spamming findings
+- BloodHound data import (`scan import-bloodhound`): read a SharpHound export
+  (ZIP or folder) and turn it into findings for kerberoastable/AS-REP-roastable
+  accounts, unconstrained delegation and Domain Admins membership
 
 ## Next
 
@@ -64,10 +67,8 @@ Larger chunks that deserve a fresh head:
   a thematic follow-up to the `.git` exposure detector from 2.28.0: when an
   open `.git` is found, suggest running `gitleaks` against a dump and turn its
   hits into credential/info-disclosure findings.
-- **BloodHound data import**: ingest SharpHound/AzureHound JSON and turn it
-  into findings ("kerberoastable accounts", domain admin count, AS-REP
-  roasting possible) plus a link to the real BloodHound view – PentOS
-  interprets the data instead of rebuilding BloodHound.
+- **AzureHound support** for the BloodHound import (Entra ID has a different
+  schema than SharpHound, not covered yet).
 - **Engagement timeline**: every project workspace already gets a
   `timelines/` folder that no feature uses yet – capture rules-of-engagement
   basics (time windows, blackout periods, escalation path) and project

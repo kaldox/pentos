@@ -30,6 +30,8 @@ pentos service list                  # Dienste
 pentos scan import-nmap scan.xml                 # nmap-XML (-oX) importieren
 pentos scan import-scanner report.nessus         # Nessus/OpenVAS/Burp (auto-erkannt)
 pentos scan import-scanner gvm.xml --format openvas   # Format erzwingen
+pentos scan import-bloodhound sharphound.zip     # SharpHound-Export (BloodHound CE, on-prem AD)
+pentos scan import-bloodhound export/ --host 1   # oder entpackter Ordner, an einen Host gebunden
 pentos scan diff rescan.xml                       # nmap-Scan gegen Projektstand (nur lesend)
 
 # Empfehlungen (nur Vorschlag, keine Ausführung)

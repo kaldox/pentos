@@ -7,6 +7,28 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.31.0] – 2026-08-15
+### Added
+- **BloodHound data import** (`pentos scan import-bloodhound <export>`,
+  BloodHound CE / on-prem AD): reads a SharpHound export (a ZIP archive, the
+  way SharpHound produces it, or an already-unpacked folder) and turns it
+  into findings — kerberoastable accounts (SPN set), AS-REP-roastable
+  accounts (Kerberos preauth disabled), unconstrained delegation (users and
+  computers), and Domain Admins membership (detected via the well-known RID
+  `-512`, independent of domain name/locale). `--host` optionally links
+  findings/note to a host (e.g. the domain controller). PentOS does **not**
+  rebuild a graph — that stays BloodHound's job; for full attack-path
+  analysis it points to the real BloodHound UI. New module
+  `pentos/importers/bloodhound.py`. Schema (data/meta wrapper per file,
+  lowercase properties like `hasspn`/`dontreqpreauth`/`enabled`, a
+  `Members` array per group) verified against the official SharpHound
+  documentation and multiple independent sources, not guessed. Only
+  SharpHound (on-prem AD) is supported — AzureHound (Entra ID) has a
+  different schema and is noted as an open roadmap item. 16 new tests
+  (`tests/test_bloodhound_importer.py`, `tests/test_cli_bloodhound.py`)
+  with a hand-built but schema-accurate fixture under
+  `tests/fixtures/sharphound/`.
+
 ## [2.30.0] – 2026-08-15
 ### Added
 - **Structured nikto parser:** `nikto` now runs with `-o {outfile} -Format

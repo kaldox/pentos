@@ -7,6 +7,28 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.31.0] – 2026-08-15
+### Hinzugefügt
+- **BloodHound-Datenimport** (`pentos scan import-bloodhound <export>`,
+  BloodHound CE / on-prem AD): liest einen SharpHound-Export (ZIP-Archiv,
+  wie SharpHound es erzeugt, oder ein bereits entpackter Ordner) und leitet
+  daraus Findings ab — Kerberoastable Accounts (SPN gesetzt), AS-REP-
+  roastbare Accounts (Kerberos-Preauth deaktiviert), uneingeschränkte
+  Delegation (Nutzer und Computer) sowie Domain-Admin-Mitgliedschaft
+  (erkannt über die well-known RID `-512`, unabhängig von Domänenname/
+  Sprache). `--host` verknüpft Findings/Notiz optional mit einem Host (z.B.
+  dem Domain Controller). PentOS baut damit **keinen Graphen nach** — das
+  bleibt BloodHounds Job; für die volle Angriffspfad-Analyse wird auf die
+  echte BloodHound-Oberfläche verwiesen. Neues Modul
+  `pentos/importers/bloodhound.py`. Schema (data/meta-Wrapper je Datei,
+  lowercase-Properties wie `hasspn`/`dontreqpreauth`/`enabled`,
+  `Members`-Array je Gruppe) gegen die offizielle SharpHound-Dokumentation
+  und mehrere unabhängige Quellen verifiziert, nicht geraten. Nur SharpHound
+  (on-prem AD) wird unterstützt — AzureHound (Entra ID) hat ein anderes
+  Schema und ist als offener Roadmap-Punkt vermerkt. 16 neue Tests
+  (`tests/test_bloodhound_importer.py`, `tests/test_cli_bloodhound.py`) mit
+  handgebauter, aber schema-treuer Fixture unter `tests/fixtures/sharphound/`.
+
 ## [2.30.0] – 2026-08-15
 ### Hinzugefügt
 - **Strukturierter nikto-Parser:** `nikto` läuft jetzt mit `-o {outfile}

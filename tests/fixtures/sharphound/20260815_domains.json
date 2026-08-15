@@ -1,0 +1,9 @@
+{
+  "data": [
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333",
+      "Properties": {"name": "CORP.LOCAL", "domain": "CORP.LOCAL"}
+    }
+  ],
+  "meta": {"count": 1, "dataType": "domains", "version": 6, "collectorVersion": "2.5.0"}
+}

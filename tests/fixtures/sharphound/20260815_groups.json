@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-512",
+      "Properties": {"name": "DOMAIN ADMINS@CORP.LOCAL", "domain": "CORP.LOCAL"},
+      "Members": [
+        {"MemberId": "S-1-5-21-1111111111-2222222222-3333333333-1108", "MemberType": "User"},
+        {"MemberId": "S-1-5-21-1111111111-2222222222-3333333333-500", "MemberType": "User"}
+      ]
+    },
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-513",
+      "Properties": {"name": "DOMAIN USERS@CORP.LOCAL", "domain": "CORP.LOCAL"},
+      "Members": []
+    }
+  ],
+  "meta": {"count": 2, "dataType": "groups", "version": 6, "collectorVersion": "2.5.0"}
+}

@@ -1,0 +1,45 @@
+{
+  "data": [
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-1105",
+      "Properties": {
+        "name": "SVC-SQL@CORP.LOCAL", "domain": "CORP.LOCAL",
+        "enabled": true, "hasspn": true, "dontreqpreauth": false,
+        "admincount": false, "unconstraineddelegation": false
+      }
+    },
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-1106",
+      "Properties": {
+        "name": "JDOE@CORP.LOCAL", "domain": "CORP.LOCAL",
+        "enabled": true, "hasspn": false, "dontreqpreauth": true,
+        "admincount": false, "unconstraineddelegation": false
+      }
+    },
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-1107",
+      "Properties": {
+        "name": "OLDACCOUNT@CORP.LOCAL", "domain": "CORP.LOCAL",
+        "enabled": false, "hasspn": true, "dontreqpreauth": true,
+        "admincount": false, "unconstraineddelegation": false
+      }
+    },
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-502",
+      "Properties": {
+        "name": "KRBTGT@CORP.LOCAL", "domain": "CORP.LOCAL",
+        "enabled": true, "hasspn": true, "dontreqpreauth": false,
+        "admincount": true, "unconstraineddelegation": false
+      }
+    },
+    {
+      "ObjectIdentifier": "S-1-5-21-1111111111-2222222222-3333333333-1108",
+      "Properties": {
+        "name": "ADMIN.BOB@CORP.LOCAL", "domain": "CORP.LOCAL",
+        "enabled": true, "hasspn": false, "dontreqpreauth": false,
+        "admincount": true, "unconstraineddelegation": true
+      }
+    }
+  ],
+  "meta": {"count": 5, "dataType": "users", "version": 6, "collectorVersion": "2.5.0"}
+}

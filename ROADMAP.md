@@ -36,6 +36,9 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Strukturierter nikto-Parser (XML-Report): sicherheitsrelevante Treffer
   werden automatisch zu Findings mit heuristischer Severity, Header-Rauschen
   landet gesammelt als Notiz statt Findings zu spammen
+- BloodHound-Datenimport (`scan import-bloodhound`): SharpHound-Export (ZIP
+  oder Ordner) einlesen, daraus Findings für Kerberoastable/AS-REP-roastbare
+  Accounts, uneingeschränkte Delegation und Domain-Admin-Mitgliedschaft bauen
 
 ## Als Nächstes
 
@@ -65,10 +68,8 @@ Größere Brocken, die einen frischen Kopf verdienen:
   thematischer Anschluss an den `.git`-Exposure-Detector aus 2.28.0: wird ein
   offenes `.git` gefunden, `gitleaks` gegen einen Dump vorschlagen und dessen
   Treffer zu Credential-/Info-Disclosure-Findings machen.
-- **BloodHound-Datenimport**: SharpHound-/AzureHound-JSON einlesen und daraus
-  Findings ("Kerberoastable Accounts", Domain-Admin-Anzahl, AS-REP-Roasting
-  möglich) plus Link zur echten BloodHound-Ansicht bauen – PentOS wertet aus,
-  statt BloodHound nachzubauen.
+- **AzureHound-Unterstützung** für den BloodHound-Import (Entra ID hat ein
+  anderes Schema als SharpHound, bisher nicht abgedeckt).
 - **Engagement-Zeitplan/Timeline**: Der Workspace legt pro Projekt schon einen
   `timelines/`-Ordner an, der aber noch von keinem Feature genutzt wird –
   Rules-of-Engagement-Eckdaten (Zeitfenster, Blackout-Zeiten, Eskalationspfad)

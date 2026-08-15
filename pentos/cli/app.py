@@ -28,6 +28,7 @@ from .. import export as export_mod
 from .. import playbooks as playbooks_mod
 from .. import diff as diff_mod
 from .. import credmatch as credmatch_mod
+from ..importers import bloodhound as bloodhound_importer
 from ..importers import nmap as nmap_importer
 from ..importers import scanners as scanner_importer
 from ..runners import base as runner_base, parsers as runner_parsers, registry as runner_registry
@@ -415,6 +416,106 @@ def scan_import_scanner(
         f"Hosts: {n_hosts}   Services: {n_services}\n"
         f"Neue Findings: {n_findings}   Übersprungen (Dublette): {n_dupe}",
         title="Scanner-Import"))
+
+
+@scan_app.command("import-bloodhound")
+def scan_import_bloodhound(
+    path: Path = typer.Argument(..., exists=True, readable=True,
+                                help="SharpHound-Export: ZIP-Datei oder entpackter Ordner"),
+    host: Optional[str] = typer.Option(None, "--host",
+                                       help="Host-ID oder -Adresse zum Verknüpfen (z.B. der Domain Controller)"),
+):
+    """Importiert einen SharpHound-Export (BloodHound CE, on-prem AD).
+
+    Baut keinen Graphen nach (das bleibt BloodHounds Job) -- wertet die Rohdaten aus
+    und legt Findings an: Kerberoastable Accounts, AS-REP-roastbare Accounts,
+    uneingeschränkte Delegation, Domain-Admin-Mitgliedschaft. Für die volle
+    Angriffspfad-Analyse den Export zusätzlich in BloodHound selbst öffnen.
+    Nur SharpHound (on-prem AD); AzureHound (Entra ID) wird (noch) nicht unterstützt.
+    """
+    repo, _ = _repo()
+    try:
+        summary = bloodhound_importer.parse_sharphound(path)
+    except bloodhound_importer.BloodHoundImportError as exc:
+        repo.close()
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+
+    host_id = None
+    if host:
+        h = repo.get_host(int(host)) if host.isdigit() else None
+        if h is None:
+            h = repo.get_host_by_address(host)
+        if h:
+            host_id = h.id
+        else:
+            console.print(f"[yellow]Host '{host}' nicht im Projekt – Findings/Notiz ohne Host-Bindung.[/yellow]")
+
+    def _add(title: str, sev: Severity, cat: FindingCategory, desc: str) -> bool:
+        if repo.finding_exists(title, host_id=host_id):
+            return False
+        repo.add_finding(Finding(title=title, severity=sev, category=cat,
+                                 status=FindingStatus.UNVERIFIED, description=desc,
+                                 host_id=host_id, auto=True))
+        return True
+
+    def _list_desc(items: list[str], limit: int = 20) -> str:
+        shown = ", ".join(items[:limit])
+        if len(items) > limit:
+            shown += f" (+{len(items) - limit} weitere)"
+        return shown
+
+    find_n = 0
+    dom = summary["domain"] or "Domäne"
+    if summary["kerberoastable"]:
+        if _add(f"Kerberoastable Accounts in {dom}", Severity.HIGH, FindingCategory.CREDENTIAL,
+               f"{len(summary['kerberoastable'])} aktive Benutzerkonten mit gesetztem SPN "
+               f"(Kerberoasting möglich – Service-Ticket anfordern, Hash offline cracken):\n"
+               f"{_list_desc(summary['kerberoastable'])}"):
+            find_n += 1
+    if summary["asrep_roastable"]:
+        if _add(f"AS-REP-roastbare Accounts in {dom}", Severity.HIGH, FindingCategory.CREDENTIAL,
+               f"{len(summary['asrep_roastable'])} aktive Benutzerkonten ohne Kerberos-Preauth "
+               f"(AS-REP-Roasting möglich, kein Passwort nötig):\n{_list_desc(summary['asrep_roastable'])}"):
+            find_n += 1
+    if summary["unconstrained_delegation"]:
+        if _add(f"Uneingeschränkte Delegation in {dom}", Severity.HIGH, FindingCategory.MISCONFIG,
+               f"{len(summary['unconstrained_delegation'])} Konten/Computer mit uneingeschränkter "
+               f"Kerberos-Delegation (bei Kompromittierung TGTs abgreifbar):\n"
+               f"{_list_desc(summary['unconstrained_delegation'])}"):
+            find_n += 1
+    if summary["domain_admins"]:
+        if _add(f"Domain-Admin-Mitgliedschaft in {dom} ({len(summary['domain_admins'])})",
+               Severity.MEDIUM, FindingCategory.EXPOSURE,
+               f"Mitglieder der Gruppe 'Domain Admins':\n{_list_desc(summary['domain_admins'], limit=50)}\n\n"
+               "Für die volle Angriffspfad-Analyse (wer kann wie Domain Admin werden) "
+               "den Export in der echten BloodHound-Oberfläche öffnen."):
+            find_n += 1
+
+    body = (
+        f"SharpHound-Import — {dom}\n\n"
+        f"Benutzer: {summary['user_count']}   Computer: {summary['computer_count']}   "
+        f"Gruppen: {summary['group_count']}\n\n"
+        f"Kerberoastable: {len(summary['kerberoastable'])}\n"
+        f"AS-REP-roastbar: {len(summary['asrep_roastable'])}\n"
+        f"Uneingeschränkte Delegation: {len(summary['unconstrained_delegation'])}\n"
+        f"Domain Admins: {len(summary['domain_admins'])}\n\n"
+        "PentOS wertet nur aus – für die volle Graphen-/Angriffspfad-Analyse "
+        "den Export in BloodHound selbst öffnen."
+    )
+    repo.add_note(Note(title=f"BloodHound-Import · {dom}", body=body, category="ad", host_id=host_id))
+    repo.log("BloodHound-Import", f"{path} ({dom}): {find_n} Findings")
+    repo.close()
+
+    console.print(Panel.fit(
+        f"[green]BloodHound-Import abgeschlossen[/green]  ({dom})\n"
+        f"Benutzer: {summary['user_count']}   Computer: {summary['computer_count']}   "
+        f"Gruppen: {summary['group_count']}\n"
+        f"Neue Findings: {find_n}\n"
+        f"Kerberoastable: {len(summary['kerberoastable'])}   "
+        f"AS-REP-roastbar: {len(summary['asrep_roastable'])}   "
+        f"Domain Admins: {len(summary['domain_admins'])}",
+        title="BloodHound"))
 
 
 @scan_app.command("diff")
