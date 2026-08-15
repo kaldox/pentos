@@ -39,17 +39,67 @@ Die vollständige Roadmap mit Begründungen und bewussten Nicht-Zielen steht in 
 
 ## Installation
 
+Vier Schritte, kopierbar. Funktioniert identisch auf Kali/Debian/Ubuntu, macOS
+und Windows.
+
+**1) Repo herunterladen** — `git clone` empfehlenswert (sonst siehe Hinweis unten):
 ```bash
+git clone https://github.com/kaldox/pentos.git
 cd pentos
-pip install -r requirements.txt
-# optional als Befehl 'pentos' installieren:
-pip install -e .
 ```
 
-Ohne Installation läuft alles via `python -m pentos ...`.
+**2) Virtuelle Umgebung anlegen und aktivieren** — auf modernen Systemen
+(Kali, Debian 12+, Ubuntu 23.04+, …) verweigert `pip` die Installation sonst mit
+`error: externally-managed-environment`. Das ist **kein Kali-spezifisches Problem**,
+sondern seit PEP 668 der Normalfall — dieser Schritt ist deshalb kein „Extra",
+sondern Pflicht:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate        # Linux/macOS
+```
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1       # Windows (PowerShell)
+```
+Der Zeilenanfang deines Terminals zeigt danach `(.venv)` — nur dann installiert
+`pip` auch wirklich in die isolierte Umgebung statt ins System.
+
+**3) Installieren:**
+```bash
+pip install -e ".[pdf,web,mcp,tui]"   # empfohlen: mit allen Extras
+# schlank, nur die Kern-CLI ohne PDF/Web/MCP/TUI:
+#   pip install -e .
+```
+
+**4) Prüfen, ob es funktioniert:**
+```bash
+pentos --help
+```
+Erscheint eine Befehlsübersicht, ist die Installation fertig. `pentos` steht ab
+jetzt in dieser (aktivierten) virtuellen Umgebung zur Verfügung.
+
+> **Wichtig:** Das venv muss in **jeder neuen Terminal-Sitzung** erneut aktiviert
+> werden (Schritt 2, `source .venv/bin/activate` im Projektordner) — sonst meldet
+> die Shell `pentos: command not found`. Wer das lästig findet: `pip install -e .`
+> auch ohne aktives venv ausführen zu wollen ist genau der Fehler, der zu
+> `externally-managed-environment` führt — nicht erzwingen, sondern das venv
+> aktivieren.
+
+Ohne Schritt 3 (`pip install -e .`) läuft PentOS trotzdem via `python -m pentos ...`,
+solange das venv aktiv ist und man sich im Projektordner befindet (dem, der
+`pyproject.toml` enthält).
 
 Beim ersten Start wird `~/.config/pentos/config.yaml` automatisch angelegt
 (siehe `config.example.yaml`). Eigener Pfad via `export PENTOS_CONFIG=/pfad/config.yaml`.
+
+### Typische Stolpersteine
+
+| Fehlermeldung | Ursache | Lösung |
+|---|---|---|
+| `error: externally-managed-environment` | Schritt 2 (venv) übersprungen, oder venv nicht aktiviert (kein `(.venv)` im Prompt) | `python3 -m venv .venv && source .venv/bin/activate`, dann Schritt 3 wiederholen. **Nicht** mit `--break-system-packages` erzwingen. |
+| `ModuleNotFoundError: No module named 'pentos'` bei `python -m pentos` | Falscher Ordner. Bei „Download ZIP" statt `git clone` heisst der entpackte Ordner `pentos-main`, und **darin** liegt zusätzlich ein Unterordner `pentos/` (der Python-Quellcode) — leicht zu verwechseln | `ls` ausführen: der richtige Ordner enthält `pyproject.toml` direkt. Falls man im inneren `pentos/`-Unterordner steht: `cd ..` |
+| `pentos: command not found` nach einem Neustart des Terminals | Venv ist in der neuen Sitzung nicht aktiv | `source .venv/bin/activate` im Projektordner erneut ausführen (Schritt 2) |
+| `pip install -r requirements.txt` findet die Datei nicht | Falscher Ordner (siehe oben) — ausserdem: `pip install -e ".[pdf,web,mcp,tui]"` aus Schritt 3 ersetzt `requirements.txt` vollständig und ist der empfohlene Weg | In den richtigen Ordner wechseln, dann Schritt 3 wie oben |
 
 ---
 
@@ -79,6 +129,15 @@ pentos report --html                      # gebrandetes HTML (auch --pdf, --expl
 Das ist der Kern-Ablauf. Alle Befehle nach Bereich gruppiert in der
 **[Befehls-Referenz (COMMANDS.md)](COMMANDS.md)**, oder live über `pentos --help`
 und `pentos <gruppe> --help` (z.B. `pentos finding --help`).
+
+Alternative für den Einstieg ohne fertigen Scan — geführte Recon direkt gegen
+ein Ziel:
+```bash
+pentos project new demo
+pentos scope add 10.10.10.0/24       # CIDR oder Hostname (z.B. box.thm)
+pentos sweep 10.10.10.5 --run        # geführte Recon/Enumeration
+pentos template seed                 # Finding-Vorlagen vorbefüllen
+```
 
 Der **Advisor-Modus** (Standard an) macht die KI proaktiv: konkrete nächste Schritte
 mit Begründung und vorgeschlagenen Befehlen, die du prüfst und selbst startest. Die KI
@@ -139,6 +198,10 @@ pentos ai status          # prüft Erreichbarkeit + listet Modelle
 Provider: `ollama` | `lmstudio` | `openai` | `none`. Reasoning-Modelle (z.B.
 `deepseek-r1`) werden unterstützt; ihre internen `<think>…</think>`-Blöcke filtert
 PentOS aus der Antwort.
+
+Ein optionaler OpenAI-Key wird **nie** in der Config gespeichert, sondern nur über
+die in `api_key_env` genannte Umgebungsvariable gelesen (Default-KI ist lokales
+Ollama, läuft komplett ohne Cloud-Anbindung).
 
 **Ollama aus einer VM erreichen:** Ollama auf dem Hauptrechner im Netz lauschen
 lassen (`OLLAMA_HOST=0.0.0.0:11434 ollama serve`), Port 11434 in der Firewall
@@ -207,33 +270,6 @@ autorisierten Umgebungen (eigene Labs, CTF/THM, freigegebene Tests).
 
 ---
 
-## Installation (aus diesem Repo)
-
-```bash
-git clone https://github.com/kaldox/pentos.git
-cd pentos
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[pdf,web,mcp,tui]"  # alle Extras: PDF + Web-Dashboard + MCP-Server + TUI; minimal: pip install -e .
-pentos --help
-```
-
-Erste Schritte:
-```bash
-pentos project new demo
-pentos scope add 10.10.10.0/24       # CIDR oder Hostname (z.B. box.thm)
-pentos sweep 10.10.10.5 --run        # geführte Recon/Enumeration
-pentos template seed                 # Finding-Vorlagen vorbefüllen
-pentos report --pdf                  # gebrandeter Report (Branding optional via config)
-```
-
-Konfiguration: Beim ersten Start wird `~/.config/pentos/config.yaml` aus den Defaults
-erzeugt. Eine kommentierte Vorlage liegt in [`config.example.yaml`](config.example.yaml).
-Ein optionaler OpenAI-Key wird **nie** in der Config gespeichert, sondern nur über die in
-`api_key_env` genannte Umgebungsvariable gelesen (Default-KI ist lokales Ollama).
-
----
-
 ## Tests
 
 ```bash
@@ -268,6 +304,8 @@ Veröffentlicht unter der [MIT-Lizenz](LICENSE).
 Ein lokales Lagebild deines Workspace im Browser: Severity-Verteilung, Findings,
 Hosts/Dienste, Loot und Notizen auf einen Blick.
 
+Bereits installiert, falls du wie oben empfohlen mit `pip install -e ".[pdf,web,mcp,tui]"`
+installiert hast — sonst nachrüsten:
 ```bash
 pip install -e ".[web]"          # FastAPI + uvicorn
 pentos serve                     # startet http://127.0.0.1:8787
@@ -289,6 +327,7 @@ High-Findings", „was steht in den Notizen zu SMB"). Alle MCP-Tools sind
 **ausschliesslich lesend/analysierend** – kein Tool führt Scans oder Angriffe
 aus. Das grosse Reasoning übernimmt der Client, die Kontrolle bleibt bei dir.
 
+Bereits installiert, falls du mit allen Extras installiert hast — sonst nachrüsten:
 ```bash
 pip install -e ".[mcp]"
 ```
@@ -312,6 +351,7 @@ markierten Findings oder Tasks weiter (das wird ins Projekt geschrieben), `r`
 aktualisiert, `q` beendet. Reine Ansicht und Status-Pflege, es wird nichts
 ausgeführt.
 
+Bereits installiert, falls du mit allen Extras installiert hast — sonst nachrüsten:
 ```bash
 pip install -e ".[tui]"
 pentos tui                 # oder: pentos tui --project meinprojekt
