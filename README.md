@@ -17,42 +17,16 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 
 ## Was PentOS kann
 
-| Funktion | Status |
-|---|---|
-| Pentest-Workspace (vollständige Ordnerstruktur pro Projekt) | ✅ |
-| Automatische Notizen (z.B. `notes/nmap.md` beim Import) | ✅ |
-| Pentest-Journal (jede Aktion mit Zeitstempel) | ✅ |
-| Aufgabensystem (auto-generiert je Service, Offen/In Bearbeitung/Erledigt) | ✅ |
-| Intelligente nächste Schritte (Empfehlungen, **keine Ausführung**) | ✅ |
-| **Scan-Diff** (`scan diff`: nmap-Scan gegen Projektstand, nur lesend) | ✅ |
-| **Loot-/Credential-Matching** (`loot match`: Spray/Pass-the-Hash/Key-Login vorschlagen) | ✅ |
-| **Projektweite Folge-Tool-Vorschläge** (`recommend` ohne Argument + nach Import) | ✅ |
-| Geführte Recon-/Enum-Kette (`sweep`, regelbasiert, Rückfrage je Schritt) | ✅ |
-| Opt-in Runner-Layer (23 Tools, kein Shell-Eval, Scope-Guard, Timeout) | ✅ |
-| Methodik-/Playbook-Bibliothek (Web/AD/Linux-/Windows-PrivEsc) | ✅ |
-| Automatische Findings (regelbasiert) + strukturierte Parser (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto) | ✅ |
-| Attack-Path-Graph (Mermaid + Graphviz-DOT) | ✅ |
-| Obsidian-Integration (Vault mit `[[Wikilinks]]`) | ✅ |
-| Loot-Management (Credentials/Hashes/Tokens/…) | ✅ |
-| Evidence-Management (Dateien/Screenshots/Outputs einem Finding zuordnen) | ✅ |
-| **Evidence/Screenshots in Reports eingebettet** (HTML inline, PDF, Markdown) | ✅ |
-| Finding-Template-Bibliothek (wiederverwendbar, CVSS, vorbefüllt + erweiterbar) | ✅ |
-| CTF/THM-Wissensdatenbank (getaggte Einträge) | ✅ |
-| „Frag dein Projekt" (RAG über eigene Projektdaten, lokale Embeddings) | ✅ |
-| KI-Mentor + **Advisor-Modus** (Scan/Log analysieren, nächste Schritte; fragt vor dem Senden; Offline-Fallback) | ✅ |
-| **KI-Sprache, Auto-Modellwahl je Aufgabe, Persona, Streaming, Temperatur/Verbosity** | ✅ |
-| **Vision** (`ai analyze-image`, z.B. qwen3-vl) + **KI-Panel im Dashboard** (Ask + Settings) | ✅ |
-| Reporting: Markdown, **gebrandetes HTML & PDF**, didaktischer Lern-Report | ✅ |
-| **Web-Dashboard interaktiv** (Lagebild + Finding-Status ändern, Notizen anlegen im Browser) | ✅ |
-| **Finding-Detailansicht + Angriffspfad-Graph** im Dashboard (SVG, anklickbar) | ✅ |
-| **Host-Detailansicht** im Dashboard (Dienste, Findings, Notizen, Loot verlinkt) | ✅ |
-| **Command Palette (Strg+K)** im Dashboard: Fuzzy-Suche über Hosts/Findings/Notizen + Schnellaktionen | ✅ |
-| **Status-Historie / Retest-Tracking** (`finding history`, Zeitleiste im Report) | ✅ |
-| **MCP-Server** (Workspace aus Claude Code/Cursor abfragen, nur lesend) | ✅ |
-| **Terminal-UI** (`pentos tui`: tastaturgesteuertes Lagebild, Status-Pflege) | ✅ |
-| Import: nmap-XML **+ Scanner-Import (Nessus/OpenVAS/Burp) + BloodHound (SharpHound-JSON, on-prem AD)** | ✅ |
-| **Shell-Completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
-| **Projekt-Export/-Import** (`project export`/`project import`, kompletter Workspace als eine ZIP-Datei) | ✅ |
+Alles unten ist bereits umgesetzt (✅) — offene Punkte stehen weiter unten in der Roadmap.
+
+|  | Bereich | Kernfunktionen |
+|---|---|---|
+| 🗂️ | **Workspace & Doku** | Vollständige Projektstruktur, automatische Notizen (`notes/nmap.md` etc.), Pentest-Journal mit Zeitstempel, Aufgabensystem, intelligente nächste Schritte (nur Vorschläge) |
+| 🔎 | **Recon & Import** | nmap-XML, Scanner-Reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatische Findings + strukturierte Parser (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto) · geführte Kette `sweep`, Scan-Diff · opt-in Runner-Layer (23 Tools, kein Shell-Eval, Scope-Guard) |
+| 🎯 | **Findings & Angriffspfad** | Severity/CVSS/Remediation, Finding-Templates, Status-Historie/Retest-Tracking, visueller Angriffspfad-Graph (Mermaid/Graphviz/SVG), Loot-/Credential-Matching |
+| 📊 | **Reporting & Oberflächen** | Markdown/gebrandetes HTML/PDF · Web-Dashboard (Lagebild, Finding-/Host-Detailansicht, Command Palette `Strg+K`) · Terminal-UI · Obsidian-Vault-Export · MCP-Server für Claude Code/Cursor (nur lesend) |
+| 🤖 | **KI-Mentor** | Advisor-Modus, „Frag dein Projekt" (RAG, lokale Embeddings), Vision (Screenshot-Analyse), freie Sprachwahl + Auto-Modellwahl, Offline-Fallback ohne Backend |
+| 🧰 | **Drumherum** | Projekt-Export/-Import als eine Datei, Shell-Completion, Evidence-Management, CTF/THM-Wissensdatenbank, Methodik-/Playbook-Bibliothek |
 
 **Roadmap (offen):**
 - KI-Lernkarten & Notizen-Zusammenfassungen (nur aus eigenen Daten, ohne Halluzination)
@@ -175,6 +149,30 @@ Port-Forwarding.
 ---
 
 ## Architektur
+
+```mermaid
+flowchart LR
+    subgraph face["Oberflächen"]
+        CLI["CLI"]
+        WEB["Web-Dashboard"]
+        TUI["TUI"]
+        MCP["MCP-Server\n(nur lesend)"]
+    end
+    subgraph input["Daten-Eingang"]
+        IMP["Importer\nnmap · Scanner · BloodHound"]
+        RUN["Runner-Layer\n(opt-in, 23 Tools)"]
+    end
+    RUN --> PARSE["Parser"]
+    PARSE --> REPO
+    IMP --> REPO
+    CLI --> REPO
+    WEB --> REPO
+    TUI --> REPO
+    MCP -.-> REPO
+    REPO[("Repository\n+ Journal")] --> DB[("SQLite\npro Projekt")]
+    REPO --> AI["KI-Mentor\n(lokal/Cloud, optional)"]
+    REPO --> REP["Reports\nMarkdown · HTML · PDF"]
+```
 
 ```
 pentos/

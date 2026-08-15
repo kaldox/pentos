@@ -18,42 +18,16 @@ commands itself**.
 
 ## What PentOS can do
 
-| Feature | Status |
-|---|---|
-| Pentest workspace (full folder structure per project) | ✅ |
-| Automatic notes (e.g. `notes/nmap.md` on import) | ✅ |
-| Pentest journal (every action timestamped) | ✅ |
-| Task system (auto-generated per service, Open/In progress/Done) | ✅ |
-| Intelligent next steps (recommendations, **no execution**) | ✅ |
-| **Scan diff** (`scan diff`: nmap scan vs. project state, read-only) | ✅ |
-| **Loot/credential matching** (`loot match`: suggest spray/pass-the-hash/key login) | ✅ |
-| **Project-wide follow-up tool suggestions** (`recommend` with no argument + after import) | ✅ |
-| Guided recon/enum chain (`sweep`, rule-based, prompts per step) | ✅ |
-| Opt-in runner layer (23 tools, no shell eval, scope guard, timeout) | ✅ |
-| Methodology / playbook library (web/AD/Linux/Windows privesc) | ✅ |
-| Automatic findings (rule-based) + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto) | ✅ |
-| Attack-path graph (Mermaid + Graphviz DOT) | ✅ |
-| Obsidian integration (vault with `[[wikilinks]]`) | ✅ |
-| Loot management (credentials/hashes/tokens/…) | ✅ |
-| Evidence management (attach files/screenshots/outputs to a finding) | ✅ |
-| **Evidence/screenshots embedded in reports** (HTML inline, PDF, Markdown) | ✅ |
-| Finding-template library (reusable, with CVSS, pre-filled + extendable) | ✅ |
-| CTF/THM knowledge base (tagged entries) | ✅ |
-| "Ask your project" (RAG over your own project data, local embeddings) | ✅ |
-| AI mentor + **advisor mode** (analyze a scan/log, suggest next steps; asks before sending; offline fallback) | ✅ |
-| **AI language, auto model-per-task, persona, streaming, temperature/verbosity** | ✅ |
-| **Vision** (`ai analyze-image`, e.g. qwen3-vl) + **AI panel in the dashboard** (ask + settings) | ✅ |
-| Reporting: Markdown, **branded HTML & PDF**, didactic learning report | ✅ |
-| **Interactive web dashboard** (overview + change finding status, add notes in the browser) | ✅ |
-| **Finding detail view + attack-path graph** in the dashboard (SVG, clickable) | ✅ |
-| **Host detail view** in the dashboard (linked services, findings, notes, loot) | ✅ |
-| **Command palette (Ctrl+K)** in the dashboard: fuzzy search over hosts/findings/notes + quick actions | ✅ |
-| **Status history / retest tracking** (`finding history`, timeline in the report) | ✅ |
-| **MCP server** (query your workspace from Claude Code/Cursor, read-only) | ✅ |
-| **Terminal UI** (`pentos tui`: keyboard-driven dashboard, status editing) | ✅ |
-| Import: nmap XML **+ scanner import (Nessus/OpenVAS/Burp) + BloodHound (SharpHound JSON, on-prem AD)** | ✅ |
-| **Shell completion** (`--install-completion`, Bash/Zsh/Fish) | ✅ |
-| **Project export/import** (`project export`/`project import`, whole workspace as one ZIP file) | ✅ |
+Everything below is already shipped (✅) — open items are further down in the roadmap.
+
+|  | Area | Core features |
+|---|---|---|
+| 🗂️ | **Workspace & docs** | Full project structure, automatic notes (`notes/nmap.md` etc.), timestamped pentest journal, task system, intelligent next steps (suggestions only) |
+| 🔎 | **Recon & import** | nmap XML, scanner reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatic findings + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto) · guided chain `sweep`, scan diff · opt-in runner layer (23 tools, no shell eval, scope guard) |
+| 🎯 | **Findings & attack path** | Severity/CVSS/remediation, finding templates, status history/retest tracking, visual attack-path graph (Mermaid/Graphviz/SVG), loot/credential matching |
+| 📊 | **Reporting & interfaces** | Markdown/branded HTML/PDF · web dashboard (overview, finding/host detail view, command palette `Ctrl+K`) · terminal UI · Obsidian vault export · MCP server for Claude Code/Cursor (read-only) |
+| 🤖 | **AI mentor** | Advisor mode, "ask your project" (RAG, local embeddings), vision (screenshot analysis), free language choice + auto model selection, offline fallback with no backend |
+| 🧰 | **Around it** | Project export/import as a single file, shell completion, evidence management, CTF/THM knowledge base, methodology/playbook library |
 
 **Roadmap (open):**
 - AI flashcards & note summaries (from your own data only, no hallucination)
@@ -169,6 +143,30 @@ networking works directly; with plain NAT you may need port forwarding.
 ---
 
 ## Architecture
+
+```mermaid
+flowchart LR
+    subgraph face["Interfaces"]
+        CLI["CLI"]
+        WEB["Web dashboard"]
+        TUI["TUI"]
+        MCP["MCP server\n(read-only)"]
+    end
+    subgraph input["Data intake"]
+        IMP["Importers\nnmap · scanner · BloodHound"]
+        RUN["Runner layer\n(opt-in, 23 tools)"]
+    end
+    RUN --> PARSE["Parsers"]
+    PARSE --> REPO
+    IMP --> REPO
+    CLI --> REPO
+    WEB --> REPO
+    TUI --> REPO
+    MCP -.-> REPO
+    REPO[("Repository\n+ journal")] --> DB[("SQLite\nper project")]
+    REPO --> AI["AI mentor\n(local/cloud, optional)"]
+    REPO --> REP["Reports\nMarkdown · HTML · PDF"]
+```
 
 ```
 pentos/
