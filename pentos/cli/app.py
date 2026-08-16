@@ -1884,6 +1884,11 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
             shell: bool = typer.Option(False, "--shell",
                                        help="Shell-Modus für interaktive Tools (z.B. smbclient -c '...'). "
                                             "ACHTUNG: interpretiert Shell-Metazeichen."),
+            proxy: Optional[str] = typer.Option(
+                None, "--proxy",
+                help="Proxy-Chain voranstellen, z.B. \"proxychains4 -q\" (SOCKS-Pivot nach einem "
+                     "Foothold ins interne Netz). Nur TCP-Connect-Traffic geht zuverlässig durch -- "
+                     "SYN-/UDP-Scans (nmap -sS, naabu, rustscan) i.d.R. nicht."),
             force: bool = typer.Option(False, "--force", help="Scope-Prüfung übergehen")):
     """Führt ein Tool aus und übernimmt die Ausgabe in den Workspace (opt-in)."""
     spec = runner_registry.get(tool)
@@ -1908,7 +1913,7 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
     try:
         result = runner_base.run_tool(spec, target, scans_dir, extra_args=extra,
                                       wordlist=wordlist, timeout=timeout, dry_run=dry_run,
-                                      profile=profile, shell=shell, raw_args=args)
+                                      profile=profile, shell=shell, raw_args=args, proxy=proxy)
     except runner_base.RunnerError as e:
         console.print(f"[red]{e}[/red]"); repo.close(); raise typer.Exit(1)
 

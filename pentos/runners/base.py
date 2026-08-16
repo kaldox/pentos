@@ -8,6 +8,7 @@ läuft nur, wenn es explizit gestartet wird.
 """
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -187,7 +188,8 @@ def run_tool(spec: ToolSpec, target: str, scans_dir: Path,
              dry_run: bool = False,
              profile: Optional[str] = None,
              shell: bool = False,
-             raw_args: Optional[str] = None) -> RunResult:
+             raw_args: Optional[str] = None,
+             proxy: Optional[str] = None) -> RunResult:
     scans_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
     outfile = None
@@ -217,6 +219,21 @@ def run_tool(spec: ToolSpec, target: str, scans_dir: Path,
         argv = build_argv(template, spec, target, outfile, wordlist, extra_args)
         command_repr = argv
 
+    # Proxy-Chain voranstellen (opt-in, z.B. "proxychains4 -q" nach einem
+    # Foothold, um ins interne Netz zu pivoten). Nur TCP-Connect-Traffic geht
+    # zuverlässig durch proxychains -- SYN-/UDP-Scans (nmap -sS, naabu,
+    # rustscan) i.d.R. nicht, siehe README.
+    if proxy:
+        proxy_tokens = shlex.split(proxy)
+        if not proxy_tokens:
+            raise RunnerError("--proxy ist leer.")
+        if shell:
+            cmd_str = f"{proxy} {cmd_str}".strip()
+            command_repr = [cmd_str]
+        else:
+            argv = proxy_tokens + argv
+            command_repr = argv
+
     started = datetime.now().replace(microsecond=0).isoformat(sep=" ")
 
     if dry_run:
@@ -226,6 +243,11 @@ def run_tool(spec: ToolSpec, target: str, scans_dir: Path,
     if shutil.which(spec.binary) is None:
         raise RunnerError(f"Binary '{spec.binary}' nicht gefunden (in PATH). "
                           f"Installieren oder anderes Tool wählen.")
+    if proxy:
+        proxy_bin = shlex.split(proxy)[0]
+        if shutil.which(proxy_bin) is None:
+            raise RunnerError(f"Proxy-Binary '{proxy_bin}' nicht gefunden (in PATH). "
+                              f"Installieren (z.B. proxychains4) oder --proxy weglassen.")
 
     eff_timeout = timeout or spec.timeout
     t0 = datetime.now()
