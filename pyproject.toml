@@ -29,6 +29,6 @@ pentos = "pentos.cli.app:app"
 packages = ["pentos", "pentos.cli", "pentos.importers", "pentos.runners", "pentos.web", "pentos.tui"]
 
 [tool.setuptools.package-data]
-pentos = ["playbooks/*.yaml"]
+pentos = ["playbooks/*.yaml", "data/wordlists/*.txt"]
 "pentos.web" = ["static/*"]
 

@@ -34,6 +34,7 @@ from ..importers import bloodhound as bloodhound_importer
 from ..importers import nmap as nmap_importer
 from ..importers import scanners as scanner_importer
 from ..runners import base as runner_base, parsers as runner_parsers, registry as runner_registry
+from .. import wordlists as wordlists_mod
 from ..models import (
     BloodHoundImport,
     Evidence,
@@ -1853,6 +1854,53 @@ def mcp_cmd():
     except ModuleNotFoundError:
         console.print('[red]MCP-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[mcp]"[/cyan]')
         raise typer.Exit(1)
+
+
+# ── Standard-Wordlists (Usernames gebündelt, Passwörter opt-in per Download) ─
+wordlists_app = typer.Typer(help="Standard-Wordlists fürs Projekt einrichten (hydra/medusa/gobuster/...)")
+app.add_typer(wordlists_app, name="wordlists", rich_help_panel="Recon & Import")
+
+
+@wordlists_app.command("setup")
+def wordlists_setup(
+    no_passwords: bool = typer.Option(False, "--no-passwords",
+                                      help="Nur Usernames einrichten, keine Passwort-Liste laden"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage herunterladen"),
+):
+    """Legt wordlists/usernames.txt (+ optional passwords.txt) im Projekt an.
+
+    usernames.txt kommt direkt aus PentOS (generische Namen/Muster, kein
+    Download nötig). passwords.txt ist opt-in: lädt die kuratierte
+    rockyou-75.txt (SecLists) von GitHub -- eine bewusst kleine, fürs
+    schnelle Durchprobieren gedachte Liste, keine vollständige Breach-Kopie.
+    """
+    repo, name = _repo()
+    repo.close()
+    wl_dir = config.project_path(name) / "wordlists"
+    download = not no_passwords
+    if download:
+        existing = (wl_dir / "passwords.txt").exists()
+        if not existing and not yes:
+            console.print(f"[yellow]Lädt eine kleine Passwort-Liste ({wordlists_mod.PASSWORD_LIST_URL}) "
+                          "herunter.[/yellow] Keine eigenen Daten werden gesendet, nur ein "
+                          "öffentliches Textfile geholt.")
+            if not typer.confirm("Herunterladen?", default=True):
+                download = False
+    try:
+        result = wordlists_mod.setup(wl_dir, download_passwords=download)
+    except wordlists_mod.WordlistError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]Usernames:[/green] {result['usernames_path']}")
+    if result["passwords_path"]:
+        tag = "neu heruntergeladen" if result["passwords_downloaded"] else "bereits vorhanden, unverändert"
+        console.print(f"[green]Passwords:[/green] {result['passwords_path']} ({tag})")
+    else:
+        console.print("[dim]Keine Passwort-Liste eingerichtet.[/dim]")
+    console.print(
+        "\n[dim]Beispiel:[/dim] pentos run hydra <ziel> --args "
+        f'"-L {wl_dir / "usernames.txt"} -P {wl_dir / "passwords.txt"} ssh"'
+    )
 
 
 # ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────
