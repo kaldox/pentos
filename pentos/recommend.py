@@ -296,10 +296,20 @@ def run_shortcuts_for(svc: Service, addr: Optional[str]) -> tuple[list[tuple[str
         if not spec:
             continue
         tgt = url if (web and spec.category == "web") else addr
-        if shutil.which(spec.binary):
-            ready.append((tname, f"pentos run {tname} {tgt}"))
-        else:
+        if not shutil.which(spec.binary):
             missing.append(tname)
+            continue
+        if spec.category == "bruteforce":
+            # hydra/medusa brauchen zwingend User-/Passwort-Liste + Protokoll-Modul
+            # als Argument -- ein blanker "pentos run hydra <ziel>" würde nur
+            # hängen bzw. nichts Sinnvolles tun. Vorlage statt fertigem Befehl,
+            # mit den Pfaden, die "pentos wordlists setup" anlegt.
+            proto = (svc.name or "").lower() or "<protokoll>"
+            cmd = (f'pentos run {tname} {tgt} --args '
+                   f'"-L wordlists/usernames.txt -P wordlists/passwords.txt {proto}"')
+            ready.append((tname, cmd))
+        else:
+            ready.append((tname, f"pentos run {tname} {tgt}"))
     return ready, missing
 
 

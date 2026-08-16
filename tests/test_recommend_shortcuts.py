@@ -42,3 +42,25 @@ def test_project_shortcuts_dedup(monkeypatch):
     assert len(ready) == len(set(ready))
     assert any("pentos run whatweb" in c for c in ready)
     assert any("pentos run enum4linux-ng" in c for c in ready)
+
+
+def test_bruteforce_tools_get_args_template_not_bare_command(monkeypatch):
+    """hydra/medusa brauchen zwingend -L/-P + Protokoll-Modul -- ein blanker
+    'pentos run hydra <ziel>' würde nur hängen. Regressionstest für genau das."""
+    monkeypatch.setattr(shutil, "which", lambda b: "/usr/bin/" + b)
+    ready, missing = recommend.run_shortcuts_for(_svc(22, "ssh"), "10.0.0.1")
+    ready_map = dict(ready)
+    assert "hydra" in ready_map
+    cmd = ready_map["hydra"]
+    assert "--args" in cmd
+    assert "-L wordlists/usernames.txt" in cmd
+    assert "-P wordlists/passwords.txt" in cmd
+    assert "ssh" in cmd  # Protokoll-Modul aus dem erkannten Service-Namen
+    assert cmd != "pentos run hydra 10.0.0.1"  # nicht mehr der alte, kaputte bare Befehl
+
+
+def test_bruteforce_template_uses_detected_protocol_name(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda b: "/usr/bin/" + b)
+    ready, _missing = recommend.run_shortcuts_for(_svc(21, "ftp"), "10.0.0.1")
+    cmd = dict(ready)["hydra"]
+    assert cmd.strip().endswith('ftp"')

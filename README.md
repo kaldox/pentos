@@ -22,8 +22,8 @@ Alles unten ist bereits umgesetzt (✅) — offene Punkte stehen weiter unten in
 |  | Bereich | Kernfunktionen |
 |---|---|---|
 | 🗂️ | **Workspace & Doku** | Vollständige Projektstruktur, automatische Notizen (`notes/nmap.md` etc.), Pentest-Journal mit Zeitstempel, Aufgabensystem, Engagement-Zeitplan (Meilensteine/Zeitfenster/Blackout), intelligente nächste Schritte (nur Vorschläge) |
-| 🔎 | **Recon & Import** | nmap-XML, Scanner-Reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatische Findings + strukturierte Parser (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto) · geführte Kette `sweep`, Scan-Diff · opt-in Runner-Layer (23 Tools, kein Shell-Eval, Scope-Guard) |
-| 🎯 | **Findings & Angriffspfad** | Severity/CVSS/Remediation, Finding-Templates, Status-Historie/Retest-Tracking, visueller Angriffspfad-Graph inkl. BloodHound-AD-Pfaden (Mermaid/Graphviz/SVG), Loot-/Credential-Matching |
+| 🔎 | **Recon & Import** | nmap-XML, Scanner-Reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatische Findings + strukturierte Parser (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto, testssl.sh, httpx/naabu/dnsx) · geführte Kette `sweep`, Scan-Diff · opt-in Runner-Layer (27 Tools, kein Shell-Eval, Scope-Guard, optionaler Proxychains-Pivot) |
+| 🎯 | **Findings & Angriffspfad** | Severity/CVSS/EPSS (Ausnutzungswahrscheinlichkeit, opt-in), Finding-Templates, Status-Historie/Retest-Tracking, visueller Angriffspfad-Graph inkl. BloodHound-AD-Pfaden (Mermaid/Graphviz/SVG), Loot-/Credential-Matching |
 | 📊 | **Reporting & Oberflächen** | Markdown/gebrandetes HTML/PDF mit Risk-Score & Chart · Web-Dashboard (Lagebild, Finding-/Host-Detailansicht, Command Palette `Strg+K`) · Terminal-UI · Obsidian-Vault-Export · MCP-Server für Claude Code/Cursor (nur lesend) |
 | 🤖 | **KI-Mentor** | Advisor-Modus, „Frag dein Projekt" (RAG, lokale Embeddings), Vision (Screenshot-Analyse), freie Sprachwahl + Auto-Modellwahl, Offline-Fallback ohne Backend |
 | 🧰 | **Drumherum** | Projekt-Export/-Import als eine Datei, Shell-Completion, Evidence-Management, CTF/THM-Wissensdatenbank, Methodik-/Playbook-Bibliothek |
