@@ -112,6 +112,27 @@ REGISTRY: dict[str, ToolSpec] = {
         description="TLS/SSL-Konfigurationscheck (Protokolle, Cipher, Zertifikat, CVEs)",
         parser="testssl",
     ),
+    "httpx": ToolSpec(
+        name="httpx", binary="httpx", category="web",
+        argv=["httpx", "-u", "{target}", "-silent", "-json", "-o", "{outfile}"],
+        produces_outfile=True, outfile_ext="json", timeout=300,
+        description="HTTP-Probe mit Tech-Detection (Status, Titel, Server, Technologien)",
+        parser="httpx",
+    ),
+    "naabu": ToolSpec(
+        name="naabu", binary="naabu", category="recon",
+        argv=["naabu", "-host", "{target}", "-silent", "-json", "-o", "{outfile}"],
+        produces_outfile=True, outfile_ext="json", timeout=600,
+        description="Sehr schnelle Port-Discovery (natives JSON, Alternative/Vorstufe zu nmap)",
+        parser="naabu",
+    ),
+    "dnsx": ToolSpec(
+        name="dnsx", binary="dnsx", category="dns",
+        argv=["dnsx", "-d", "{target}", "-a", "-silent", "-json", "-o", "{outfile}"],
+        produces_outfile=True, outfile_ext="json", timeout=180,
+        description="DNS-Auflösung (A-Records, JSON, target = Domain)",
+        parser="dnsx",
+    ),
 
     # ── Brute-Force / Auth (THM-Training; opt-in, scope-gated) ───────────────
     "hydra": ToolSpec(

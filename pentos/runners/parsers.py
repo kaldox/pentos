@@ -2,11 +2,12 @@
 Ingest-Logik für PentOS-Runs.
 
 Verarbeitet die Rohausgabe eines Tool-Laufs in DB-Objekte:
-- nmap     -> volle Pipeline (Hosts/Services/Auto-Tasks/Auto-Findings)
-- nuclei   -> Findings aus den Treffer-Zeilen
-- nikto    -> Findings aus dem XML-Report
-- testssl  -> Findings aus dem JSON-Report (--jsonfile)
-- sonst    -> Capture: Evidence + Notiz mit der Ausgabe
+- nmap             -> volle Pipeline (Hosts/Services/Auto-Tasks/Auto-Findings)
+- nuclei           -> Findings aus den Treffer-Zeilen
+- nikto            -> Findings aus dem XML-Report
+- testssl          -> Findings aus dem JSON-Report (--jsonfile)
+- httpx/naabu/dnsx -> strukturierte Sammelnotiz aus JSONL (-json), reine Recon
+- sonst            -> Capture: Evidence + Notiz mit der Ausgabe
 
 Jeder Lauf wird zusätzlich als Evidence (Rohdatei) und im runs-Log erfasst.
 
@@ -139,6 +140,25 @@ def ingest(repo: Repository, spec: ToolSpec, target: str, result: RunResult,
     if parser == "lines_note":
         text = _read_output(result)
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        body = ("Gefunden ({}):\n\n".format(len(lines)) + "\n".join(f"- {ln}" for ln in lines[:500])) \
+            if lines else "Keine Treffer."
+        repo.add_note(Note(title=f"{spec.name} · {target} — {len(lines)}",
+                           body=body, category=spec.category, host_id=host_id))
+        summary["notes"] += 1
+        return summary
+
+    # ── ProjectDiscovery-Tools (httpx/naabu/dnsx): natives JSON -> Sammelnotiz ──
+    # Reine Recon-/Enumeration-Tools (kein Schwachstellen-Scan) -- wie subfinder
+    # und rustscan werden Treffer NICHT zu Findings, sondern zu einer strukturiert
+    # formatierten Notiz (jede Zeile ein JSON-Objekt, "-json"-Ausgabe).
+    if parser in ("httpx", "naabu", "dnsx"):
+        text = _read_output(result)
+        if parser == "httpx":
+            lines = _parse_httpx(text)
+        elif parser == "naabu":
+            lines = _parse_naabu(text)
+        else:
+            lines = _parse_dnsx(text)
         body = ("Gefunden ({}):\n\n".format(len(lines)) + "\n".join(f"- {ln}" for ln in lines[:500])) \
             if lines else "Keine Treffer."
         repo.add_note(Note(title=f"{spec.name} · {target} — {len(lines)}",
@@ -470,6 +490,88 @@ def _parse_testssl(repo: Repository, spec, target: str, text: str,
         ))
         find_n += 1
     return find_n, info_lines
+
+
+# ── ProjectDiscovery-Tools: httpx / naabu / dnsx (JSONL, "-json") ────────────
+# Schema verifiziert gegen die Go-Structs der jeweiligen Repos
+# (projectdiscovery/httpx runner/types.go, naabu pkg/result, dnsx libs/dnsx):
+# ein JSON-Objekt pro Zeile, kein Rahmen/Array drumherum.
+def _parse_jsonl(text: str) -> list[dict]:
+    """Parst zeilenbasiertes JSON (ein Objekt pro Zeile). Robust gegen leere/
+    kaputte Zeilen (z.B. Banner-/Warnzeilen von -silent-Tools) -- diese werden
+    einfach übersprungen statt den ganzen Parse fehlschlagen zu lassen."""
+    items = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(obj, dict):
+            items.append(obj)
+    return items
+
+
+def _parse_httpx(text: str) -> list[str]:
+    """httpx -json: u.a. url, status_code, title, webserver, tech (Liste)."""
+    lines = []
+    for obj in _parse_jsonl(text):
+        url = (obj.get("url") or obj.get("input") or "").strip()
+        if not url:
+            continue
+        parts = [url]
+        status = obj.get("status_code")
+        if status:
+            parts.append(f"[{status}]")
+        title = (obj.get("title") or "").strip()
+        if title:
+            parts.append(f"– {title}")
+        server = (obj.get("webserver") or "").strip()
+        if server:
+            parts.append(f"({server})")
+        tech = obj.get("tech") or []
+        if tech:
+            parts.append("· " + ", ".join(str(t) for t in tech))
+        lines.append(" ".join(parts))
+    return lines
+
+
+def _parse_naabu(text: str) -> list[str]:
+    """naabu -json: mindestens ip + port, optional host/protocol."""
+    lines = []
+    for obj in _parse_jsonl(text):
+        ip = str(obj.get("ip") or "").strip()
+        port = obj.get("port")
+        if not ip or port is None:
+            continue
+        host = str(obj.get("host") or "").strip()
+        proto = obj.get("protocol") or "tcp"
+        label = f"{host} ({ip})" if host and host != ip else ip
+        lines.append(f"{label}:{port}/{proto}")
+    return lines
+
+
+def _parse_dnsx(text: str) -> list[str]:
+    """dnsx -json: host + a/aaaa/cname (jeweils Liste von Strings)."""
+    lines = []
+    for obj in _parse_jsonl(text):
+        host = str(obj.get("host") or "").strip()
+        if not host:
+            continue
+        parts = [host]
+        a = obj.get("a") or []
+        if a:
+            parts.append("→ " + ", ".join(str(x) for x in a))
+        aaaa = obj.get("aaaa") or []
+        if aaaa:
+            parts.append("(AAAA " + ", ".join(str(x) for x in aaaa) + ")")
+        cname = obj.get("cname") or []
+        if cname:
+            parts.append("(CNAME " + ", ".join(str(x) for x in cname) + ")")
+        lines.append(" ".join(parts))
+    return lines
 
 
 def _parse_feroxbuster(text: str) -> list[tuple]:
