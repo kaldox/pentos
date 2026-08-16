@@ -2,10 +2,11 @@
 Ingest-Logik für PentOS-Runs.
 
 Verarbeitet die Rohausgabe eines Tool-Laufs in DB-Objekte:
-- nmap   -> volle Pipeline (Hosts/Services/Auto-Tasks/Auto-Findings)
-- nuclei -> Findings aus den Treffer-Zeilen
-- nikto  -> Findings aus dem XML-Report
-- sonst  -> Capture: Evidence + Notiz mit der Ausgabe
+- nmap     -> volle Pipeline (Hosts/Services/Auto-Tasks/Auto-Findings)
+- nuclei   -> Findings aus den Treffer-Zeilen
+- nikto    -> Findings aus dem XML-Report
+- testssl  -> Findings aus dem JSON-Report (--jsonfile)
+- sonst    -> Capture: Evidence + Notiz mit der Ausgabe
 
 Jeder Lauf wird zusätzlich als Evidence (Rohdatei) und im runs-Log erfasst.
 
@@ -117,6 +118,19 @@ def ingest(repo: Repository, spec: ToolSpec, target: str, result: RunResult,
             body = (f"nikto Info-Treffer ({len(info_lines)}) — Kontext, keine Findings:\n\n"
                     + "\n".join(f"- {ln}" for ln in info_lines[:200]))
             repo.add_note(Note(title=f"nikto (info) · {target} — {len(info_lines)}",
+                               body=body, category="vuln", host_id=host_id))
+            summary["notes"] += 1
+        return summary
+
+    # ── testssl.sh: strukturierte Findings + Info-Sammelnotiz ────────────────
+    if parser == "testssl" and result.output_path and Path(result.output_path).exists():
+        text = Path(result.output_path).read_text(encoding="utf-8", errors="ignore")
+        find_n, info_lines = _parse_testssl(repo, spec, target, text, host_id)
+        summary["findings"] += find_n
+        if info_lines:
+            body = (f"testssl.sh Info-/Warn-Treffer ({len(info_lines)}) — Kontext, keine Findings:\n\n"
+                    + "\n".join(f"- {ln}" for ln in info_lines[:200]))
+            repo.add_note(Note(title=f"testssl.sh (info) · {target} — {len(info_lines)}",
                                body=body, category="vuln", host_id=host_id))
             summary["notes"] += 1
         return summary
@@ -364,6 +378,93 @@ def _parse_nikto(repo: Repository, spec, target: str, text: str,
             desc += f"\nReferenzen: {h['references']}"
         repo.add_finding(Finding(
             title=title, severity=_nikto_severity(combined), category=FindingCategory.VULN,
+            status=FindingStatus.UNVERIFIED, description=desc,
+            host_id=host_id, auto=True,
+        ))
+        find_n += 1
+    return find_n, info_lines
+
+
+# ── testssl.sh: JSON-Report ("--jsonfile {outfile}", flaches Array) -> Findings ──
+# Vorbild: die offizielle fileout_json_finding()-Funktion im testssl/testssl.sh-
+# Repo (ab Version 3.2). Jedes Element: {"id","ip","port","severity","cve","cwe",
+# "hint"?,"finding"}. Severity kommt direkt vom Tool -- anders als bei nikto
+# braucht es keine eigene Heuristik. OK/DEBUG sind reines "Test bestanden"/
+# Diagnose-Rauschen und werden verworfen; INFO/WARN/FATAL (Scan-Probleme,
+# Kontext-Infos) landen als Sammelnotiz; LOW+ werden Findings.
+_TESTSSL_SEV = {
+    "LOW": Severity.LOW, "MEDIUM": Severity.MEDIUM,
+    "HIGH": Severity.HIGH, "CRITICAL": Severity.CRITICAL,
+}
+_TESTSSL_NOISE_SEV = {"INFO", "WARN", "FATAL"}   # als Notiz, kein Finding
+_TESTSSL_SKIP_SEV = {"OK", "DEBUG"}              # kein Sicherheitswert -> verwerfen
+
+
+def _parse_testssl_json(text: str) -> list[dict]:
+    """Parst testssl.sh --jsonfile-Output (flaches Array) in eine Liste von
+    Rohtreffern. Robust gegen leere/fehlerhafte Dateien (z.B. abgebrochener
+    Scan) -- liefert dann [] statt zu werfen. Akzeptiert zusätzlich den
+    Pretty-Wrapper mit 'scanResult' (--jsonfile-pretty), falls jemand
+    versehentlich die Pretty-Variante als Ausgabedatei übergibt."""
+    try:
+        data = json.loads(text)
+    except (ValueError, TypeError):
+        return []
+    if isinstance(data, dict):
+        data = data.get("scanResult", [])
+    if not isinstance(data, list):
+        return []
+    hits = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        sev = str(item.get("severity") or "").upper()
+        finding = (item.get("finding") or "").strip()
+        if not sev or not finding:
+            continue
+        hits.append({
+            "id": str(item.get("id") or ""), "port": str(item.get("port") or ""),
+            "severity": sev, "cve": (item.get("cve") or "").strip(),
+            "cwe": (item.get("cwe") or "").strip(), "finding": finding,
+        })
+    return hits
+
+
+def _parse_testssl(repo: Repository, spec, target: str, text: str,
+                   host_id: Optional[int]) -> tuple[int, list[str]]:
+    """Strukturierter testssl.sh-Parser (Vorbild: der nikto-Parser).
+
+    Liefert (Anzahl angelegter Findings, Liste der Info-/Warn-Treffer-Texte)
+    genau wie `_parse_nikto`. OK/DEBUG werden verworfen (kein Sicherheitswert,
+    wären reines Rauschen bei hunderten Einzelchecks pro Scan).
+    """
+    find_n = 0
+    info_lines: list[str] = []
+    for h in _parse_testssl_json(text):
+        sev_raw = h["severity"]
+        if sev_raw in _TESTSSL_SKIP_SEV:
+            continue
+        port_txt = f":{h['port']}" if h["port"] else ""
+        if sev_raw in _TESTSSL_NOISE_SEV:
+            info_lines.append(f"{h['id']}{port_txt} — {h['finding']}")
+            continue
+        sev = _TESTSSL_SEV.get(sev_raw)
+        if sev is None:
+            continue  # unbekannter Wert -> auf Nummer sicher, kein Müll-Finding
+        title_body = h["finding"]
+        if len(title_body) > 100:
+            title_body = title_body[:97] + "…"
+        title = f"{h['id']}: {title_body} ({target}{port_txt})"
+        if repo.finding_exists(title, host_id=host_id):
+            continue
+        desc = h["finding"]
+        if h["cve"]:
+            desc += f"\nCVE: {h['cve']}"
+        if h["cwe"]:
+            desc += f"\nCWE: {h['cwe']}"
+        category = FindingCategory.VULN if h["cve"] else FindingCategory.MISCONFIG
+        repo.add_finding(Finding(
+            title=title, severity=sev, category=category,
             status=FindingStatus.UNVERIFIED, description=desc,
             host_id=host_id, auto=True,
         ))

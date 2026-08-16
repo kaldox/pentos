@@ -1,0 +1,17 @@
+[
+  {"id": "SSLv2", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "OK", "cve": "", "cwe": "", "finding": "not offered"},
+  {"id": "SSLv3", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "OK", "cve": "", "cwe": "", "finding": "not offered"},
+  {"id": "TLS1", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "LOW", "cve": "", "cwe": "CWE-327", "finding": "offered"},
+  {"id": "TLS1_1", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "LOW", "cve": "", "cwe": "CWE-327", "finding": "offered"},
+  {"id": "TLS1_2", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "OK", "cve": "", "cwe": "", "finding": "offered (OK)"},
+  {"id": "TLS1_3", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "OK", "cve": "", "cwe": "", "finding": "offered with final"},
+  {"id": "heartbleed", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "HIGH", "cve": "CVE-2014-0160", "cwe": "CWE-119", "finding": "VULNERABLE (NOT ok)"},
+  {"id": "ROBOT", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "CRITICAL", "cve": "CVE-2017-13099", "cwe": "CWE-203", "finding": "VULNERABLE (NOT ok), Bleichenbacher on JAVA server"},
+  {"id": "cert_expirationStatus", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "MEDIUM", "cve": "", "cwe": "", "finding": "expires < 30 days (17)"},
+  {"id": "cert_chain_of_trust", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "OK", "cve": "", "cwe": "", "finding": "passed"},
+  {"id": "cipherlist_3DES_IDEA", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "MEDIUM", "cve": "", "cwe": "CWE-327", "finding": "offered"},
+  {"id": "protocol_negotiated", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "WARN", "cve": "", "cwe": "", "finding": "TLS1.2 could not be tested properly, fallback used"},
+  {"id": "scanProblem", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "WARN", "cve": "", "cwe": "", "finding": "server does not seem to support SNI"},
+  {"id": "engine_problem", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "DEBUG", "cve": "", "cwe": "", "finding": "internal debug note, not security relevant"},
+  {"id": "cert_commonName", "ip": "10.10.10.7/10.10.10.7", "port": "443", "severity": "INFO", "cve": "", "cwe": "", "finding": "example.local"}
+]

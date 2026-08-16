@@ -105,6 +105,13 @@ REGISTRY: dict[str, ToolSpec] = {
         description="Template-basierter Schwachstellen-Scan",
         parser="nuclei",
     ),
+    "testssl": ToolSpec(
+        name="testssl", binary="testssl.sh", category="web",
+        argv=["testssl.sh", "--jsonfile", "{outfile}", "--quiet", "{target}"],
+        produces_outfile=True, outfile_ext="json", timeout=900,
+        description="TLS/SSL-Konfigurationscheck (Protokolle, Cipher, Zertifikat, CVEs)",
+        parser="testssl",
+    ),
 
     # ── Brute-Force / Auth (THM-Training; opt-in, scope-gated) ───────────────
     "hydra": ToolSpec(
