@@ -1984,6 +1984,57 @@ def wordlists_setup(
     )
 
 
+@wordlists_app.command("catalog")
+def wordlists_catalog(
+    category: Optional[str] = typer.Option(
+        None, "--category", help="Nur eine Kategorie: usernames|passwords|directories|subdomains"),
+    filter_: Optional[str] = typer.Option(None, "--filter", help="Name/Beschreibung durchsuchen"),
+):
+    """Durchsucht den kuratierten SecLists-Katalog (Browse/Filter, kein Download)."""
+    entries = wordlists_mod.catalog_list(category=category, query=filter_)
+    if not entries:
+        console.print("[dim]Keine Treffer.[/dim]")
+        return
+    table = Table(title="Wordlist-Katalog")
+    for c in ["Name", "Kategorie", "Beschreibung"]:
+        table.add_column(c)
+    for e in entries:
+        table.add_row(e.name, e.category, e.description)
+    console.print(table)
+    console.print("[dim]Laden mit:[/dim] pentos wordlists add <name>")
+
+
+@wordlists_app.command("add")
+def wordlists_add(
+    name: str = typer.Argument(..., help="Katalog-Name, siehe 'pentos wordlists catalog'"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage herunterladen"),
+):
+    """Lädt eine einzelne, namentlich gewählte Liste aus dem Katalog ins Projekt."""
+    entry = wordlists_mod.catalog_get(name)
+    if not entry:
+        console.print(f"[red]Unbekannter Katalog-Eintrag '{name}'.[/red] "
+                      f"Übersicht: [cyan]pentos wordlists catalog[/cyan]")
+        raise typer.Exit(1)
+    repo, proj = _repo()
+    repo.close()
+    wl_dir = config.project_path(proj) / "wordlists"
+    out_path = wl_dir / f"{entry.name}.txt"
+    if not yes:
+        console.print(f"[yellow]Lädt '{entry.name}' ({entry.url}) herunter.[/yellow] "
+                      "Keine eigenen Daten werden gesendet, nur ein öffentliches Textfile geholt.")
+        if not typer.confirm("Herunterladen?", default=True):
+            console.print("Abgebrochen.")
+            raise typer.Exit()
+    try:
+        text = wordlists_mod.fetch_catalog_entry(entry)
+    except wordlists_mod.WordlistError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+    wl_dir.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(text, encoding="utf-8")
+    console.print(f"[green]{entry.name}[/green] ({entry.category}) {SYM_ARROW} {out_path}")
+
+
 # ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────
 @app.command("tools", rich_help_panel="Recon & Import")
 def tools_cmd():
