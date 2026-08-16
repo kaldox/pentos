@@ -55,7 +55,11 @@ def test_wordlists_setup_yes_flag_downloads_without_prompt(monkeypatch):
     r = CliRunner().invoke(app_mod.app, ["wordlists", "setup", "--yes"])
     assert r.exit_code == 0, r.output
     assert "Passwords:" in r.output
-    assert "neu heruntergeladen" in r.output
+    # "heruntergeladen" statt der vollen Phrase pruefen: Rich umbricht die
+    # Konsolenausgabe je nach erkannter Terminalbreite (schmal z.B. bei
+    # nicht-interaktivem CliRunner/SSH), "neu heruntergeladen" kann dabei
+    # auf zwei Zeilen landen -- das einzelne Wort bleibt stabil.
+    assert "heruntergeladen" in r.output
 
     from pentos import config
     wl_dir = config.project_path("w") / "wordlists"
