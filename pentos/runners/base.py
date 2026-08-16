@@ -23,7 +23,7 @@ from pydantic import BaseModel
 class ToolSpec(BaseModel):
     name: str
     binary: str
-    category: str                       # recon | web | smb | dns | snmp | vuln | bruteforce | exploit | cracking
+    category: str                       # recon | web | smb | dns | snmp | vuln | bruteforce | exploit | cracking | secrets
     argv: list[str]                     # Tokens mit {target} {outfile} {wordlist}
     produces_outfile: bool = False
     outfile_ext: str = "txt"

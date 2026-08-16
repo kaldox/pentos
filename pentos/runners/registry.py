@@ -133,6 +133,15 @@ REGISTRY: dict[str, ToolSpec] = {
         description="DNS-Auflösung (A-Records, JSON, target = Domain)",
         parser="dnsx",
     ),
+    "gitleaks": ToolSpec(
+        name="gitleaks", binary="gitleaks", category="secrets",
+        argv=["gitleaks", "git", "{target}", "--report-format", "json",
+              "--report-path", "{outfile}", "--exit-code", "0", "--no-banner"],
+        produces_outfile=True, outfile_ext="json", timeout=600, network=False,
+        description="Secret-Scan gegen einen lokalen Git-Repo-Dump "
+                    "(z.B. rekonstruiertes .git; target = lokaler Repo-Pfad, kein Netzwerkziel)",
+        parser="gitleaks",
+    ),
 
     # ── Brute-Force / Auth (THM-Training; opt-in, scope-gated) ───────────────
     "hydra": ToolSpec(

@@ -7,6 +7,7 @@ Verarbeitet die Rohausgabe eines Tool-Laufs in DB-Objekte:
 - nikto            -> Findings aus dem XML-Report
 - testssl          -> Findings aus dem JSON-Report (--jsonfile)
 - httpx/naabu/dnsx -> strukturierte Sammelnotiz aus JSONL (-json), reine Recon
+- gitleaks         -> Findings + Loot aus dem JSON-Report (Secret-Scan gegen einen Repo-Dump)
 - sonst            -> Capture: Evidence + Notiz mit der Ausgabe
 
 Jeder Lauf wird zusätzlich als Evidence (Rohdatei) und im runs-Log erfasst.
@@ -134,6 +135,14 @@ def ingest(repo: Repository, spec: ToolSpec, target: str, result: RunResult,
             repo.add_note(Note(title=f"testssl.sh (info) · {target} — {len(info_lines)}",
                                body=body, category="vuln", host_id=host_id))
             summary["notes"] += 1
+        return summary
+
+    # ── gitleaks: Secret-Scan gegen einen lokalen Repo-Dump -> Findings + Loot ─
+    if parser == "gitleaks" and result.output_path and Path(result.output_path).exists():
+        text = Path(result.output_path).read_text(encoding="utf-8", errors="ignore")
+        find_n, loot_n = _parse_gitleaks(repo, spec, target, text, host_id)
+        summary["findings"] += find_n
+        summary["loot"] += loot_n
         return summary
 
     # ── Zeilenbasierte Ausgabe (z.B. subfinder -> Subdomains) als Notiz ──────
@@ -574,6 +583,106 @@ def _parse_dnsx(text: str) -> list[str]:
     return lines
 
 
+# ── gitleaks: JSON-Report ("--report-format json") -> Findings + Loot ────────
+# Vorbild: der report.Finding-Struct im gitleaks/gitleaks-Repo (report/finding.go).
+# Flaches Array; Felder u.a. RuleID, Description, Secret, File, Commit, Author,
+# Email, Date, Tags, Fingerprint. gitleaks liefert keine eigene Severity --
+# jeder echte Fund ist ein Secret, daher einheitlich HIGH/CREDENTIAL statt
+# einer Heuristik wie bei nikto. Wie beim nxc-Parser: Findings fürs Tracking,
+# Loot für den vollen Wert (Secret nur maskiert im Finding-Text, das auch in
+# Reports landet).
+_LOOT_TYPE_HINTS: list[tuple[re.Pattern, "LootType"]] = [
+    (re.compile(r"ssh|private[-_ ]?key|pem", re.IGNORECASE), LootType.SSH_KEY),
+    (re.compile(r"token|bearer|jwt", re.IGNORECASE), LootType.TOKEN),
+    (re.compile(r"api[-_ ]?key|secret[-_ ]?key|access[-_ ]?key", re.IGNORECASE), LootType.API_KEY),
+    (re.compile(r"password|pwd|passwd", re.IGNORECASE), LootType.CREDENTIAL),
+]
+
+
+def _gitleaks_loot_type(rule_id: str) -> "LootType":
+    for pattern, lt in _LOOT_TYPE_HINTS:
+        if pattern.search(rule_id):
+            return lt
+    return LootType.OTHER
+
+
+def _mask_secret(secret: str) -> str:
+    """Zeigt nur Anfang/Ende eines Secrets -- der volle Wert landet als Loot,
+    nicht zusätzlich im Finding-Text (der auch in Reports gedruckt wird)."""
+    if len(secret) <= 8:
+        return "*" * len(secret)
+    return f"{secret[:4]}{'*' * (len(secret) - 8)}{secret[-4:]}"
+
+
+def _parse_gitleaks_json(text: str) -> list[dict]:
+    """Parst gitleaks --report-format json (flaches Array) in eine Liste von
+    Rohtreffern. Robust gegen leere/kaputte Dateien (z.B. 'keine Funde' ->
+    leeres Array, oder abgebrochener Scan) -- liefert dann [] statt zu werfen."""
+    try:
+        data = json.loads(text)
+    except (ValueError, TypeError):
+        return []
+    if not isinstance(data, list):
+        return []
+    hits = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        secret = (item.get("Secret") or "").strip()
+        file_ = (item.get("File") or "").strip()
+        if not secret or not file_:
+            continue
+        hits.append({
+            "rule_id": str(item.get("RuleID") or "unknown"),
+            "description": (item.get("Description") or "").strip(),
+            "secret": secret,
+            "file": file_,
+            "commit": str(item.get("Commit") or "")[:12],
+            "author": (item.get("Author") or "").strip(),
+            "email": (item.get("Email") or "").strip(),
+            "date": (item.get("Date") or "").strip(),
+            "fingerprint": str(item.get("Fingerprint") or ""),
+        })
+    return hits
+
+
+def _parse_gitleaks(repo: Repository, spec, target: str, text: str,
+                    host_id: Optional[int]) -> tuple[int, int]:
+    """Strukturierter gitleaks-Parser (Vorbild: der nxc-Parser für Credential-
+    Funde). Liefert (Anzahl Findings, Anzahl Loot-Einträge). Dedup nur
+    innerhalb eines Laufs (per Fingerprint), wie bei nxc -- kein DB-weiter
+    Loot-Dedup, das ist im Projekt so etabliert."""
+    find_n = 0
+    loot_n = 0
+    seen: set[str] = set()
+    for h in _parse_gitleaks_json(text):
+        key = h["fingerprint"] or f"{h['file']}:{h['rule_id']}:{h['secret']}"
+        if key in seen:
+            continue
+        seen.add(key)
+        title = f"Secret in Git-Historie: {h['rule_id']} ({h['file']})"
+        if not repo.finding_exists(title, host_id=host_id):
+            desc = (
+                f"{h['description'] or h['rule_id']}\n"
+                f"Datei: {h['file']}\n"
+                f"Commit: {h['commit'] or '-'}  ·  Autor: {h['author'] or '-'} <{h['email'] or '-'}>  "
+                f"·  Datum: {h['date'] or '-'}\n"
+                f"Vorschau: {_mask_secret(h['secret'])} (voller Wert als Loot gespeichert)"
+            )
+            repo.add_finding(Finding(
+                title=title, severity=Severity.HIGH, category=FindingCategory.CREDENTIAL,
+                status=FindingStatus.UNVERIFIED, description=desc,
+                host_id=host_id, auto=True,
+            ))
+            find_n += 1
+        repo.add_loot(Loot(
+            type=_gitleaks_loot_type(h["rule_id"]), label=f"gitleaks: {h['rule_id']} ({h['file']})",
+            value=h["secret"], host_id=host_id, source=f"gitleaks · {target}",
+        ))
+        loot_n += 1
+    return find_n, loot_n
+
+
 def _parse_feroxbuster(text: str) -> list[tuple]:
     hits = []
     for line in text.splitlines():
@@ -617,7 +726,9 @@ _SENSITIVE_PATH_PATTERNS: list[tuple[re.Pattern, str, "Severity", "FindingCatego
     (re.compile(r"\.git(/|$)", re.IGNORECASE),
      "Exponiertes .git-Verzeichnis", Severity.HIGH, FindingCategory.EXPOSURE,
      "Das .git-Verzeichnis ist erreichbar. Repository-Historie (ggf. Quellcode/Secrets) "
-     "kann daraus rekonstruiert werden (z.B. mit git-dumper)."),
+     "kann daraus rekonstruiert werden (z.B. mit git-dumper). Nach dem Dump: "
+     "'pentos run gitleaks <pfad-zum-dump>' durchsucht die komplette Commit-Historie "
+     "nach Secrets (API-Keys, Passwörter, Token) und legt Treffer als Findings + Loot an."),
     (re.compile(r"(^|/)\.svn(/|$)|(^|/)\.hg(/|$)", re.IGNORECASE),
      "Exponiertes VCS-Verzeichnis", Severity.HIGH, FindingCategory.EXPOSURE,
      "Ein Versionskontroll-Verzeichnis (SVN/Mercurial) ist erreichbar."),
