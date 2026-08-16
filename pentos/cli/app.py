@@ -9,6 +9,7 @@ Attack-Path-Graph, Obsidian-Export, Reporting und KI-Mentor.
 from __future__ import annotations
 
 import json
+import re
 import shlex
 from datetime import datetime
 from pathlib import Path
@@ -1747,10 +1748,58 @@ def ai_analyze(
         console.print("[green]Als Notiz gespeichert.[/green]")
 
 
+# pentos-run-Vorschläge aus der freien KI-Antwort herausfiltern (der Advisor-
+# System-Prompt bittet gezielt um genau dieses Format). Nur Tool+Ziel, keine
+# von der KI vorgeschlagenen Zusatz-Flags -- die werden bewusst ignoriert,
+# damit nicht unbeaufsichtigt beliebige Optionen mitlaufen.
+_AI_CMD_RE = re.compile(r"pentos run\s+([a-zA-Z0-9_.\-]+)\s+(\S+)")
+
+
+def _extract_ai_commands(answer: str) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for m in _AI_CMD_RE.finditer(answer or ""):
+        tool, target = m.group(1), m.group(2).rstrip(".,;:`)")
+        if runner_registry.get(tool) and (tool, target) not in out:
+            out.append((tool, target))
+    return out[:5]
+
+
+def _run_tool_confirmed(repo, name: str, spec, target: str) -> bool:
+    """Scope-Check + Ausführung + Ingest + Ergebnis-Panel für einen einzelnen,
+    vom Menschen bereits bestätigten Lauf. Geteilte Logik für 'ai next --act'
+    (die eigentliche Ausführung von 'pentos run' bleibt unverändert, deckt
+    aber mehr Optionen ab als hier gebraucht werden)."""
+    host = runner_base.host_of(target)
+    if spec.network and repo.scope_defined() and not repo.in_scope(host):
+        console.print(f"[red]'{host}' liegt nicht im definierten Scope.[/red] "
+                      f"Erweitern mit: [cyan]pentos scope add {host}[/cyan]")
+        return False
+    scans_dir = config.project_path(name) / "scans"
+    try:
+        result = runner_base.run_tool(spec, target, scans_dir)
+    except runner_base.RunnerError as e:
+        console.print(f"[red]{e}[/red]")
+        return False
+    summary = runner_parsers.ingest(repo, spec, target, result, name)
+    status = "[yellow]Timeout[/yellow]" if result.timed_out else f"rc={result.returncode}"
+    console.print(Panel.fit(
+        f"[bold]{spec.name}[/bold] {SYM_ARROW} {target}   ({status}, {result.duration_ms} ms)\n"
+        f"Ausgabe: {result.output_path}\n"
+        f"Neu: {summary['hosts']} Hosts · {summary['services']} Services · "
+        f"{summary['tasks']} Tasks · {summary['findings']} Findings · "
+        f"{summary['loot']} Loot · {summary['notes']} Notizen · {summary['evidence']} Evidence",
+        title="Von der KI vorgeschlagen, von dir bestätigt"))
+    return True
+
+
 @ai_app.command("next")
 def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden"),
             lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache nur für diesen Aufruf"),
-            stream: bool = typer.Option(False, "--stream", help="Antwort live streamen")):
+            stream: bool = typer.Option(False, "--stream", help="Antwort live streamen"),
+            act: bool = typer.Option(False, "--act",
+                                     help="Aus der Antwort vorgeschlagene 'pentos run'-Befehle "
+                                          "anbieten -- du wählst und bestätigst, bevor irgendetwas "
+                                          "läuft. Ohne --act reine Textausgabe wie bisher.")):
     """Schlägt auf Basis des aktuellen Projektstands die nächsten sinnvollen Schritte vor."""
     repo, name = _repo()
     hosts = repo.list_hosts()
@@ -1791,6 +1840,38 @@ def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage
     if not answer:
         console.print("[red]Keine Antwort vom Modell[/red] (Backend erreichbar? `pentos ai status`).")
         raise typer.Exit(1)
+
+    if not act:
+        return
+
+    candidates = _extract_ai_commands(answer)
+    if not candidates:
+        console.print("\n[dim]Keine ausführbare 'pentos run <tool> <ziel>'-Empfehlung im "
+                      "Antworttext gefunden -- nichts zum Bestätigen.[/dim]")
+        return
+    console.print("\n[bold]Vorgeschlagene Befehle (nur Tool + Ziel, Zusatz-Optionen der KI "
+                  "werden ignoriert):[/bold]")
+    for i, (tool, target) in enumerate(candidates, 1):
+        console.print(f"  {i}. pentos run {tool} {target}")
+    choice = typer.prompt("Welchen ausführen? (Nummer, Enter = keinen)", default="", show_default=False)
+    if not choice.strip():
+        console.print("Nichts ausgeführt.")
+        return
+    try:
+        idx = int(choice.strip()) - 1
+        if idx < 0:
+            raise ValueError
+        tool, target = candidates[idx]
+    except (ValueError, IndexError):
+        console.print("[red]Ungültige Auswahl.[/red]")
+        raise typer.Exit(1)
+    spec = runner_registry.get(tool)
+    if not typer.confirm(f"'pentos run {tool} {target}' jetzt wirklich ausführen?", default=False):
+        console.print("Abgebrochen.")
+        return
+    repo2, name2 = _repo()
+    _run_tool_confirmed(repo2, name2, spec, target)
+    repo2.close()
 
 
 @app.command("serve", rich_help_panel="KI & Integration")
