@@ -59,10 +59,17 @@ Konkret geplant, baut auf Bestehendem auf:
   `httpx` liefert Tech-Detection direkt mit, `naabu` ist eine sehr schnelle
   Port-Discovery, `dnsx` löst auf.
 - **EPSS-Anreicherung für Findings**: Findings mit CVE/CVSS bekommen
-  zusätzlich einen EPSS-Score (kostenlose FIRST-API) – CVSS sagt, wie schlimm
-  eine Lücke wäre, EPSS sagt, wie wahrscheinlich sie in den nächsten 30 Tagen
-  tatsächlich ausgenutzt wird. Wie bei Cloud-KI-Aufrufen mit explizitem
-  Hinweis, dass dafür eine Anfrage nach aussen geht (opt-in).
+  zusätzlich einen EPSS-Score (kostenlose FIRST-API,
+  `api.first.org/data/v1/epss`) – CVSS sagt, wie schlimm eine Lücke wäre,
+  EPSS sagt, wie wahrscheinlich sie in den nächsten 30 Tagen tatsächlich
+  ausgenutzt wird. Wie bei Cloud-KI-Aufrufen mit explizitem Hinweis, dass
+  dafür eine Anfrage nach aussen geht (opt-in).
+- **testssl.sh-Parser**: strukturierter TLS/SSL-Check gehört in praktisch
+  jeden Web-Pentest, ist aber bisher komplett ungedeckt. testssl.sh liefert
+  seit 3.2 ein stabiles JSON-Format mit Severity je Einzelbefund (Protokolle,
+  schwache Cipher, Zertifikatskette, Heartbleed/ROBOT/POODLE & Co.) – passt
+  ins bestehende Parser-Muster (severity-heuristisch wie bei nikto), landet
+  als Findings direkt am betroffenen Service.
 
 ## Später
 
@@ -79,6 +86,12 @@ Größere Brocken, die einen frischen Kopf verdienen:
   Treffer zu Credential-/Info-Disclosure-Findings machen.
 - **AzureHound-Unterstützung** für den BloodHound-Import (Entra ID hat ein
   anderes Schema als SharpHound, bisher nicht abgedeckt).
+- **MITRE-ATT&CK-Mapping für Findings**: optionales Technique-Tag (z.B.
+  `T1110` Brute Force) pro Finding, dazu Export als ATT&CK-Navigator-Layer
+  (`.json`, offizielles Layer-Format) für den Report – zeigt auf einen Blick,
+  welche Taktiken abgedeckt wurden, ohne dass PentOS selbst etwas automatisch
+  ausführt oder klassifiziert (die Zuordnung bleibt manuell/kuratiert wie bei
+  allen anderen Wissens-Inhalten).
 - **Mehr strukturierte Parser** für weitere Tools, damit deren Ausgabe
   automatisch zu Hosts, Diensten und Findings wird.
 

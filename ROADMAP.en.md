@@ -58,9 +58,16 @@ Concretely planned, building on what exists:
   format. `httpx` includes tech detection, `naabu` is very fast port
   discovery, `dnsx` resolves DNS.
 - **EPSS enrichment for findings**: findings with a CVE/CVSS also get an EPSS
-  score (free FIRST API) – CVSS says how bad a flaw could be, EPSS says how
-  likely it actually gets exploited in the next 30 days. Like cloud AI calls,
-  with an explicit notice that a request leaves the machine (opt-in).
+  score (free FIRST API, `api.first.org/data/v1/epss`) – CVSS says how bad a
+  flaw could be, EPSS says how likely it actually gets exploited in the next
+  30 days. Like cloud AI calls, with an explicit notice that a request leaves
+  the machine (opt-in).
+- **testssl.sh parser**: a structured TLS/SSL check belongs in practically
+  every web pentest but isn't covered at all yet. testssl.sh has had a
+  stable JSON format with a severity per finding since 3.2 (protocols, weak
+  ciphers, certificate chain, Heartbleed/ROBOT/POODLE etc.) – fits the
+  existing parser pattern (heuristic severity like the nikto parser), lands
+  as findings directly on the affected service.
 
 ## Later
 
@@ -77,6 +84,12 @@ Larger chunks that deserve a fresh head:
   hits into credential/info-disclosure findings.
 - **AzureHound support** for the BloodHound import (Entra ID has a different
   schema than SharpHound, not covered yet).
+- **MITRE ATT&CK mapping for findings**: an optional technique tag (e.g.
+  `T1110` Brute Force) per finding, plus export as an ATT&CK Navigator layer
+  (`.json`, the official layer format) for the report – shows at a glance
+  which tactics were covered, without PentOS itself executing or
+  classifying anything automatically (mapping stays manual/curated, like all
+  other knowledge content).
 - **More structured parsers** for additional tools, so their output automatically
   becomes hosts, services and findings.
 
