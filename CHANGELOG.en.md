@@ -7,6 +7,29 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.35.0] – 2026-08-16
+### Added
+- **Wordlist catalog (`pentos wordlists catalog`/`add`):** builds on
+  `wordlists setup` — instead of just the two fixed files, now a curated
+  catalog of 12 further SecLists lists across four categories (usernames,
+  password lists in several sizes, directories, subdomains), each
+  searchable (`--category`/`--filter`) and loadable into the project by
+  name. All URLs are real `raw.githubusercontent.com` SecLists paths.
+- **gitleaks integration:** new runner entry `gitleaks` for secret scans
+  against a local git repo dump (`pentos run gitleaks <path>`, target = a
+  local path, not a network target). A thematic follow-up to the existing
+  `.git` exposure detector, whose finding text now points at this next
+  step. Schema verified against the real `report.Finding` struct in the
+  gitleaks/gitleaks repo. Hits become findings (tracking, with a masked
+  secret preview) and loot (full value, type via a RuleID heuristic).
+
+### Noted (not shipped)
+- **AzureHound support researched but deferred:** the schema is
+  substantially bigger/more complex than SharpHound's (follows the full
+  Microsoft Graph API object model) and couldn't be verified with the same
+  confidence as this session's other importers/parsers. Details and
+  findings-so-far are in ROADMAP.en.md.
+
 ## [2.34.0] – 2026-08-16
 ### Added
 - **testssl.sh parser:** new runner entry `testssl` (`testssl.sh --jsonfile

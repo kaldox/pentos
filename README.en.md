@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.34.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.35.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -23,14 +23,14 @@ Everything below is already shipped (✅) — open items are further down in the
 |  | Area | Core features |
 |---|---|---|
 | 🗂️ | **Workspace & docs** | Full project structure, automatic notes (`notes/nmap.md` etc.), timestamped pentest journal, task system, engagement timeline (milestones/windows/blackouts), intelligent next steps (suggestions only) |
-| 🔎 | **Recon & import** | nmap XML, scanner reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatic findings + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto, testssl.sh, httpx/naabu/dnsx) · guided chain `sweep`, scan diff · opt-in runner layer (27 tools, no shell eval, scope guard, optional proxychains pivot) |
+| 🔎 | **Recon & import** | nmap XML, scanner reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatic findings + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto, testssl.sh, httpx/naabu/dnsx, gitleaks) · guided chain `sweep`, scan diff · opt-in runner layer (28 tools, no shell eval, scope guard, optional proxychains pivot) |
 | 🎯 | **Findings & attack path** | Severity/CVSS/EPSS (exploit likelihood, opt-in), finding templates, status history/retest tracking, visual attack-path graph incl. BloodHound AD paths (Mermaid/Graphviz/SVG), loot/credential matching |
 | 📊 | **Reporting & interfaces** | Markdown/branded HTML/PDF with risk score & chart · web dashboard (overview, finding/host detail view, command palette `Ctrl+K`) · terminal UI · Obsidian vault export · MCP server for Claude Code/Cursor (read-only) |
 | 🤖 | **AI mentor** | Advisor mode (optional `--act`: AI proposes a `pentos run` command, you pick and confirm each step yourself), "ask your project" (RAG, local embeddings), vision (screenshot analysis), free language choice + auto model selection, offline fallback with no backend |
-| 🧰 | **Around it** | Project export/import as a single file, default wordlists via `wordlists setup`, shell completion, evidence management, CTF/THM knowledge base, methodology/playbook library |
+| 🧰 | **Around it** | Project export/import as a single file, default wordlists plus a curated SecLists catalog (`wordlists setup`/`catalog`/`add`), shell completion, evidence management, CTF/THM knowledge base, methodology/playbook library |
 
 **Roadmap (open):**
-- Wordlist catalog: load further SecLists lists into the project by name
+- AzureHound support for the BloodHound import (schema research underway, see ROADMAP.en.md)
 - AI flashcards & note summaries (from your own data only, no hallucination)
 - Richer screenshot handling (e.g. direct capture/annotation)
 
@@ -217,7 +217,7 @@ flowchart LR
     end
     subgraph input["Data intake"]
         IMP["Importers\nnmap · scanner · BloodHound"]
-        RUN["Runner layer\n(opt-in, 27 tools)"]
+        RUN["Runner layer\n(opt-in, 28 tools)"]
     end
     RUN --> PARSE["Parsers"]
     PARSE --> REPO
@@ -354,4 +354,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.34.0**.
+Current version: **2.35.0**.

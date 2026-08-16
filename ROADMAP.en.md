@@ -70,16 +70,20 @@ For context, what was added most recently (details in the changelog):
   scanned for executable `pentos run …` suggestions, which you pick from and
   confirm individually – speeds up manual work without the AI ever starting
   anything itself
+- **Wordlist catalog** (`pentos wordlists catalog`/`add`): a curated catalog
+  of 12 further SecLists lists across four categories (usernames, password
+  lists in several sizes, directories, subdomains), each searchable and
+  loadable into the project by name
+- **gitleaks integration**: secret scanning against a local repo dump
+  (`pentos run gitleaks <path>`), a thematic follow-up to the `.git`
+  exposure detector – hits become findings (with a masked secret preview)
+  and loot (with the full value)
 
 ## Next
 
-Concretely planned, building on what exists:
-
-- **Wordlist catalog**: `pentos wordlists setup` currently covers exactly two
-  files (usernames, rockyou-75). Next up: a searchable catalog of curated
-  SecLists lists (directories, more password-list sizes, subdomains), each
-  loadable into the project by name – needs its own catalog format and a
-  browse/filter CLI.
+Nothing concrete newly planned right now – the items that used to live here
+all landed in "Recently shipped". Suggestions welcome via the
+[issues](https://github.com/kaldox/pentos/issues).
 
 ## Later
 
@@ -95,7 +99,16 @@ Larger chunks that deserve a fresh head:
   open `.git` is found, suggest running `gitleaks` against a dump and turn its
   hits into credential/info-disclosure findings.
 - **AzureHound support** for the BloodHound import (Entra ID has a different
-  schema than SharpHound, not covered yet).
+  schema than SharpHound, not covered yet). Research attempt on 2026-08-16:
+  the schema is substantially bigger/more complex than SharpHound's (follows
+  the full Microsoft Graph API object model, a single User node has 60+
+  fields), and the official docs don't include a concrete example JSON.
+  Confirmed so far: an `IngestRequest{Meta{Type,Version,Count}, Data}`
+  wrapper exists, Global Admin detection goes through a `roleTemplateId`.
+  A clean implementation needs either real test-tenant access or a
+  published sample export to verify against — deliberately not built on a
+  guess, to keep the "schema verified, not guessed" standard the other
+  importers/parsers hold to.
 - **MITRE ATT&CK mapping for findings**: an optional technique tag (e.g.
   `T1110` Brute Force) per finding, plus export as an ATT&CK Navigator layer
   (`.json`, the official layer format) for the report – shows at a glance

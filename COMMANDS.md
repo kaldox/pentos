@@ -26,6 +26,9 @@ pentos timeline list                 # Meilensteine/Zeitfenster/Blackout-Zeiten 
 pentos timeline rm 1
 pentos wordlists setup               # Standard-Wordlists anlegen (Usernames sofort, Passwörter opt-in)
 pentos wordlists setup --no-passwords  # nur Usernames, keinen Download
+pentos wordlists catalog             # kuratierten SecLists-Katalog durchsuchen
+pentos wordlists catalog --category directories --filter raft
+pentos wordlists add subdomains-20k  # einzelne Katalog-Liste ins Projekt laden
 ```
 
 ## Recon & Import
@@ -51,6 +54,7 @@ pentos run nmap 10.10.10.10 --args "-p- -T4"   # zusätzliche Argumente durchrei
 pentos run nmap 10.10.10.10 --dry-run          # nur das Kommando zeigen
 pentos run nmap 10.10.10.10 --shell            # Shell-Modus (nur mit vertrauenswürdiger Eingabe!)
 pentos run nikto 10.10.10.10 --proxy "proxychains4 -q"   # SOCKS-Pivot nach einem Foothold
+pentos run gitleaks /pfad/zum/repo-dump   # Secret-Scan gegen einen rekonstruierten .git-Dump
 pentos runs                          # Historie aller Läufe
 
 # Geführte Recon-/Enum-Kette

@@ -7,6 +7,30 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.35.0] – 2026-08-16
+### Hinzugefügt
+- **Wordlists-Katalog (`pentos wordlists catalog`/`add`):** baut auf
+  `wordlists setup` auf — statt nur den zwei festen Dateien jetzt ein
+  kuratierter Katalog mit 12 weiteren SecLists-Listen über vier Kategorien
+  (Usernames, Passwörter in mehreren Grössen, Verzeichnisse, Subdomains),
+  einzeln per Namen durchsuchbar (`--category`/`--filter`) und ins Projekt
+  ladbar. Alle URLs echte `raw.githubusercontent.com`-SecLists-Pfade.
+- **gitleaks-Integration:** neuer Runner-Eintrag `gitleaks` für Secret-Scans
+  gegen einen lokalen Git-Repo-Dump (`pentos run gitleaks <pfad>`,
+  target = lokaler Pfad, kein Netzwerkziel). Thematischer Anschluss an den
+  bestehenden `.git`-Exposure-Detector, dessen Finding-Text jetzt auf diesen
+  Folgeschritt verweist. Schema verifiziert gegen den echten
+  `report.Finding`-Struct im gitleaks/gitleaks-Repo. Treffer werden Findings
+  (Tracking, mit maskierter Secret-Vorschau) und Loot (voller Wert, Typ per
+  RuleID-Heuristik).
+
+### Notiert (nicht umgesetzt)
+- **AzureHound-Unterstützung recherchiert, aber zurückgestellt:** Schema ist
+  deutlich grösser/komplexer als SharpHound (folgt dem vollen
+  Microsoft-Graph-API-Objektmodell) und liess sich nicht mit derselben
+  Sicherheit verifizieren wie die anderen Importer/Parser dieser Session.
+  Details und bereits gesicherte Erkenntnisse in ROADMAP.md.
+
 ## [2.34.0] – 2026-08-16
 ### Hinzugefügt
 - **testssl.sh-Parser:** Neuer Runner-Eintrag `testssl` (`testssl.sh

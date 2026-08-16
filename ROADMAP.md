@@ -72,16 +72,20 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   wird nach ausführbaren `pentos run …`-Vorschlägen durchsucht, die du
   auswählst und einzeln bestätigst – beschleunigt die manuelle Arbeit, ohne
   dass die KI selbst etwas startet
+- **Wordlists-Katalog** (`pentos wordlists catalog`/`add`): kuratierter
+  Katalog mit 12 weiteren SecLists-Listen über vier Kategorien (Usernames,
+  Passwörter in mehreren Grössen, Verzeichnisse, Subdomains), einzeln per
+  Namen durchsuchbar und ins Projekt ladbar
+- **gitleaks-Integration**: Secret-Scan gegen einen lokalen Repo-Dump
+  (`pentos run gitleaks <pfad>`), thematischer Anschluss an den
+  `.git`-Exposure-Detector – Treffer werden Findings (mit maskierter
+  Secret-Vorschau) und Loot (mit vollem Wert)
 
 ## Als Nächstes
 
-Konkret geplant, baut auf Bestehendem auf:
-
-- **Wordlists-Katalog**: `pentos wordlists setup` deckt bisher genau zwei
-  Dateien ab (Usernames, rockyou-75). Als Nächstes ein durchsuchbarer
-  Katalog ausgewählter SecLists-Listen (Verzeichnisse, weitere Passwort-
-  Grössen, Subdomains), einzeln per Namen ins Projekt ladbar – braucht ein
-  eigenes Katalog-Format und eine Browse-/Filter-CLI.
+Aktuell nichts konkret Neues eingeplant – die Punkte hier waren zuletzt alle
+in „Kürzlich umgesetzt" gelandet. Vorschläge gerne über die
+[Issues](https://github.com/kaldox/pentos/issues).
 
 ## Später
 
@@ -97,7 +101,16 @@ Größere Brocken, die einen frischen Kopf verdienen:
   offenes `.git` gefunden, `gitleaks` gegen einen Dump vorschlagen und dessen
   Treffer zu Credential-/Info-Disclosure-Findings machen.
 - **AzureHound-Unterstützung** für den BloodHound-Import (Entra ID hat ein
-  anderes Schema als SharpHound, bisher nicht abgedeckt).
+  anderes Schema als SharpHound, bisher nicht abgedeckt). Rechercheversuch
+  am 2026-08-16: Schema deutlich grösser/komplexer als SharpHound (folgt
+  dem vollen Microsoft-Graph-API-Objektmodell, ein einzelner User-Knoten
+  hat 60+ Felder), offizielle Doku enthält kein konkretes Beispiel-JSON.
+  Bestätigt bisher nur: `IngestRequest{Meta{Type,Version,Count}, Data}`-
+  Wrapper existiert, Global-Admin-Erkennung läuft über eine `roleTemplateId`.
+  Für eine saubere Umsetzung braucht es entweder echten Testtenant-Zugriff
+  oder ein veröffentlichtes Beispiel-Export zum Gegenprüfen – bewusst nicht
+  auf Verdacht gebaut, um den „Schema verifiziert, nicht geraten"-Standard
+  der anderen Importer/Parser nicht zu brechen.
 - **MITRE-ATT&CK-Mapping für Findings**: optionales Technique-Tag (z.B.
   `T1110` Brute Force) pro Finding, dazu Export als ATT&CK-Navigator-Layer
   (`.json`, offizielles Layer-Format) für den Report – zeigt auf einen Blick,

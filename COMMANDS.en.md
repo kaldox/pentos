@@ -26,6 +26,9 @@ pentos timeline list                 # the project's milestones/windows/blackout
 pentos timeline rm 1
 pentos wordlists setup               # set up default wordlists (usernames immediately, passwords opt-in)
 pentos wordlists setup --no-passwords  # usernames only, no download
+pentos wordlists catalog             # browse the curated SecLists catalog
+pentos wordlists catalog --category directories --filter raft
+pentos wordlists add subdomains-20k  # load a single catalog list into the project
 ```
 
 ## Recon & Import
@@ -51,6 +54,7 @@ pentos run nmap 10.10.10.10 --args "-p- -T4"   # pass extra arguments through
 pentos run nmap 10.10.10.10 --dry-run          # only show the command
 pentos run nmap 10.10.10.10 --shell            # shell mode (only with trusted input!)
 pentos run nikto 10.10.10.10 --proxy "proxychains4 -q"   # SOCKS pivot after a foothold
+pentos run gitleaks /path/to/repo-dump    # secret scan against a reconstructed .git dump
 pentos runs                          # history of all runs
 
 # Guided recon/enum chain
