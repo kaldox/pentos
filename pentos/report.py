@@ -90,6 +90,8 @@ def build_markdown(repo: Repository, project: str) -> str:
         if f.cvss_score is not None:
             vec = f" (`{f.cvss_vector}`)" if f.cvss_vector else ""
             md.append(f"- **CVSS:** {f.cvss_score}{vec}")
+        if f.epss_score is not None:
+            md.append(f"- **EPSS:** {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})")
         md.append(f"- **Erkennung:** {'automatisch' if f.auto else 'manuell'}")
         md.append("")
         md.append(f.description or "_Keine Beschreibung._")

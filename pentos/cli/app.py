@@ -24,6 +24,7 @@ from rich.table import Table
 from .. import archive as archive_mod
 from .. import config
 from ..ai import AIClient
+from .. import epss as epss_mod
 from .. import findings_rules, graph as graph_mod, obsidian as obsidian_mod, recommend, report as report_mod
 from .. import export as export_mod
 from .. import playbooks as playbooks_mod
@@ -745,10 +746,14 @@ def finding_show(finding_id: int):
     repo.close()
     if not f:
         console.print("[red]Nicht gefunden.[/red]"); raise typer.Exit(1)
+    epss_line = ""
+    if f.epss_score is not None:
+        epss_line = f"\nEPSS: {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})"
     console.print(Panel.fit(
         f"[bold]{f.title}[/bold]\n\n"
         f"Severity: {f.severity.value}\nKategorie: {f.category.value}\nStatus: {f.status.value}\n"
-        f"Erkennung: {'automatisch' if f.auto else 'manuell'}\n\n{f.description or '_keine Beschreibung_'}",
+        f"Erkennung: {'automatisch' if f.auto else 'manuell'}{epss_line}\n\n"
+        f"{f.description or '_keine Beschreibung_'}",
         title=f"Finding #{f.id}"))
 
 
@@ -780,6 +785,66 @@ def finding_history(finding_id: int):
         lines.append(f"[dim]{h.ts}[/dim]  {arrow}{note}")
     body = "\n".join(lines) if lines else "[dim]Keine Historie erfasst.[/dim]"
     console.print(Panel.fit(body, title=f"Status-Historie · Finding #{finding_id}: {f.title}"))
+
+
+def _confirm_epss_send(cve_count: int, yes: bool) -> bool:
+    """Fragt vor dem Senden an die FIRST.org-EPSS-API nach -- CVE-IDs
+    verlassen den Rechner (analog zu _confirm_ai_send bei Cloud-KI-Aufrufen).
+    Anders als bei der KI gibt es hier keine 'lokal'-Variante: EPSS ist immer
+    ein externer Dienst, also immer die deutliche Warnung."""
+    if yes:
+        return True
+    console.print(f"[yellow]Achtung:[/yellow] {cve_count} CVE-ID(s) werden an einen externen "
+                  f"Dienst ([bold]api.first.org[/bold], EPSS) gesendet – Daten verlassen deinen Rechner.")
+    return typer.confirm("Wirklich senden?", default=False)
+
+
+@finding_app.command("epss")
+def finding_epss(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden")):
+    """Reichert Findings mit erkennbarer CVE-Referenz um einen EPSS-Score an.
+
+    EPSS (kostenlose FIRST.org-API) sagt, wie wahrscheinlich eine Lücke in den
+    nächsten 30 Tagen tatsächlich ausgenutzt wird -- ergänzt CVSS (wie schlimm
+    sie wäre) um die Ausnutzungswahrscheinlichkeit. Opt-in, wie bei KI-Cloud-
+    Aufrufen: fragt vor dem Senden nach, sofern nicht --yes gesetzt ist.
+    """
+    repo, _ = _repo()
+    findings = repo.list_findings()
+    by_cve: dict[str, list[Finding]] = {}
+    for f in findings:
+        for cve in epss_mod.extract_cves(f):
+            by_cve.setdefault(cve, []).append(f)
+    if not by_cve:
+        repo.close()
+        console.print("[dim]Keine Findings mit erkennbarer CVE-Referenz (Titel/Beschreibung).[/dim]")
+        return
+    if not _confirm_epss_send(len(by_cve), yes):
+        repo.close()
+        console.print("Abgebrochen.")
+        raise typer.Exit()
+    try:
+        scores = epss_mod.fetch_epss(list(by_cve.keys()))
+    except epss_mod.EpssError as exc:
+        repo.close()
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+    updated = 0
+    table = Table(title="EPSS-Anreicherung")
+    for c in ["CVE", "EPSS", "Perzentil", "Findings"]:
+        table.add_column(c)
+    for cve, fs in by_cve.items():
+        data = scores.get(cve)
+        if not data:
+            table.add_row(cve, "–", "–", str(len(fs)))
+            continue
+        table.add_row(cve, f"{data['epss']:.3f}", f"{data['percentile']:.2f}", str(len(fs)))
+        for f in fs:
+            if f.id is not None and repo.set_finding_epss(f.id, data["epss"], data["percentile"]):
+                updated += 1
+    repo.close()
+    console.print(table)
+    console.print(f"[green]{updated} Finding(s) aktualisiert.[/green] "
+                  f"({len(by_cve)} eindeutige CVE(s) abgefragt)")
 
 
 # ── Finding-Template-Bibliothek ──────────────────────────────────────────────

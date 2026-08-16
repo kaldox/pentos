@@ -126,10 +126,10 @@ class Repository:
     def add_finding(self, f: Finding) -> Finding:
         cur = self.conn.execute(
             "INSERT INTO findings (title, category, severity, status, description, remediation, "
-            "cvss_score, cvss_vector, host_id, service_id, auto, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "cvss_score, cvss_vector, epss_score, epss_percentile, host_id, service_id, auto, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (f.title, f.category.value, f.severity.value, f.status.value, f.description,
-             f.remediation, f.cvss_score, f.cvss_vector,
+             f.remediation, f.cvss_score, f.cvss_vector, f.epss_score, f.epss_percentile,
              f.host_id, f.service_id, int(f.auto), f.created_at),
         )
         self.conn.commit()
@@ -138,6 +138,15 @@ class Repository:
         tag = "Auto-Finding" if f.auto else "Finding erstellt"
         self.log(tag, f"[{f.severity.value}] {f.title} (id={f.id})")
         return f
+
+    def set_finding_epss(self, finding_id: int, epss_score: float, epss_percentile: float) -> bool:
+        """Trägt einen abgefragten EPSS-Score nach (siehe pentos/epss.py, opt-in)."""
+        cur = self.conn.execute(
+            "UPDATE findings SET epss_score = ?, epss_percentile = ? WHERE id = ?",
+            (epss_score, epss_percentile, finding_id),
+        )
+        self.conn.commit()
+        return cur.rowcount > 0
 
     @staticmethod
     def _norm_title(title: str) -> str:

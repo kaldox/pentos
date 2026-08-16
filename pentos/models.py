@@ -110,6 +110,8 @@ class Finding(BaseModel):
     remediation: Optional[str] = None
     cvss_score: Optional[float] = None
     cvss_vector: Optional[str] = None
+    epss_score: Optional[float] = None        # Ausnutzungswahrscheinlichkeit (0..1), opt-in via 'pentos finding epss'
+    epss_percentile: Optional[float] = None   # Perzentil ggü. allen bewerteten CVEs (0..1)
     host_id: Optional[int] = None
     service_id: Optional[int] = None
     auto: bool = False                  # automatisch erkannt?

@@ -205,6 +205,8 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
         if f.cvss_score is not None:
             vec = f" · {e(f.cvss_vector)}" if f.cvss_vector else ""
             cvss = f' · CVSS {f.cvss_score}{vec}'
+        if f.epss_score is not None:
+            cvss += f' · EPSS {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})'
         remediation = (f'<p class="remediation"><strong>Remediation:</strong> '
                        f'{e(f.remediation)}</p>') if f.remediation else ""
         loc_html = f' <span class="muted">— {e(loc)}</span>' if loc else ""
@@ -468,6 +470,8 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         if f.cvss_score is not None:
             vec = f" · {e(f.cvss_vector)}" if f.cvss_vector else ""
             cvss = f" · CVSS {f.cvss_score}{vec}"
+        if f.epss_score is not None:
+            cvss += f" · EPSS {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})"
         story.append(Paragraph(
             f"Kategorie: {e(f.category.value)} · Status: {e(f.status.value)}{cvss} · "
             f'{"automatisch" if f.auto else "manuell"} erkannt', styles["Meta"]))
