@@ -48,26 +48,38 @@ For context, what was added most recently (details in the changelog):
   report
 - Engagement timeline (`pentos timeline add/list/rm`): track milestones, test
   windows and blackout periods per project, shown in all three report formats
+- **testssl.sh parser**: structured TLS/SSL checks (protocols, weak ciphers,
+  certificate chain, Heartbleed/ROBOT/POODLE etc.) straight from the native
+  JSON report – severity comes from the tool itself, no heuristic needed
+- **ProjectDiscovery parsers** (`httpx`/`naabu`/`dnsx`): native JSON instead
+  of text format, `httpx` includes tech detection – land as a structured
+  recon note (not a vulnerability scan, so no findings)
+- **EPSS enrichment for findings** (`finding epss`): CVE references found in
+  title/description get looked up against the FIRST API – CVSS says how bad
+  a flaw could be, EPSS says how likely it actually gets exploited in the
+  next 30 days. Opt-in like cloud AI calls.
+- **Proxychains support in the runner** (`pentos run <tool> <target> --proxy
+  "proxychains4 -q"`): for the real pivot case after a foothold into an
+  internal network – deliberately no Tor/anonymization support, see
+  "Deliberately not planned"
+- **Default wordlists** (`pentos wordlists setup`): a generic username list
+  ships with the package, a short password list (SecLists `rockyou-75.txt`)
+  is fetched opt-in from the official source instead of being bundled in the
+  repo – `hydra`/`medusa` suggestions in `recommend` now point at these paths
+- **AI proposes, you confirm** (`ai next --act`): the advisor's answer gets
+  scanned for executable `pentos run …` suggestions, which you pick from and
+  confirm individually – speeds up manual work without the AI ever starting
+  anything itself
 
 ## Next
 
 Concretely planned, building on what exists:
 
-- **ProjectDiscovery parsers** (`httpx`/`naabu`/`dnsx`): all three can output
-  native JSON, which makes for more robust parsers than gobuster's text
-  format. `httpx` includes tech detection, `naabu` is very fast port
-  discovery, `dnsx` resolves DNS.
-- **EPSS enrichment for findings**: findings with a CVE/CVSS also get an EPSS
-  score (free FIRST API, `api.first.org/data/v1/epss`) – CVSS says how bad a
-  flaw could be, EPSS says how likely it actually gets exploited in the next
-  30 days. Like cloud AI calls, with an explicit notice that a request leaves
-  the machine (opt-in).
-- **testssl.sh parser**: a structured TLS/SSL check belongs in practically
-  every web pentest but isn't covered at all yet. testssl.sh has had a
-  stable JSON format with a severity per finding since 3.2 (protocols, weak
-  ciphers, certificate chain, Heartbleed/ROBOT/POODLE etc.) – fits the
-  existing parser pattern (heuristic severity like the nikto parser), lands
-  as findings directly on the affected service.
+- **Wordlist catalog**: `pentos wordlists setup` currently covers exactly two
+  files (usernames, rockyou-75). Next up: a searchable catalog of curated
+  SecLists lists (directories, more password-list sizes, subdomains), each
+  loadable into the project by name – needs its own catalog format and a
+  browse/filter CLI.
 
 ## Later
 
@@ -98,7 +110,16 @@ Larger chunks that deserve a fresh head:
 This is not an oversight but intent and part of the idea of PentOS:
 
 - **No autonomous execution of attacks.** The AI analyzes and suggests; only what
-  the human triggers is started. An "auto-hack" mode is not coming.
+  the human triggers is started. `ai next --act` still fits this: it shows
+  suggestions, execution only ever happens after an explicit per-step
+  confirmation. A real "auto-hack" mode (chaining without confirmation) is
+  not coming.
+- **No Tor/anonymization support against the target.** Proxychains is
+  supported, but only for the legitimate pivot case (SOCKS through a
+  foothold into an internal network). Deliberately anonymizing traffic
+  against an authorized test target undermines the accountability a rules-
+  of-engagement is meant to guarantee – and it's technically unsuited for
+  real scanning anyway (latency, blocked exit nodes).
 - **No cloud requirement.** PentOS stays local-first and runnable without external
   services; a cloud connection will never be a prerequisite.
 - **No replacement for your own understanding.** The learning reports and the

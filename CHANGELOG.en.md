@@ -7,6 +7,47 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.34.0] – 2026-08-16
+### Added
+- **testssl.sh parser:** new runner entry `testssl` (`testssl.sh --jsonfile
+  {outfile} --quiet {target}`) plus a structured parser for TLS/SSL findings
+  (protocols, weak ciphers, certificate chain, Heartbleed/ROBOT/POODLE
+  etc.). Schema verified against the official `fileout_json_finding()`
+  function in the testssl/testssl.sh repo. Severity comes straight from the
+  tool, no heuristic needed.
+- **ProjectDiscovery parsers httpx/naabu/dnsx:** three new runner entries for
+  native JSON instead of text format. Pure recon/enumeration tools (not a
+  vulnerability scan) — hits land as a structured collection note per
+  target, like subfinder, not as findings.
+- **EPSS enrichment (`pentos finding epss`):** new module `pentos/epss.py`
+  extracts CVE IDs from a finding's title/description and looks up the
+  exploit prediction score at the free FIRST.org API (batched). Opt-in like
+  cloud AI calls — asks explicitly before sending. Shown next to CVSS in
+  `finding show` and in all three report formats.
+- **Proxychains support (`pentos run <tool> <target> --proxy "proxychains4
+  -q"`):** prepends a proxy chain to the tool invocation, for the pivot case
+  after a foothold into an internal network. Deliberately no Tor support
+  (see ROADMAP.en.md, "Deliberately not planned").
+- **Default wordlists (`pentos wordlists setup`):** a generic username list
+  (352 entries, plain patterns/names) ships directly with PentOS. The
+  password list is deliberately NOT bundled in the repo (it stems from a
+  real 2009 data breach) — instead it's fetched opt-in from the official
+  SecLists source (`rockyou-75.txt`, a curated 75-entry short list).
+- **`ai next --act`:** the advisor has long formulated concrete `pentos run
+  …` suggestions in its answer text — these are now filtered out, shown as
+  a pick list, and only started (via the same runner path as `pentos run`,
+  scope check included) after two explicit confirmations. Without `--act`,
+  `ai next` stays plain text output as before — doesn't violate the "AI
+  never executes itself" principle, every run remains a deliberate human
+  action.
+
+### Fixed
+- **`pentos recommend`: hydra/medusa shortcuts ran into nothing.** Both were
+  listed under "ready (installed)" with a bare `pentos run hydra <target>`
+  — without `-L`/`-P`/a protocol module that doesn't do anything useful.
+  Now shows a command template with `--args` pointing at the paths `pentos
+  wordlists setup` creates.
+
 ## [2.33.0] – 2026-08-15
 ### Added
 - **BloodHound attack path in the dashboard graph:** the SharpHound import

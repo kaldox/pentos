@@ -7,6 +7,48 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.34.0] – 2026-08-16
+### Hinzugefügt
+- **testssl.sh-Parser:** Neuer Runner-Eintrag `testssl` (`testssl.sh
+  --jsonfile {outfile} --quiet {target}`) plus strukturierter Parser für
+  TLS/SSL-Findings (Protokolle, schwache Cipher, Zertifikatskette,
+  Heartbleed/ROBOT/POODLE & Co.). Schema verifiziert gegen die offizielle
+  `fileout_json_finding()`-Funktion im testssl/testssl.sh-Repo. Severity
+  kommt direkt vom Tool, keine eigene Heuristik nötig.
+- **ProjectDiscovery-Parser httpx/naabu/dnsx:** Drei neue Runner-Einträge für
+  natives JSON statt Textformat. Reine Recon-/Enumeration-Tools (kein
+  Schwachstellen-Scan) — Treffer landen wie bei subfinder als strukturierte
+  Sammelnotiz je Ziel, nicht als Findings.
+- **EPSS-Anreicherung (`pentos finding epss`):** Neues Modul `pentos/epss.py`
+  extrahiert CVE-IDs aus Finding-Titel/-Beschreibung und fragt den
+  Exploit-Prediction-Score bei der kostenlosen FIRST.org-API ab (gebatcht).
+  Opt-in wie bei Cloud-KI-Aufrufen — fragt vor dem Senden explizit nach.
+  Anzeige neben CVSS in `finding show` sowie in allen drei Reportformaten.
+- **Proxychains-Unterstützung (`pentos run <tool> <ziel> --proxy "proxychains4
+  -q"`):** stellt eine Proxy-Chain vor den Tool-Aufruf, für den Pivot-Fall
+  nach einem Foothold ins interne Netz. Bewusst kein Tor-Support (siehe
+  ROADMAP.md, „Bewusst nicht geplant").
+- **Standard-Wordlists (`pentos wordlists setup`):** Generische
+  Username-Liste (352 Einträge, reine Muster/Namen) wird direkt mit PentOS
+  ausgeliefert. Passwort-Liste ist bewusst NICHT im Repo gebündelt (stammt
+  aus einem echten Datenleck von 2009), sondern wird opt-in von der
+  offiziellen SecLists-Quelle geladen (`rockyou-75.txt`, kuratierte
+  75-Einträge-Kurzliste).
+- **`ai next --act`:** Der Advisor formuliert schon länger konkrete `pentos
+  run …`-Vorschläge im Antworttext — neu werden diese jetzt herausgefiltert,
+  als Auswahl angezeigt und erst nach zwei expliziten Bestätigungen über
+  denselben Runner-Pfad wie `pentos run` gestartet (inkl. Scope-Check). Ohne
+  `--act` bleibt `ai next` reine Textausgabe wie bisher — verletzt das
+  Prinzip „KI führt nie selbst aus" nicht, jeder Lauf bleibt eine bewusste
+  menschliche Aktion.
+
+### Behoben
+- **`pentos recommend`: hydra/medusa-Shortcuts liefen ins Leere.** Beide
+  wurden unter „Bereit (installiert)" mit einem blanken `pentos run hydra
+  <ziel>` gelistet — ohne `-L`/`-P`/Protokoll-Modul tut das nichts
+  Sinnvolles. Zeigt jetzt eine Befehlsvorlage mit `--args`, die auf die
+  Pfade zeigt, die `pentos wordlists setup` anlegt.
+
 ## [2.33.0] – 2026-08-15
 ### Hinzugefügt
 - **BloodHound-Angriffspfad im Dashboard-Graphen:** Der SharpHound-Import

@@ -49,27 +49,39 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Engagement-Zeitplan (`pentos timeline add/list/rm`): Meilensteine,
   Testzeitfenster und Blackout-Zeiten pro Projekt festhalten, erscheint in
   allen drei Report-Formaten
+- **testssl.sh-Parser**: strukturierter TLS/SSL-Check (Protokolle, schwache
+  Cipher, Zertifikatskette, Heartbleed/ROBOT/POODLE & Co.) direkt aus dem
+  nativen JSON-Report – Severity kommt vom Tool selbst, keine eigene Heuristik
+  nötig
+- **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): natives JSON statt
+  Textformat, `httpx` inkl. Tech-Detection – landen als strukturierte
+  Recon-Notiz (kein Schwachstellen-Scan, also keine Findings)
+- **EPSS-Anreicherung für Findings** (`finding epss`): CVE-Referenzen aus
+  Titel/Beschreibung werden bei der FIRST-API abgefragt – CVSS sagt, wie
+  schlimm eine Lücke wäre, EPSS sagt, wie wahrscheinlich sie in den nächsten
+  30 Tagen tatsächlich ausgenutzt wird. Opt-in wie bei Cloud-KI-Aufrufen.
+- **Proxychains-Unterstützung im Runner** (`pentos run <tool> <ziel> --proxy
+  "proxychains4 -q"`): für den echten Pivot-Fall nach einem Foothold ins
+  interne Netz – bewusst kein Tor-/Anonymisierungs-Support, siehe „Bewusst
+  nicht geplant"
+- **Standard-Wordlists** (`pentos wordlists setup`): generische Username-Liste
+  direkt mitgeliefert, Passwort-Kurzliste (SecLists `rockyou-75.txt`) opt-in
+  von der offiziellen Quelle geladen statt im Repo gebündelt – `hydra`/
+  `medusa`-Vorschläge in `recommend` zeigen jetzt auf diese Pfade
+- **KI schlägt vor, du bestätigst** (`ai next --act`): die Advisor-Antwort
+  wird nach ausführbaren `pentos run …`-Vorschlägen durchsucht, die du
+  auswählst und einzeln bestätigst – beschleunigt die manuelle Arbeit, ohne
+  dass die KI selbst etwas startet
 
 ## Als Nächstes
 
 Konkret geplant, baut auf Bestehendem auf:
 
-- **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): alle drei können nativ
-  JSON ausgeben, das macht die Parser robuster als das gobuster-Textformat.
-  `httpx` liefert Tech-Detection direkt mit, `naabu` ist eine sehr schnelle
-  Port-Discovery, `dnsx` löst auf.
-- **EPSS-Anreicherung für Findings**: Findings mit CVE/CVSS bekommen
-  zusätzlich einen EPSS-Score (kostenlose FIRST-API,
-  `api.first.org/data/v1/epss`) – CVSS sagt, wie schlimm eine Lücke wäre,
-  EPSS sagt, wie wahrscheinlich sie in den nächsten 30 Tagen tatsächlich
-  ausgenutzt wird. Wie bei Cloud-KI-Aufrufen mit explizitem Hinweis, dass
-  dafür eine Anfrage nach aussen geht (opt-in).
-- **testssl.sh-Parser**: strukturierter TLS/SSL-Check gehört in praktisch
-  jeden Web-Pentest, ist aber bisher komplett ungedeckt. testssl.sh liefert
-  seit 3.2 ein stabiles JSON-Format mit Severity je Einzelbefund (Protokolle,
-  schwache Cipher, Zertifikatskette, Heartbleed/ROBOT/POODLE & Co.) – passt
-  ins bestehende Parser-Muster (severity-heuristisch wie bei nikto), landet
-  als Findings direkt am betroffenen Service.
+- **Wordlists-Katalog**: `pentos wordlists setup` deckt bisher genau zwei
+  Dateien ab (Usernames, rockyou-75). Als Nächstes ein durchsuchbarer
+  Katalog ausgewählter SecLists-Listen (Verzeichnisse, weitere Passwort-
+  Grössen, Subdomains), einzeln per Namen ins Projekt ladbar – braucht ein
+  eigenes Katalog-Format und eine Browse-/Filter-CLI.
 
 ## Später
 
@@ -100,8 +112,16 @@ Größere Brocken, die einen frischen Kopf verdienen:
 Das ist kein Versehen, sondern Absicht und Teil der Idee von PentOS:
 
 - **Keine autonome Ausführung von Angriffen.** Die KI analysiert und schlägt
-  vor; gestartet wird nur, was der Mensch selbst auslöst. Ein „Auto-Hack"-Modus
-  kommt nicht.
+  vor; gestartet wird nur, was der Mensch selbst auslöst. `ai next --act`
+  bleibt dabei: es zeigt Vorschläge, ausgeführt wird erst nach expliziter
+  Bestätigung pro Schritt. Ein echter „Auto-Hack"-Modus (Ketten ohne
+  Bestätigung) kommt nicht.
+- **Kein Tor-/Anonymisierungs-Support gegenüber dem Ziel.** Proxychains wird
+  unterstützt, aber nur für den legitimen Pivot-Fall (SOCKS durch einen
+  Foothold ins interne Netz). Traffic gegenüber einem autorisierten Testziel
+  bewusst zu anonymisieren, widerspricht der Nachvollziehbarkeit, die eine
+  Rules-of-Engagement eigentlich sicherstellen soll – und ist für echtes
+  Scanning technisch ohnehin ungeeignet (Latenz, geblockte Exit-Nodes).
 - **Kein Cloud-Zwang.** PentOS bleibt lokal-first und lauffähig ohne externe
   Dienste; eine Cloud-Anbindung wird nie Voraussetzung.
 - **Kein Ersatz für eigenes Verständnis.** Die Lern-Reports und der Advisor

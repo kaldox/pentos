@@ -21,6 +21,11 @@ pentos scope add 10.10.10.0/24       # allowed target (CIDR or hostname)
 pentos scope list                    # show scope
 pentos host list                     # hosts
 pentos service list                  # services
+pentos timeline add "Test window" --kind window --start "2026-08-20 08:00" --end "2026-08-24 18:00"
+pentos timeline list                 # the project's milestones/windows/blackout periods
+pentos timeline rm 1
+pentos wordlists setup               # set up default wordlists (usernames immediately, passwords opt-in)
+pentos wordlists setup --no-passwords  # usernames only, no download
 ```
 
 ## Recon & Import
@@ -45,6 +50,7 @@ pentos run nmap 10.10.10.10 --profile full     # basic | standard | full | custo
 pentos run nmap 10.10.10.10 --args "-p- -T4"   # pass extra arguments through
 pentos run nmap 10.10.10.10 --dry-run          # only show the command
 pentos run nmap 10.10.10.10 --shell            # shell mode (only with trusted input!)
+pentos run nikto 10.10.10.10 --proxy "proxychains4 -q"   # SOCKS pivot after a foothold
 pentos runs                          # history of all runs
 
 # Guided recon/enum chain
@@ -73,6 +79,7 @@ pentos finding list
 pentos finding status 4 confirmed    # set status
 pentos finding status 4 closed --note "retest ok, fixed"    # with rationale
 pentos finding history 4             # status timeline (retest tracking)
+pentos finding epss                  # backfill EPSS score for findings with a CVE reference (opt-in)
 pentos finding rm 4
 
 # Finding templates (reusable, per project)
@@ -121,6 +128,7 @@ pentos ai explain-finding 4
 pentos ai enum 4
 pentos ai analyze scan.txt --as nmap # interpret a scan/log (--text, stdin, --save)
 pentos ai next                       # suggestions based on project state
+pentos ai next --act                 # + offer executable suggestions, you pick and confirm
 pentos ai analyze scan.txt --as nmap --stream   # stream the answer live
 pentos ai analyze-image shot.png --q "Anything notable?"   # vision (qwen3-vl)
 

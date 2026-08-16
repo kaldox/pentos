@@ -21,6 +21,11 @@ pentos scope add 10.10.10.0/24       # erlaubtes Ziel (CIDR oder Hostname)
 pentos scope list                    # Scope anzeigen
 pentos host list                     # Hosts
 pentos service list                  # Dienste
+pentos timeline add "Testfenster" --kind window --start "2026-08-20 08:00" --end "2026-08-24 18:00"
+pentos timeline list                 # Meilensteine/Zeitfenster/Blackout-Zeiten des Projekts
+pentos timeline rm 1
+pentos wordlists setup               # Standard-Wordlists anlegen (Usernames sofort, Passwörter opt-in)
+pentos wordlists setup --no-passwords  # nur Usernames, keinen Download
 ```
 
 ## Recon & Import
@@ -45,6 +50,7 @@ pentos run nmap 10.10.10.10 --profile full     # basic | standard | full | custo
 pentos run nmap 10.10.10.10 --args "-p- -T4"   # zusätzliche Argumente durchreichen
 pentos run nmap 10.10.10.10 --dry-run          # nur das Kommando zeigen
 pentos run nmap 10.10.10.10 --shell            # Shell-Modus (nur mit vertrauenswürdiger Eingabe!)
+pentos run nikto 10.10.10.10 --proxy "proxychains4 -q"   # SOCKS-Pivot nach einem Foothold
 pentos runs                          # Historie aller Läufe
 
 # Geführte Recon-/Enum-Kette
@@ -73,6 +79,7 @@ pentos finding list
 pentos finding status 4 confirmed    # Status setzen
 pentos finding status 4 closed --note "Retest ok, gefixt"   # mit Begruendung
 pentos finding history 4             # Status-Zeitleiste (Retest-Tracking)
+pentos finding epss                  # EPSS-Score für Findings mit CVE-Referenz nachtragen (opt-in)
 pentos finding rm 4
 
 # Finding-Vorlagen (wiederverwendbar, pro Projekt)
@@ -121,6 +128,7 @@ pentos ai explain-finding 4
 pentos ai enum 4
 pentos ai analyze scan.txt --as nmap # Scan/Log deuten (--text, stdin, --save)
 pentos ai next                       # Vorschläge zum Projektstand
+pentos ai next --act                 # + ausführbare Vorschläge anbieten, du wählst und bestätigst
 pentos ai analyze scan.txt --as nmap --stream   # Antwort live streamen
 pentos ai analyze-image shot.png --q "Was ist auffällig?"   # Vision (qwen3-vl)
 
