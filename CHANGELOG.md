@@ -7,6 +7,21 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.36.0] – 2026-08-17
+### Hinzugefügt
+- **MITRE-ATT&CK-Mapping für Findings (`pentos finding attack`):** optionales
+  Technique-Tag pro Finding (z.B. `T1110`), rein manuell/kuratiert — PentOS
+  prüft nur das ID-Format (`Txxxx`/`Txxxx.xxx`), nicht gegen die echte
+  ATT&CK-Matrix (kein Drift-Risiko bei künftigen ATT&CK-Revisionen).
+  Anzeige in `finding show` sowie neben CVSS/EPSS in allen drei Report-
+  Formaten.
+- **ATT&CK-Navigator-Export (`pentos report --attack-navigator`):**
+  exportiert alle getaggten Findings als offizielles Navigator-Layer-JSON
+  (Schema verifiziert gegen `layers/spec/v4.5/layerformat.md` im
+  mitre-attack/attack-navigator-Repo) — direkt unter
+  https://mitre-attack.github.io/attack-navigator/ importierbar. Score je
+  Technique = Anzahl Findings, Kommentar = betroffene Finding-Titel.
+
 ## [2.35.0] – 2026-08-16
 ### Hinzugefügt
 - **Wordlists-Katalog (`pentos wordlists catalog`/`add`):** baut auf

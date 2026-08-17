@@ -84,6 +84,8 @@ pentos finding status 4 confirmed    # set status
 pentos finding status 4 closed --note "retest ok, fixed"    # with rationale
 pentos finding history 4             # status timeline (retest tracking)
 pentos finding epss                  # backfill EPSS score for findings with a CVE reference (opt-in)
+pentos finding attack 4 T1110 --name "Brute Force"   # set a MITRE ATT&CK technique tag
+pentos finding attack 4 --clear      # remove the technique tag again
 pentos finding rm 4
 
 # Finding templates (reusable, per project)
@@ -117,6 +119,7 @@ pentos report                        # Markdown report under <project>/reports
 pentos report --html                 # branded HTML (printable in the browser)
 pentos report --pdf                  # branded PDF (needs reportlab)
 pentos report --explain              # learning report: explains each step didactically
+pentos report --attack-navigator     # ATT&CK Navigator layer JSON from tagged findings
 pentos graph mermaid --out attack_paths/ap.mmd
 pentos graph dot --out attack_paths/ap.dot       # dot -Tpng ap.dot -o ap.png
 pentos obsidian                      # Obsidian vault under <project>/obsidian

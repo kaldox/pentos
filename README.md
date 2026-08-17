@@ -2,7 +2,7 @@
 
 **🇩🇪 Deutsch** · [🇬🇧 English](README.en.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.35.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.36.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -23,7 +23,7 @@ Alles unten ist bereits umgesetzt (✅) — offene Punkte stehen weiter unten in
 |---|---|---|
 | 🗂️ | **Workspace & Doku** | Vollständige Projektstruktur, automatische Notizen (`notes/nmap.md` etc.), Pentest-Journal mit Zeitstempel, Aufgabensystem, Engagement-Zeitplan (Meilensteine/Zeitfenster/Blackout), intelligente nächste Schritte (nur Vorschläge) |
 | 🔎 | **Recon & Import** | nmap-XML, Scanner-Reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatische Findings + strukturierte Parser (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto, testssl.sh, httpx/naabu/dnsx, gitleaks) · geführte Kette `sweep`, Scan-Diff · opt-in Runner-Layer (28 Tools, kein Shell-Eval, Scope-Guard, optionaler Proxychains-Pivot) |
-| 🎯 | **Findings & Angriffspfad** | Severity/CVSS/EPSS (Ausnutzungswahrscheinlichkeit, opt-in), Finding-Templates, Status-Historie/Retest-Tracking, visueller Angriffspfad-Graph inkl. BloodHound-AD-Pfaden (Mermaid/Graphviz/SVG), Loot-/Credential-Matching |
+| 🎯 | **Findings & Angriffspfad** | Severity/CVSS/EPSS (Ausnutzungswahrscheinlichkeit, opt-in), MITRE-ATT&CK-Technique-Tags + Navigator-Export, Finding-Templates, Status-Historie/Retest-Tracking, visueller Angriffspfad-Graph inkl. BloodHound-AD-Pfaden (Mermaid/Graphviz/SVG), Loot-/Credential-Matching |
 | 📊 | **Reporting & Oberflächen** | Markdown/gebrandetes HTML/PDF mit Risk-Score & Chart · Web-Dashboard (Lagebild, Finding-/Host-Detailansicht, Command Palette `Strg+K`) · Terminal-UI · Obsidian-Vault-Export · MCP-Server für Claude Code/Cursor (nur lesend) |
 | 🤖 | **KI-Mentor** | Advisor-Modus (optional mit `--act`: KI schlägt einen `pentos run`-Befehl vor, du wählst und bestätigst jeden Schritt einzeln), „Frag dein Projekt" (RAG, lokale Embeddings), Vision (Screenshot-Analyse), freie Sprachwahl + Auto-Modellwahl, Offline-Fallback ohne Backend |
 | 🧰 | **Drumherum** | Projekt-Export/-Import als eine Datei, Standard-Wordlists + kuratierter SecLists-Katalog (`wordlists setup`/`catalog`/`add`), Shell-Completion, Evidence-Management, CTF/THM-Wissensdatenbank, Methodik-/Playbook-Bibliothek |
@@ -362,4 +362,4 @@ pentos tui                 # oder: pentos tui --project meinprojekt
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.35.0**.
+Aktuelle Version: **2.36.0**.

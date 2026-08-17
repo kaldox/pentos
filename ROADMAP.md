@@ -80,6 +80,12 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   (`pentos run gitleaks <pfad>`), thematischer Anschluss an den
   `.git`-Exposure-Detector – Treffer werden Findings (mit maskierter
   Secret-Vorschau) und Loot (mit vollem Wert)
+- **MITRE-ATT&CK-Mapping** (`pentos finding attack <id> <technique>`):
+  optionales Technique-Tag pro Finding, rein manuell/kuratiert (PentOS prüft
+  nur das ID-Format, nicht gegen die echte Matrix – kein Drift-Risiko bei
+  ATT&CK-Revisionen). Export als offizielles Navigator-Layer-JSON
+  (`report --attack-navigator`), direkt in der echten ATT&CK-Navigator-
+  Anwendung ladbar.
 
 ## Als Nächstes
 
@@ -107,12 +113,6 @@ Größere Brocken, die einen frischen Kopf verdienen:
   oder ein veröffentlichtes Beispiel-Export zum Gegenprüfen – bewusst nicht
   auf Verdacht gebaut, um den „Schema verifiziert, nicht geraten"-Standard
   der anderen Importer/Parser nicht zu brechen.
-- **MITRE-ATT&CK-Mapping für Findings**: optionales Technique-Tag (z.B.
-  `T1110` Brute Force) pro Finding, dazu Export als ATT&CK-Navigator-Layer
-  (`.json`, offizielles Layer-Format) für den Report – zeigt auf einen Blick,
-  welche Taktiken abgedeckt wurden, ohne dass PentOS selbst etwas automatisch
-  ausführt oder klassifiziert (die Zuordnung bleibt manuell/kuratiert wie bei
-  allen anderen Wissens-Inhalten).
 - **Mehr strukturierte Parser** für weitere Tools, damit deren Ausgabe
   automatisch zu Hosts, Diensten und Findings wird.
 
