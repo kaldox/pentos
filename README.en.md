@@ -288,7 +288,9 @@ for every executed action lies with the user.
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE). Contributions welcome – see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Found a security issue in PentOS
+itself? Please [report it privately](SECURITY.md), not as an issue.
 
 ---
 

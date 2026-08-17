@@ -295,7 +295,9 @@ Aktion liegt bei der nutzenden Person.
 
 ## Lizenz
 
-Veröffentlicht unter der [MIT-Lizenz](LICENSE).
+Veröffentlicht unter der [MIT-Lizenz](LICENSE). Beiträge willkommen –
+siehe [`CONTRIBUTING.md`](CONTRIBUTING.md). Sicherheitslücke in PentOS
+selbst gefunden? Bitte [privat melden](SECURITY.md), nicht als Issue.
 
 ---
 
