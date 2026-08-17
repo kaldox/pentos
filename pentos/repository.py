@@ -126,10 +126,12 @@ class Repository:
     def add_finding(self, f: Finding) -> Finding:
         cur = self.conn.execute(
             "INSERT INTO findings (title, category, severity, status, description, remediation, "
-            "cvss_score, cvss_vector, epss_score, epss_percentile, host_id, service_id, auto, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "cvss_score, cvss_vector, epss_score, epss_percentile, attack_technique, "
+            "attack_technique_name, host_id, service_id, auto, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (f.title, f.category.value, f.severity.value, f.status.value, f.description,
              f.remediation, f.cvss_score, f.cvss_vector, f.epss_score, f.epss_percentile,
+             f.attack_technique, f.attack_technique_name,
              f.host_id, f.service_id, int(f.auto), f.created_at),
         )
         self.conn.commit()
@@ -144,6 +146,17 @@ class Repository:
         cur = self.conn.execute(
             "UPDATE findings SET epss_score = ?, epss_percentile = ? WHERE id = ?",
             (epss_score, epss_percentile, finding_id),
+        )
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def set_finding_attack(self, finding_id: int, technique_id: Optional[str],
+                           technique_name: Optional[str] = None) -> bool:
+        """Setzt (oder löscht, mit technique_id=None) das ATT&CK-Technique-Tag
+        eines Findings (siehe pentos/attack_navigator.py)."""
+        cur = self.conn.execute(
+            "UPDATE findings SET attack_technique = ?, attack_technique_name = ? WHERE id = ?",
+            (technique_id, technique_name, finding_id),
         )
         self.conn.commit()
         return cur.rowcount > 0

@@ -92,6 +92,9 @@ def build_markdown(repo: Repository, project: str) -> str:
             md.append(f"- **CVSS:** {f.cvss_score}{vec}")
         if f.epss_score is not None:
             md.append(f"- **EPSS:** {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})")
+        if f.attack_technique:
+            name = f" – {f.attack_technique_name}" if f.attack_technique_name else ""
+            md.append(f"- **ATT&CK:** {f.attack_technique}{name}")
         md.append(f"- **Erkennung:** {'automatisch' if f.auto else 'manuell'}")
         md.append("")
         md.append(f.description or "_Keine Beschreibung._")

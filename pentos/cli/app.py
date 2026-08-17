@@ -23,6 +23,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .. import archive as archive_mod
+from .. import attack_navigator as attack_navigator_mod
 from .. import config
 from ..ai import AIClient
 from .. import epss as epss_mod
@@ -751,10 +752,14 @@ def finding_show(finding_id: int):
     epss_line = ""
     if f.epss_score is not None:
         epss_line = f"\nEPSS: {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})"
+    attack_line = ""
+    if f.attack_technique:
+        label = f" ({f.attack_technique_name})" if f.attack_technique_name else ""
+        attack_line = f"\nATT&CK: {f.attack_technique}{label}"
     console.print(Panel.fit(
         f"[bold]{f.title}[/bold]\n\n"
         f"Severity: {f.severity.value}\nKategorie: {f.category.value}\nStatus: {f.status.value}\n"
-        f"Erkennung: {'automatisch' if f.auto else 'manuell'}{epss_line}\n\n"
+        f"Erkennung: {'automatisch' if f.auto else 'manuell'}{epss_line}{attack_line}\n\n"
         f"{f.description or '_keine Beschreibung_'}",
         title=f"Finding #{f.id}"))
 
@@ -847,6 +852,43 @@ def finding_epss(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rück
     console.print(table)
     console.print(f"[green]{updated} Finding(s) aktualisiert.[/green] "
                   f"({len(by_cve)} eindeutige CVE(s) abgefragt)")
+
+
+@finding_app.command("attack")
+def finding_attack(
+    finding_id: int,
+    technique_id: Optional[str] = typer.Argument(
+        None, help="MITRE-ATT&CK-Technique-ID, z.B. T1110 oder T1110.001"),
+    name: Optional[str] = typer.Option(None, "--name", help="Kurzbezeichnung, z.B. 'Brute Force' (nur Anzeige)"),
+    clear: bool = typer.Option(False, "--clear", help="Vorhandenes Technique-Tag entfernen"),
+):
+    """Ordnet einem Finding eine ATT&CK-Technique zu (oder entfernt sie mit --clear).
+
+    Rein manuelle/kuratierte Zuordnung -- PentOS prüft nur das ID-Format
+    (Txxxx oder Txxxx.xxx), nicht gegen die echte ATT&CK-Matrix. Export aller
+    getaggten Findings als Navigator-Layer: 'pentos report --attack-navigator'.
+    """
+    repo, _ = _repo()
+    f = repo.get_finding(finding_id)
+    if not f:
+        console.print(f"[red]Finding #{finding_id} existiert nicht.[/red]"); repo.close(); raise typer.Exit(1)
+    if clear:
+        repo.set_finding_attack(finding_id, None, None)
+        repo.close()
+        console.print(f"[green]Technique-Tag von Finding #{finding_id} entfernt.[/green]")
+        return
+    if not technique_id:
+        console.print("[red]Technique-ID fehlt (oder --clear zum Entfernen).[/red]")
+        repo.close(); raise typer.Exit(1)
+    tid = technique_id.strip().upper()
+    if not attack_navigator_mod.is_valid_technique_id(tid):
+        console.print(f"[red]'{technique_id}' sieht nicht wie eine ATT&CK-Technique-ID aus "
+                      "(erwartet: Txxxx oder Txxxx.xxx, z.B. T1110 oder T1110.001).[/red]")
+        repo.close(); raise typer.Exit(1)
+    repo.set_finding_attack(finding_id, tid, name)
+    repo.close()
+    label = f" ({name})" if name else ""
+    console.print(f"[green]Finding #{finding_id} {SYM_ARROW} {tid}{label}[/green]")
 
 
 # ── Finding-Template-Bibliothek ──────────────────────────────────────────────
@@ -1234,15 +1276,35 @@ def report_build(out: Optional[Path] = typer.Option(None, "--out",
                  explain: bool = typer.Option(False, "--explain",
                                               help="Lern-Report: erklärt Schritte/Befehle didaktisch"),
                  html: bool = typer.Option(False, "--html", help="Gebrandeter HTML-Report (druck-/PDF-fähig)"),
-                 pdf: bool = typer.Option(False, "--pdf", help="Gebrandetes PDF (benötigt reportlab)")):
+                 pdf: bool = typer.Option(False, "--pdf", help="Gebrandetes PDF (benötigt reportlab)"),
+                 attack_navigator: bool = typer.Option(
+                     False, "--attack-navigator",
+                     help="ATT&CK-Navigator-Layer (.json) aus getaggten Findings exportieren "
+                          "(siehe 'finding attack')")):
     """Erzeugt einen Report aus Findings, Journal, Aufgaben und Attack-Path.
 
-    Formate: Markdown (Standard), --html (gebrandet), --pdf (gebrandet, reportlab).
-    Mit --explain wird ein didaktischer Lern-Report erzeugt (nur Markdown).
+    Formate: Markdown (Standard), --html (gebrandet), --pdf (gebrandet, reportlab),
+    --attack-navigator (ATT&CK-Navigator-Layer-JSON). Mit --explain wird ein
+    didaktischer Lern-Report erzeugt (nur Markdown).
     """
     repo, name = _repo()
     reports_dir = config.project_path(name) / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
+
+    if attack_navigator:
+        layer = attack_navigator_mod.build_navigator_layer(name, repo.list_findings())
+        target = out or (reports_dir / "attack-navigator.json")
+        target.write_text(json.dumps(layer, indent=2, ensure_ascii=False), encoding="utf-8")
+        repo.log("ATT&CK-Navigator-Layer erstellt", str(target))
+        console.print(f"[green]ATT&CK-Navigator-Layer erstellt:[/green] {target}")
+        n = len(layer["techniques"])
+        if n:
+            console.print(f"[dim]{n} Technik(en) – in https://mitre-attack.github.io/attack-navigator/ "
+                          "öffnen und die Datei importieren.[/dim]")
+        else:
+            console.print("[dim]Keine Findings mit Technique-Tag – siehe 'pentos finding attack'.[/dim]")
+        repo.close()
+        return
 
     if explain and (html or pdf):
         console.print("[yellow]--explain erzeugt nur Markdown; --html/--pdf werden ignoriert.[/yellow]")

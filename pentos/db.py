@@ -199,7 +199,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
     """Fügt neue Spalten zu bestehenden Tabellen hinzu (vorwärtskompatibel)."""
     cols = {row["name"] for row in conn.execute("PRAGMA table_info(findings)")}
     for col, decl in (("remediation", "TEXT"), ("cvss_score", "REAL"), ("cvss_vector", "TEXT"),
-                      ("epss_score", "REAL"), ("epss_percentile", "REAL")):
+                      ("epss_score", "REAL"), ("epss_percentile", "REAL"),
+                      ("attack_technique", "TEXT"), ("attack_technique_name", "TEXT")):
         if col not in cols:
             conn.execute(f"ALTER TABLE findings ADD COLUMN {col} {decl}")
     conn.commit()

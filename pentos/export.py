@@ -207,6 +207,9 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
             cvss = f' · CVSS {f.cvss_score}{vec}'
         if f.epss_score is not None:
             cvss += f' · EPSS {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})'
+        if f.attack_technique:
+            name = f" – {e(f.attack_technique_name)}" if f.attack_technique_name else ""
+            cvss += f' · ATT&amp;CK {e(f.attack_technique)}{name}'
         remediation = (f'<p class="remediation"><strong>Remediation:</strong> '
                        f'{e(f.remediation)}</p>') if f.remediation else ""
         loc_html = f' <span class="muted">— {e(loc)}</span>' if loc else ""
@@ -472,6 +475,9 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
             cvss = f" · CVSS {f.cvss_score}{vec}"
         if f.epss_score is not None:
             cvss += f" · EPSS {f.epss_score:.3f} (Perzentil {f.epss_percentile:.2f})"
+        if f.attack_technique:
+            name = f" – {e(f.attack_technique_name)}" if f.attack_technique_name else ""
+            cvss += f" · ATT&amp;CK {e(f.attack_technique)}{name}"
         story.append(Paragraph(
             f"Kategorie: {e(f.category.value)} · Status: {e(f.status.value)}{cvss} · "
             f'{"automatisch" if f.auto else "manuell"} erkannt', styles["Meta"]))

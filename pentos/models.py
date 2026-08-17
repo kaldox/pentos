@@ -112,6 +112,8 @@ class Finding(BaseModel):
     cvss_vector: Optional[str] = None
     epss_score: Optional[float] = None        # Ausnutzungswahrscheinlichkeit (0..1), opt-in via 'pentos finding epss'
     epss_percentile: Optional[float] = None   # Perzentil ggü. allen bewerteten CVEs (0..1)
+    attack_technique: Optional[str] = None      # MITRE-ATT&CK-Technique-ID, z.B. "T1110"
+    attack_technique_name: Optional[str] = None  # frei eingegeben, z.B. "Brute Force" (nur Anzeige)
     host_id: Optional[int] = None
     service_id: Optional[int] = None
     auto: bool = False                  # automatisch erkannt?
