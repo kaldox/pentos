@@ -96,10 +96,6 @@ Größere Brocken, die einen frischen Kopf verdienen:
 - **Reicheres Screenshot-Handling**, etwa automatisierte Screenshots über
   `gowitness` (Headless-Chrome-Screenshot-Tool, passt ins Runner/Parser-Muster)
   statt nur manuell angehängter Dateien.
-- **gitleaks-Integration**: Secret-Scanning als eigene Findings-Quelle –
-  thematischer Anschluss an den `.git`-Exposure-Detector aus 2.28.0: wird ein
-  offenes `.git` gefunden, `gitleaks` gegen einen Dump vorschlagen und dessen
-  Treffer zu Credential-/Info-Disclosure-Findings machen.
 - **AzureHound-Unterstützung** für den BloodHound-Import (Entra ID hat ein
   anderes Schema als SharpHound, bisher nicht abgedeckt). Rechercheversuch
   am 2026-08-16: Schema deutlich grösser/komplexer als SharpHound (folgt

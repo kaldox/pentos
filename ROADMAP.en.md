@@ -94,10 +94,6 @@ Larger chunks that deserve a fresh head:
 - **Richer screenshot handling**, e.g. automated screenshots via `gowitness`
   (headless-Chrome screenshot tool, fits the runner/parser pattern) instead of
   only manually attached files.
-- **gitleaks integration**: secret scanning as its own findings source –
-  a thematic follow-up to the `.git` exposure detector from 2.28.0: when an
-  open `.git` is found, suggest running `gitleaks` against a dump and turn its
-  hits into credential/info-disclosure findings.
 - **AzureHound support** for the BloodHound import (Entra ID has a different
   schema than SharpHound, not covered yet). Research attempt on 2026-08-16:
   the schema is substantially bigger/more complex than SharpHound's (follows
