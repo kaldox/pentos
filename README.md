@@ -17,7 +17,7 @@ Lern- und Analyseassistent. **Sie führt niemals selbst Angriffe oder Befehle au
 
 ## Was PentOS kann
 
-Alles unten ist bereits umgesetzt (✅) — offene Punkte stehen weiter unten in der Roadmap.
+Alles unten ist bereits umgesetzt (✅) - offene Punkte stehen weiter unten in der Roadmap.
 
 |  | Bereich | Kernfunktionen |
 |---|---|---|
@@ -42,16 +42,16 @@ Die vollständige Roadmap mit Begründungen und bewussten Nicht-Zielen steht in 
 Vier Schritte, kopierbar. Funktioniert identisch auf Kali/Debian/Ubuntu, macOS
 und Windows.
 
-**1) Repo herunterladen** — `git clone` empfehlenswert (sonst siehe Hinweis unten):
+**1) Repo herunterladen** - `git clone` empfehlenswert (sonst siehe Hinweis unten):
 ```bash
 git clone https://github.com/kaldox/pentos.git
 cd pentos
 ```
 
-**2) Virtuelle Umgebung anlegen und aktivieren** — auf modernen Systemen
+**2) Virtuelle Umgebung anlegen und aktivieren** - auf modernen Systemen
 (Kali, Debian 12+, Ubuntu 23.04+, …) verweigert `pip` die Installation sonst mit
 `error: externally-managed-environment`. Das ist **kein Kali-spezifisches Problem**,
-sondern seit PEP 668 der Normalfall — dieser Schritt ist deshalb kein „Extra",
+sondern seit PEP 668 der Normalfall - dieser Schritt ist deshalb kein „Extra",
 sondern Pflicht:
 ```bash
 python3 -m venv .venv
@@ -61,7 +61,7 @@ source .venv/bin/activate        # Linux/macOS
 python -m venv .venv
 .venv\Scripts\Activate.ps1       # Windows (PowerShell)
 ```
-Der Zeilenanfang deines Terminals zeigt danach `(.venv)` — nur dann installiert
+Der Zeilenanfang deines Terminals zeigt danach `(.venv)` - nur dann installiert
 `pip` auch wirklich in die isolierte Umgebung statt ins System.
 
 **3) Installieren:**
@@ -79,10 +79,10 @@ Erscheint eine Befehlsübersicht, ist die Installation fertig. `pentos` steht ab
 jetzt in dieser (aktivierten) virtuellen Umgebung zur Verfügung.
 
 > **Wichtig:** Das venv muss in **jeder neuen Terminal-Sitzung** erneut aktiviert
-> werden (Schritt 2, `source .venv/bin/activate` im Projektordner) — sonst meldet
+> werden (Schritt 2, `source .venv/bin/activate` im Projektordner) - sonst meldet
 > die Shell `pentos: command not found`. Wer das lästig findet: `pip install -e .`
 > auch ohne aktives venv ausführen zu wollen ist genau der Fehler, der zu
-> `externally-managed-environment` führt — nicht erzwingen, sondern das venv
+> `externally-managed-environment` führt - nicht erzwingen, sondern das venv
 > aktivieren.
 
 Ohne Schritt 3 (`pip install -e .`) läuft PentOS trotzdem via `python -m pentos ...`,
@@ -97,9 +97,9 @@ Beim ersten Start wird `~/.config/pentos/config.yaml` automatisch angelegt
 | Fehlermeldung | Ursache | Lösung |
 |---|---|---|
 | `error: externally-managed-environment` | Schritt 2 (venv) übersprungen, oder venv nicht aktiviert (kein `(.venv)` im Prompt) | `python3 -m venv .venv && source .venv/bin/activate`, dann Schritt 3 wiederholen. **Nicht** mit `--break-system-packages` erzwingen. |
-| `ModuleNotFoundError: No module named 'pentos'` bei `python -m pentos` | Falscher Ordner. Bei „Download ZIP" statt `git clone` heisst der entpackte Ordner `pentos-main`, und **darin** liegt zusätzlich ein Unterordner `pentos/` (der Python-Quellcode) — leicht zu verwechseln | `ls` ausführen: der richtige Ordner enthält `pyproject.toml` direkt. Falls man im inneren `pentos/`-Unterordner steht: `cd ..` |
+| `ModuleNotFoundError: No module named 'pentos'` bei `python -m pentos` | Falscher Ordner. Bei „Download ZIP" statt `git clone` heisst der entpackte Ordner `pentos-main`, und **darin** liegt zusätzlich ein Unterordner `pentos/` (der Python-Quellcode) - leicht zu verwechseln | `ls` ausführen: der richtige Ordner enthält `pyproject.toml` direkt. Falls man im inneren `pentos/`-Unterordner steht: `cd ..` |
 | `pentos: command not found` nach einem Neustart des Terminals | Venv ist in der neuen Sitzung nicht aktiv | `source .venv/bin/activate` im Projektordner erneut ausführen (Schritt 2) |
-| `pip install -r requirements.txt` findet die Datei nicht | Falscher Ordner (siehe oben) — ausserdem: `pip install -e ".[pdf,web,mcp,tui]"` aus Schritt 3 ersetzt `requirements.txt` vollständig und ist der empfohlene Weg | In den richtigen Ordner wechseln, dann Schritt 3 wie oben |
+| `pip install -r requirements.txt` findet die Datei nicht | Falscher Ordner (siehe oben) - ausserdem: `pip install -e ".[pdf,web,mcp,tui]"` aus Schritt 3 ersetzt `requirements.txt` vollständig und ist der empfohlene Weg | In den richtigen Ordner wechseln, dann Schritt 3 wie oben |
 
 ---
 
@@ -130,7 +130,7 @@ Das ist der Kern-Ablauf. Alle Befehle nach Bereich gruppiert in der
 **[Befehls-Referenz (COMMANDS.md)](COMMANDS.md)**, oder live über `pentos --help`
 und `pentos <gruppe> --help` (z.B. `pentos finding --help`).
 
-Alternative für den Einstieg ohne fertigen Scan — geführte Recon direkt gegen
+Alternative für den Einstieg ohne fertigen Scan - geführte Recon direkt gegen
 ein Ziel:
 ```bash
 pentos project new demo
@@ -295,7 +295,7 @@ Aktion liegt bei der nutzenden Person.
 
 ## Lizenz
 
-Veröffentlicht unter der [MIT-Lizenz](LICENSE). Beiträge willkommen –
+Veröffentlicht unter der [MIT-Lizenz](LICENSE). Beiträge willkommen -
 siehe [`CONTRIBUTING.md`](CONTRIBUTING.md). Sicherheitslücke in PentOS
 selbst gefunden? Bitte [privat melden](SECURITY.md), nicht als Issue.
 
@@ -307,7 +307,7 @@ Ein lokales Lagebild deines Workspace im Browser: Severity-Verteilung, Findings,
 Hosts/Dienste, Loot und Notizen auf einen Blick.
 
 Bereits installiert, falls du wie oben empfohlen mit `pip install -e ".[pdf,web,mcp,tui]"`
-installiert hast — sonst nachrüsten:
+installiert hast - sonst nachrüsten:
 ```bash
 pip install -e ".[web]"          # FastAPI + uvicorn
 pentos serve                     # startet http://127.0.0.1:8787
@@ -324,12 +324,12 @@ gegen Drive-By-Zugriffe fremder Websites geschützt.
 ## MCP-Server (optional)
 
 Macht den PentOS-Workspace für MCP-Clients wie **Claude Code** oder **Cursor**
-abfragbar – du sprichst dein Projekt in natürlicher Sprache an („zeig die
+abfragbar - du sprichst dein Projekt in natürlicher Sprache an („zeig die
 High-Findings", „was steht in den Notizen zu SMB"). Alle MCP-Tools sind
-**ausschliesslich lesend/analysierend** – kein Tool führt Scans oder Angriffe
+**ausschliesslich lesend/analysierend** - kein Tool führt Scans oder Angriffe
 aus. Das grosse Reasoning übernimmt der Client, die Kontrolle bleibt bei dir.
 
-Bereits installiert, falls du mit allen Extras installiert hast — sonst nachrüsten:
+Bereits installiert, falls du mit allen Extras installiert hast - sonst nachrüsten:
 ```bash
 pip install -e ".[mcp]"
 ```
@@ -344,7 +344,7 @@ Bereitgestellte Tools: `pentos_list_projects`, `pentos_summary`, `pentos_finding
 
 ---
 
-## TUI – Terminal-Oberfläche (optional)
+## TUI - Terminal-Oberfläche (optional)
 
 `pentos tui` öffnet ein tastaturgesteuertes Lagebild des aktiven Projekts direkt
 im Terminal. Tabs für Übersicht, Hosts, Dienste, Findings, Tasks, Loot und
@@ -353,7 +353,7 @@ markierten Findings oder Tasks weiter (das wird ins Projekt geschrieben), `r`
 aktualisiert, `q` beendet. Reine Ansicht und Status-Pflege, es wird nichts
 ausgeführt.
 
-Bereits installiert, falls du mit allen Extras installiert hast — sonst nachrüsten:
+Bereits installiert, falls du mit allen Extras installiert hast - sonst nachrüsten:
 ```bash
 pip install -e ".[tui]"
 pentos tui                 # oder: pentos tui --project meinprojekt

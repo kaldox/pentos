@@ -51,26 +51,26 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   allen drei Report-Formaten
 - **testssl.sh-Parser**: strukturierter TLS/SSL-Check (Protokolle, schwache
   Cipher, Zertifikatskette, Heartbleed/ROBOT/POODLE & Co.) direkt aus dem
-  nativen JSON-Report – Severity kommt vom Tool selbst, keine eigene Heuristik
+  nativen JSON-Report - Severity kommt vom Tool selbst, keine eigene Heuristik
   nötig
 - **ProjectDiscovery-Parser** (`httpx`/`naabu`/`dnsx`): natives JSON statt
-  Textformat, `httpx` inkl. Tech-Detection – landen als strukturierte
+  Textformat, `httpx` inkl. Tech-Detection - landen als strukturierte
   Recon-Notiz (kein Schwachstellen-Scan, also keine Findings)
 - **EPSS-Anreicherung für Findings** (`finding epss`): CVE-Referenzen aus
-  Titel/Beschreibung werden bei der FIRST-API abgefragt – CVSS sagt, wie
+  Titel/Beschreibung werden bei der FIRST-API abgefragt - CVSS sagt, wie
   schlimm eine Lücke wäre, EPSS sagt, wie wahrscheinlich sie in den nächsten
   30 Tagen tatsächlich ausgenutzt wird. Opt-in wie bei Cloud-KI-Aufrufen.
 - **Proxychains-Unterstützung im Runner** (`pentos run <tool> <ziel> --proxy
   "proxychains4 -q"`): für den echten Pivot-Fall nach einem Foothold ins
-  interne Netz – bewusst kein Tor-/Anonymisierungs-Support, siehe „Bewusst
+  interne Netz - bewusst kein Tor-/Anonymisierungs-Support, siehe „Bewusst
   nicht geplant"
 - **Standard-Wordlists** (`pentos wordlists setup`): generische Username-Liste
   direkt mitgeliefert, Passwort-Kurzliste (SecLists `rockyou-75.txt`) opt-in
-  von der offiziellen Quelle geladen statt im Repo gebündelt – `hydra`/
+  von der offiziellen Quelle geladen statt im Repo gebündelt - `hydra`/
   `medusa`-Vorschläge in `recommend` zeigen jetzt auf diese Pfade
 - **KI schlägt vor, du bestätigst** (`ai next --act`): die Advisor-Antwort
   wird nach ausführbaren `pentos run …`-Vorschlägen durchsucht, die du
-  auswählst und einzeln bestätigst – beschleunigt die manuelle Arbeit, ohne
+  auswählst und einzeln bestätigst - beschleunigt die manuelle Arbeit, ohne
   dass die KI selbst etwas startet
 - **Wordlists-Katalog** (`pentos wordlists catalog`/`add`): kuratierter
   Katalog mit 12 weiteren SecLists-Listen über vier Kategorien (Usernames,
@@ -78,17 +78,17 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   Namen durchsuchbar und ins Projekt ladbar
 - **gitleaks-Integration**: Secret-Scan gegen einen lokalen Repo-Dump
   (`pentos run gitleaks <pfad>`), thematischer Anschluss an den
-  `.git`-Exposure-Detector – Treffer werden Findings (mit maskierter
+  `.git`-Exposure-Detector - Treffer werden Findings (mit maskierter
   Secret-Vorschau) und Loot (mit vollem Wert)
 - **MITRE-ATT&CK-Mapping** (`pentos finding attack <id> <technique>`):
   optionales Technique-Tag pro Finding, rein manuell/kuratiert (PentOS prüft
-  nur das ID-Format, nicht gegen die echte Matrix – kein Drift-Risiko bei
+  nur das ID-Format, nicht gegen die echte Matrix - kein Drift-Risiko bei
   ATT&CK-Revisionen). Export als offizielles Navigator-Layer-JSON
   (`report --attack-navigator`), direkt in der echten ATT&CK-Navigator-
   Anwendung ladbar.
 - **Engagement-Policy für Bug-Bounty-Programme** (`pentos policy setup`):
   Programm-Regeln pro Projekt festlegen (Brute-Force/aktive Exploitation/
-  Offline-Cracking/automatisierte Tools erlaubt?) – durchsetzbare Antworten
+  Offline-Cracking/automatisierte Tools erlaubt?) - durchsetzbare Antworten
   sperren die passende Runner-Kategorie in `run`/`sweep --run` (Override wie
   beim Scope-Guard via `--force`), nicht durchsetzbare (DoS-Tests, Social
   Engineering, Produktiv-only, Rate-Limits) landen als Beleg im Report.
@@ -96,7 +96,7 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 
 ## Als Nächstes
 
-Aktuell nichts konkret Neues eingeplant – die Punkte hier waren zuletzt alle
+Aktuell nichts konkret Neues eingeplant - die Punkte hier waren zuletzt alle
 in „Kürzlich umgesetzt" gelandet. Vorschläge gerne über die
 [Issues](https://github.com/kaldox/pentos/issues).
 
@@ -117,7 +117,7 @@ Größere Brocken, die einen frischen Kopf verdienen:
   Bestätigt bisher nur: `IngestRequest{Meta{Type,Version,Count}, Data}`-
   Wrapper existiert, Global-Admin-Erkennung läuft über eine `roleTemplateId`.
   Für eine saubere Umsetzung braucht es entweder echten Testtenant-Zugriff
-  oder ein veröffentlichtes Beispiel-Export zum Gegenprüfen – bewusst nicht
+  oder ein veröffentlichtes Beispiel-Export zum Gegenprüfen - bewusst nicht
   auf Verdacht gebaut, um den „Schema verifiziert, nicht geraten"-Standard
   der anderen Importer/Parser nicht zu brechen.
 - **Mehr strukturierte Parser** für weitere Tools, damit deren Ausgabe
@@ -136,7 +136,7 @@ Das ist kein Versehen, sondern Absicht und Teil der Idee von PentOS:
   unterstützt, aber nur für den legitimen Pivot-Fall (SOCKS durch einen
   Foothold ins interne Netz). Traffic gegenüber einem autorisierten Testziel
   bewusst zu anonymisieren, widerspricht der Nachvollziehbarkeit, die eine
-  Rules-of-Engagement eigentlich sicherstellen soll – und ist für echtes
+  Rules-of-Engagement eigentlich sicherstellen soll - und ist für echtes
   Scanning technisch ohnehin ungeeignet (Latenz, geblockte Exit-Nodes).
 - **Kein Cloud-Zwang.** PentOS bleibt lokal-first und lauffähig ohne externe
   Dienste; eine Cloud-Anbindung wird nie Voraussetzung.

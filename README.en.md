@@ -18,7 +18,7 @@ commands itself**.
 
 ## What PentOS can do
 
-Everything below is already shipped (✅) — open items are further down in the roadmap.
+Everything below is already shipped (✅) - open items are further down in the roadmap.
 
 |  | Area | Core features |
 |---|---|---|
@@ -43,16 +43,16 @@ The full roadmap, with rationale and deliberate non-goals, lives in [`ROADMAP.en
 Four steps, copy-paste ready. Works the same on Kali/Debian/Ubuntu, macOS and
 Windows.
 
-**1) Get the repo** — `git clone` recommended (see the note below otherwise):
+**1) Get the repo** - `git clone` recommended (see the note below otherwise):
 ```bash
 git clone https://github.com/kaldox/pentos.git
 cd pentos
 ```
 
-**2) Create and activate a virtual environment** — on modern systems (Kali,
+**2) Create and activate a virtual environment** - on modern systems (Kali,
 Debian 12+, Ubuntu 23.04+, …) `pip` otherwise refuses to install with
 `error: externally-managed-environment`. This is **not a Kali-specific
-issue** — it's been the normal case since PEP 668, so this step isn't
+issue** - it's been the normal case since PEP 668, so this step isn't
 optional, it's required:
 ```bash
 python3 -m venv .venv
@@ -62,7 +62,7 @@ source .venv/bin/activate        # Linux/macOS
 python -m venv .venv
 .venv\Scripts\Activate.ps1       # Windows (PowerShell)
 ```
-Your terminal prompt should show `(.venv)` afterwards — only then does `pip`
+Your terminal prompt should show `(.venv)` afterwards - only then does `pip`
 actually install into the isolated environment instead of system-wide.
 
 **3) Install:**
@@ -80,10 +80,10 @@ If a command overview shows up, you're done. `pentos` is now available inside
 this (activated) virtual environment.
 
 > **Important:** the venv must be activated again in **every new terminal
-> session** (step 2, `source .venv/bin/activate` in the project folder) —
+> session** (step 2, `source .venv/bin/activate` in the project folder) -
 > otherwise the shell reports `pentos: command not found`. If that's
 > annoying: trying to run `pip install -e .` without an active venv is
-> exactly what causes `externally-managed-environment` — don't force it,
+> exactly what causes `externally-managed-environment` - don't force it,
 > activate the venv instead.
 
 Without step 3 (`pip install -e .`), PentOS still runs via `python -m pentos ...`
@@ -98,9 +98,9 @@ On first start, `~/.config/pentos/config.yaml` is created automatically
 | Error message | Cause | Fix |
 |---|---|---|
 | `error: externally-managed-environment` | Step 2 (venv) skipped, or the venv isn't active (no `(.venv)` in the prompt) | `python3 -m venv .venv && source .venv/bin/activate`, then repeat step 3. **Don't** force it with `--break-system-packages`. |
-| `ModuleNotFoundError: No module named 'pentos'` on `python -m pentos` | Wrong folder. With "Download ZIP" instead of `git clone`, the extracted folder is called `pentos-main`, and **inside it** there's also a `pentos/` subfolder (the Python source) — easy to mix up | Run `ls`: the correct folder contains `pyproject.toml` directly. If you're inside the inner `pentos/` subfolder: `cd ..` |
+| `ModuleNotFoundError: No module named 'pentos'` on `python -m pentos` | Wrong folder. With "Download ZIP" instead of `git clone`, the extracted folder is called `pentos-main`, and **inside it** there's also a `pentos/` subfolder (the Python source) - easy to mix up | Run `ls`: the correct folder contains `pyproject.toml` directly. If you're inside the inner `pentos/` subfolder: `cd ..` |
 | `pentos: command not found` after restarting the terminal | The venv isn't active in the new session | Run `source .venv/bin/activate` in the project folder again (step 2) |
-| `pip install -r requirements.txt` can't find the file | Wrong folder (see above) — also: `pip install -e ".[pdf,web,mcp,tui]"` from step 3 fully replaces `requirements.txt` and is the recommended path | Switch to the correct folder, then step 3 as above |
+| `pip install -r requirements.txt` can't find the file | Wrong folder (see above) - also: `pip install -e ".[pdf,web,mcp,tui]"` from step 3 fully replaces `requirements.txt` and is the recommended path | Switch to the correct folder, then step 3 as above |
 
 ---
 
@@ -132,7 +132,7 @@ That is the core flow. All commands grouped by area in the
 **[command reference (COMMANDS.en.md)](COMMANDS.en.md)**, or live via `pentos --help`
 and `pentos <group> --help` (e.g. `pentos finding --help`).
 
-Alternative starting point without a ready-made scan — guided recon straight
+Alternative starting point without a ready-made scan - guided recon straight
 against a target:
 ```bash
 pentos project new demo
@@ -288,7 +288,7 @@ for every executed action lies with the user.
 
 ## License
 
-Released under the [MIT License](LICENSE). Contributions welcome – see
+Released under the [MIT License](LICENSE). Contributions welcome - see
 [`CONTRIBUTING.md`](CONTRIBUTING.md). Found a security issue in PentOS
 itself? Please [report it privately](SECURITY.md), not as an issue.
 
@@ -300,7 +300,7 @@ A local situational overview of your workspace in the browser: severity distribu
 findings, hosts/services, loot and notes at a glance.
 
 Already installed if you followed the recommended `pip install -e ".[pdf,web,mcp,tui]"`
-above — otherwise add it:
+above - otherwise add it:
 ```bash
 pip install -e ".[web]"          # FastAPI + uvicorn
 pentos serve                     # starts http://127.0.0.1:8787
@@ -321,7 +321,7 @@ You talk to your project in natural language ("show the high findings", "what is
 SMB notes"). All MCP tools are **strictly read-only/analytical**; no tool runs scans or
 attacks. The heavy reasoning happens in the client, control stays with you.
 
-Already installed if you used all extras above — otherwise add it:
+Already installed if you used all extras above - otherwise add it:
 ```bash
 pip install -e ".[mcp]"
 ```
@@ -337,7 +337,7 @@ Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 
 ---
 
-## TUI – terminal interface (optional)
+## TUI - terminal interface (optional)
 
 `pentos tui` opens a keyboard-driven dashboard of the active project right in the
 terminal. Tabs for overview, hosts, services, findings, tasks, loot and journal;
@@ -345,7 +345,7 @@ navigate with arrow keys and Tab. Press `s` to cycle the status of the selected
 finding or task (written back to the project), `r` refreshes, `q` quits. View and
 status editing only, nothing is executed.
 
-Already installed if you used all extras above — otherwise add it:
+Already installed if you used all extras above - otherwise add it:
 ```bash
 pip install -e ".[tui]"
 pentos tui                 # or: pentos tui --project myproject

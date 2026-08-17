@@ -16,27 +16,27 @@ You'll get an acknowledgement and, once a fix is ready, credit in the advisory
 
 ## Scope
 
-**In scope** — vulnerabilities in PentOS's own code, e.g.:
+**In scope** - vulnerabilities in PentOS's own code, e.g.:
 - Path traversal / zip-slip in project export or import
 - Injection or unsafe deserialization when parsing scan imports or reports
 - Anything that lets an untrusted project file, scan result, or report template
   execute unintended code or escape the project's own workspace directory
 
 **Out of scope:**
-- Vulnerabilities in third-party tools PentOS wraps (nmap, nikto, nuclei, …) —
+- Vulnerabilities in third-party tools PentOS wraps (nmap, nikto, nuclei, …) -
   please report those to the respective upstream project
-- Findings PentOS *surfaces* while scanning a target — that's the tool doing
+- Findings PentOS *surfaces* while scanning a target - that's the tool doing
   its job, not a PentOS vulnerability
 
 ## Supported Versions
 
 Only the latest released version is supported with security fixes. There is
-no long-term support branch — always update to the newest release.
+no long-term support branch - always update to the newest release.
 
 ## Response
 
 PentOS is a hobby project maintained in spare time, so there's no guaranteed
-response time or SLA — but security reports get priority over feature
+response time or SLA - but security reports get priority over feature
 requests and regular bugs.
 
 ---
@@ -49,15 +49,15 @@ Eine Sicherheitslücke in **PentOS selbst** gefunden (nicht in einem Ziel, das
 du damit gescannt hast)? Bitte privat melden, nicht als öffentliches Issue:
 
 1. Zum [Security-Tab](https://github.com/kaldox/pentos/security) dieses Repos gehen
-2. **"Report a vulnerability"** klicken – öffnet einen privaten GitHub Security Advisory
+2. **"Report a vulnerability"** klicken - öffnet einen privaten GitHub Security Advisory
 3. Beschreiben: was ist das Problem, wie reproduziert man es, welche Auswirkung hat es
 
 Du bekommst eine Rückmeldung und, sobald ein Fix bereitsteht, eine Nennung im
-Advisory (falls gewünscht – auch anonym möglich).
+Advisory (falls gewünscht - auch anonym möglich).
 
 ## Umfang
 
-**Relevant** – Schwachstellen im eigenen PentOS-Code, z.B.:
+**Relevant** - Schwachstellen im eigenen PentOS-Code, z.B.:
 - Path-Traversal/Zip-Slip beim Projekt-Export oder -Import
 - Injection oder unsichere Deserialisierung beim Einlesen von Scan-Importen
   oder Reports
@@ -67,18 +67,18 @@ Advisory (falls gewünscht – auch anonym möglich).
 
 **Nicht relevant:**
 - Schwachstellen in externen Tools, die PentOS nur aufruft (nmap, nikto,
-  nuclei, …) – die bitte beim jeweiligen Projekt melden
-- Findings, die PentOS beim Scannen eines Ziels *anzeigt* – das ist das Tool,
+  nuclei, …) - die bitte beim jeweiligen Projekt melden
+- Findings, die PentOS beim Scannen eines Ziels *anzeigt* - das ist das Tool,
   das seinen Job macht, keine PentOS-Schwachstelle
 
 ## Unterstützte Versionen
 
 Nur die jeweils aktuellste veröffentlichte Version bekommt Sicherheits-Fixes.
-Es gibt keinen Long-Term-Support-Branch – immer auf die neueste Version
+Es gibt keinen Long-Term-Support-Branch - immer auf die neueste Version
 aktualisieren.
 
 ## Reaktionszeit
 
-PentOS ist ein Hobby-Projekt, gepflegt in der Freizeit – keine garantierte
+PentOS ist ein Hobby-Projekt, gepflegt in der Freizeit - keine garantierte
 Reaktionszeit oder SLA, aber Sicherheitsmeldungen haben Vorrang vor
 Feature-Wünschen und regulären Bugs.

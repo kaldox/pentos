@@ -50,25 +50,25 @@ For context, what was added most recently (details in the changelog):
   windows and blackout periods per project, shown in all three report formats
 - **testssl.sh parser**: structured TLS/SSL checks (protocols, weak ciphers,
   certificate chain, Heartbleed/ROBOT/POODLE etc.) straight from the native
-  JSON report – severity comes from the tool itself, no heuristic needed
+  JSON report - severity comes from the tool itself, no heuristic needed
 - **ProjectDiscovery parsers** (`httpx`/`naabu`/`dnsx`): native JSON instead
-  of text format, `httpx` includes tech detection – land as a structured
+  of text format, `httpx` includes tech detection - land as a structured
   recon note (not a vulnerability scan, so no findings)
 - **EPSS enrichment for findings** (`finding epss`): CVE references found in
-  title/description get looked up against the FIRST API – CVSS says how bad
+  title/description get looked up against the FIRST API - CVSS says how bad
   a flaw could be, EPSS says how likely it actually gets exploited in the
   next 30 days. Opt-in like cloud AI calls.
 - **Proxychains support in the runner** (`pentos run <tool> <target> --proxy
   "proxychains4 -q"`): for the real pivot case after a foothold into an
-  internal network – deliberately no Tor/anonymization support, see
+  internal network - deliberately no Tor/anonymization support, see
   "Deliberately not planned"
 - **Default wordlists** (`pentos wordlists setup`): a generic username list
   ships with the package, a short password list (SecLists `rockyou-75.txt`)
   is fetched opt-in from the official source instead of being bundled in the
-  repo – `hydra`/`medusa` suggestions in `recommend` now point at these paths
+  repo - `hydra`/`medusa` suggestions in `recommend` now point at these paths
 - **AI proposes, you confirm** (`ai next --act`): the advisor's answer gets
   scanned for executable `pentos run …` suggestions, which you pick from and
-  confirm individually – speeds up manual work without the AI ever starting
+  confirm individually - speeds up manual work without the AI ever starting
   anything itself
 - **Wordlist catalog** (`pentos wordlists catalog`/`add`): a curated catalog
   of 12 further SecLists lists across four categories (usernames, password
@@ -76,17 +76,17 @@ For context, what was added most recently (details in the changelog):
   loadable into the project by name
 - **gitleaks integration**: secret scanning against a local repo dump
   (`pentos run gitleaks <path>`), a thematic follow-up to the `.git`
-  exposure detector – hits become findings (with a masked secret preview)
+  exposure detector - hits become findings (with a masked secret preview)
   and loot (with the full value)
 - **MITRE ATT&CK mapping** (`pentos finding attack <id> <technique>`): an
   optional technique tag per finding, purely manual/curated (PentOS only
-  checks the ID format, not against the real matrix – no drift risk on
+  checks the ID format, not against the real matrix - no drift risk on
   ATT&CK revisions). Export as an official Navigator layer JSON
   (`report --attack-navigator`), loadable straight into the real ATT&CK
   Navigator app.
 - **Engagement policy for bug bounty programs** (`pentos policy setup`):
   set per-project program rules (brute-force/active exploitation/offline
-  cracking/automated tools allowed?) – enforceable answers block the
+  cracking/automated tools allowed?) - enforceable answers block the
   matching runner category in `run`/`sweep --run` (override like the scope
   guard, via `--force`), non-enforceable ones (DoS testing, social
   engineering, production-only, rate limits) land as documentation in the
@@ -94,7 +94,7 @@ For context, what was added most recently (details in the changelog):
 
 ## Next
 
-Nothing concrete newly planned right now – the items that used to live here
+Nothing concrete newly planned right now - the items that used to live here
 all landed in "Recently shipped". Suggestions welcome via the
 [issues](https://github.com/kaldox/pentos/issues).
 
@@ -115,7 +115,7 @@ Larger chunks that deserve a fresh head:
   Confirmed so far: an `IngestRequest{Meta{Type,Version,Count}, Data}`
   wrapper exists, Global Admin detection goes through a `roleTemplateId`.
   A clean implementation needs either real test-tenant access or a
-  published sample export to verify against — deliberately not built on a
+  published sample export to verify against - deliberately not built on a
   guess, to keep the "schema verified, not guessed" standard the other
   importers/parsers hold to.
 - **More structured parsers** for additional tools, so their output automatically
@@ -134,7 +134,7 @@ This is not an oversight but intent and part of the idea of PentOS:
   supported, but only for the legitimate pivot case (SOCKS through a
   foothold into an internal network). Deliberately anonymizing traffic
   against an authorized test target undermines the accountability a rules-
-  of-engagement is meant to guarantee – and it's technically unsuited for
+  of-engagement is meant to guarantee - and it's technically unsuited for
   real scanning anyway (latency, blocked exit nodes).
 - **No cloud requirement.** PentOS stays local-first and runnable without external
   services; a cloud connection will never be a prerequisite.
