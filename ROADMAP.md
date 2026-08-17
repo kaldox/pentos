@@ -86,6 +86,13 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   ATT&CK-Revisionen). Export als offizielles Navigator-Layer-JSON
   (`report --attack-navigator`), direkt in der echten ATT&CK-Navigator-
   Anwendung ladbar.
+- **Engagement-Policy für Bug-Bounty-Programme** (`pentos policy setup`):
+  Programm-Regeln pro Projekt festlegen (Brute-Force/aktive Exploitation/
+  Offline-Cracking/automatisierte Tools erlaubt?) – durchsetzbare Antworten
+  sperren die passende Runner-Kategorie in `run`/`sweep --run` (Override wie
+  beim Scope-Guard via `--force`), nicht durchsetzbare (DoS-Tests, Social
+  Engineering, Produktiv-only, Rate-Limits) landen als Beleg im Report.
+  Gedächtnisstütze/Selbstschutz, keine Compliance-Garantie.
 
 ## Als Nächstes
 

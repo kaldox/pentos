@@ -84,6 +84,13 @@ For context, what was added most recently (details in the changelog):
   ATT&CK revisions). Export as an official Navigator layer JSON
   (`report --attack-navigator`), loadable straight into the real ATT&CK
   Navigator app.
+- **Engagement policy for bug bounty programs** (`pentos policy setup`):
+  set per-project program rules (brute-force/active exploitation/offline
+  cracking/automated tools allowed?) – enforceable answers block the
+  matching runner category in `run`/`sweep --run` (override like the scope
+  guard, via `--force`), non-enforceable ones (DoS testing, social
+  engineering, production-only, rate limits) land as documentation in the
+  report. A memory aid/self-protection, not a compliance guarantee.
 
 ## Next
 

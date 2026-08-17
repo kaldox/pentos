@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.36.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.37.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -12,7 +12,7 @@ revolves around. Local-first, no forced cloud, German-language output by default
 The AI is purely a learning and analysis assistant. **It never runs attacks or
 commands itself**.
 
-> Built for authorized testing: CTF, TryHackMe and signed-off engagements.
+> Built for authorized testing: CTF, TryHackMe, bug bounty programs and signed-off engagements.
 
 ---
 
@@ -22,7 +22,7 @@ Everything below is already shipped (✅) — open items are further down in the
 
 |  | Area | Core features |
 |---|---|---|
-| 🗂️ | **Workspace & docs** | Full project structure, automatic notes (`notes/nmap.md` etc.), timestamped pentest journal, task system, engagement timeline (milestones/windows/blackouts), intelligent next steps (suggestions only) |
+| 🗂️ | **Workspace & docs** | Full project structure, automatic notes (`notes/nmap.md` etc.), timestamped pentest journal, task system, engagement timeline (milestones/windows/blackouts), bug-bounty scope policy (`policy setup`, blocks e.g. brute-force/exploitation per program rules), intelligent next steps (suggestions only) |
 | 🔎 | **Recon & import** | nmap XML, scanner reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatic findings + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto, testssl.sh, httpx/naabu/dnsx, gitleaks) · guided chain `sweep`, scan diff · opt-in runner layer (28 tools, no shell eval, scope guard, optional proxychains pivot) |
 | 🎯 | **Findings & attack path** | Severity/CVSS/EPSS (exploit likelihood, opt-in), MITRE ATT&CK technique tags + Navigator export, finding templates, status history/retest tracking, visual attack-path graph incl. BloodHound AD paths (Mermaid/Graphviz/SVG), loot/credential matching |
 | 📊 | **Reporting & interfaces** | Markdown/branded HTML/PDF with risk score & chart · web dashboard (overview, finding/host detail view, command palette `Ctrl+K`) · terminal UI · Obsidian vault export · MCP server for Claude Code/Cursor (read-only) |
@@ -354,4 +354,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.36.0**.
+Current version: **2.37.0**.

@@ -7,6 +7,22 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.37.0] – 2026-08-17
+### Hinzugefügt
+- **Engagement-Policy für Bug-Bounty-Programme (`pentos policy setup`):**
+  Programm-Regeln pro Projekt festlegen — ist Brute-Force/aktive
+  Exploitation/Offline-Cracking/automatisiertes Testen überhaupt erlaubt?
+  Durchsetzbare Antworten sperren die passende Runner-Kategorie in
+  `pentos run` und `sweep --run` mit klarer Fehlermeldung (Override wie
+  beim bestehenden Scope-Guard via `--force`); nicht durchsetzbare Regeln
+  (DoS-/Rate-Limit-Tests, Social Engineering, Produktiv-only, Freitext-
+  Hinweise) werden nur dokumentiert und erscheinen im Report als Beleg,
+  unter welchen Einschränkungen getestet wurde. `pentos policy show`/
+  `clear` verwalten den aktuellen Stand. Bewusst als Gedächtnisstütze/
+  Selbstschutz gerahmt, nicht als Compliance-Garantie — PentOS kann z.B.
+  kein DoS-Verhalten technisch verhindern, das hängt von der
+  Tool-Konfiguration ab, nicht vom gewählten Tool.
+
 ## [2.36.0] – 2026-08-17
 ### Hinzugefügt
 - **MITRE-ATT&CK-Mapping für Findings (`pentos finding attack`):** optionales

@@ -19,6 +19,10 @@ pentos project export [name]         # kompletten Workspace als eine ZIP-Datei s
 pentos project import <datei.zip>    # Export wieder als Projekt einspielen (--name, --force)
 pentos scope add 10.10.10.0/24       # erlaubtes Ziel (CIDR oder Hostname)
 pentos scope list                    # Scope anzeigen
+pentos policy setup --no-bruteforce --exploitation   # Programm-Regeln, z.B. Bug-Bounty-Scope
+pentos policy setup                  # interaktiv durch alle Fragen
+pentos policy show                   # aktuelle Programm-Regeln anzeigen
+pentos policy clear                  # Programm-Regeln entfernen
 pentos host list                     # Hosts
 pentos service list                  # Dienste
 pentos timeline add "Testfenster" --kind window --start "2026-08-20 08:00" --end "2026-08-24 18:00"
@@ -74,6 +78,8 @@ pentos playbook status               # Fortschritt über alle Playbooks
 > **Brute-Force/Exploits nie** automatisch, nur als Vorschlag. Tools laufen ohne
 > Shell (festes `argv`, kein Metazeichen-Eval). `--shell` schaltet eine echte
 > Shell bewusst frei und ist nur mit vertrauenswürdiger Eingabe zu nutzen.
+> Sind Programm-Regeln gesetzt (`pentos policy setup`), sperren sie passende
+> Kategorien zusätzlich mit klarer Fehlermeldung (Override: `--force`).
 
 ## Befunde & Doku
 

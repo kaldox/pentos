@@ -7,6 +7,22 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.37.0] – 2026-08-17
+### Added
+- **Engagement policy for bug bounty programs (`pentos policy setup`):**
+  set per-project program rules — is brute-force/active exploitation/
+  offline cracking/automated testing allowed at all? Enforceable answers
+  block the matching runner category in `pentos run` and `sweep --run`
+  with a clear error message (override like the existing scope guard, via
+  `--force`); non-enforceable rules (DoS/rate-limit testing, social
+  engineering, production-only, free-text notes) are documentation-only
+  and show up in the report as evidence of what constraints testing
+  happened under. `pentos policy show`/`clear` manage the current state.
+  Deliberately framed as a memory aid/self-protection, not a compliance
+  guarantee — PentOS can't technically prevent DoS-like behavior, for
+  example, since that depends on tool configuration, not which tool you
+  picked.
+
 ## [2.36.0] – 2026-08-17
 ### Added
 - **MITRE ATT&CK mapping for findings (`pentos finding attack`):** an
