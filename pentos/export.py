@@ -15,6 +15,7 @@ import html as _html
 import mimetypes
 from pathlib import Path
 
+from . import policy as policy_mod
 from .models import SEVERITY_ORDER, Severity, TaskStatus, TimelineKind, _now
 from .repository import Repository
 from .risk import compute_risk
@@ -158,6 +159,7 @@ def _collect(repo: Repository) -> dict:
         "history_by_finding": _history_by_finding(repo, findings),
         "risk": compute_risk(findings),
         "timeline": repo.list_timeline_entries(),
+        "policy": repo.get_engagement_policy(),
     }
 
 
@@ -293,6 +295,26 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
             f'<tbody>{tl_rows}</tbody></table>'
         )
 
+    policy_section = ""
+    if policy_mod.has_any_answer(d["policy"]):
+        pol_rows = "".join(
+            f"<tr><td>{e(row['label'])}</td><td>{e(row['value'])}</td></tr>"
+            for row in policy_mod.summary_rows(d["policy"])
+        )
+        extra_rows = ""
+        if d["policy"].rate_limit_note:
+            extra_rows += f"<tr><td>Rate-Limit</td><td>{e(d['policy'].rate_limit_note)}</td></tr>"
+        if d["policy"].scope_note:
+            extra_rows += f"<tr><td>Scope-Hinweis</td><td>{e(d['policy'].scope_note)}</td></tr>"
+        if d["policy"].program_url:
+            extra_rows += f"<tr><td>Programm-Link</td><td>{e(d['policy'].program_url)}</td></tr>"
+        policy_section = (
+            '<h2>Programm-Regeln</h2>'
+            '<p class="muted">Getestet unter folgenden vom Auftraggeber/Programm vorgegebenen Einschränkungen:</p>'
+            '<table><thead><tr><th>Regel</th><th>Status</th></tr></thead>'
+            f'<tbody>{pol_rows}{extra_rows}</tbody></table>'
+        )
+
     return f"""<!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8">
 <title>Pentest-Report: {e(project)}</title>
@@ -370,6 +392,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
 <h2>Loot / Credentials</h2>
 {loot_html}
 {timeline_section}
+{policy_section}
 
 <footer>Erzeugt mit PentOS{f" · {e(b['company'])}" if b['company'] else ""} · Nur für autorisierte Sicherheitstests.</footer>
 </body></html>"""
@@ -576,6 +599,30 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
             ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e5e7eb")),
         ]))
         story.append(tlt)
+
+    # Programm-Regeln (z.B. Bug-Bounty-Scope) -- was war erlaubt?
+    if policy_mod.has_any_answer(d["policy"]):
+        story.append(Paragraph("Programm-Regeln", styles["H2b"]))
+        story.append(Paragraph(
+            "Getestet unter folgenden vom Auftraggeber/Programm vorgegebenen Einschränkungen:",
+            styles["Meta"]))
+        cell = ParagraphStyle("PolCell", parent=styles["Normal"], fontSize=8, leading=10)
+        poldata = [["Regel", "Status"]]
+        for row in policy_mod.summary_rows(d["policy"]):
+            poldata.append([Paragraph(e(row["label"]), cell), Paragraph(e(row["value"]), cell)])
+        if d["policy"].rate_limit_note:
+            poldata.append([Paragraph("Rate-Limit", cell), Paragraph(e(d["policy"].rate_limit_note), cell)])
+        if d["policy"].scope_note:
+            poldata.append([Paragraph("Scope-Hinweis", cell), Paragraph(e(d["policy"].scope_note), cell)])
+        if d["policy"].program_url:
+            poldata.append([Paragraph("Programm-Link", cell), Paragraph(e(d["policy"].program_url), cell)])
+        polt = Table(poldata, colWidths=[6 * cm, 10 * cm])
+        polt.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f3f4f6")),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e5e7eb")),
+        ]))
+        story.append(polt)
 
     def _footer(canvas, doc_):
         canvas.saveState()

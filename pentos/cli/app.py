@@ -27,6 +27,7 @@ from .. import attack_navigator as attack_navigator_mod
 from .. import config
 from ..ai import AIClient
 from .. import epss as epss_mod
+from .. import policy as policy_mod
 from .. import findings_rules, graph as graph_mod, obsidian as obsidian_mod, recommend, report as report_mod
 from .. import export as export_mod
 from .. import playbooks as playbooks_mod
@@ -39,6 +40,7 @@ from ..runners import base as runner_base, parsers as runner_parsers, registry a
 from .. import wordlists as wordlists_mod
 from ..models import (
     BloodHoundImport,
+    EngagementPolicy,
     Evidence,
     Finding,
     FindingCategory,
@@ -2144,6 +2146,12 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
                       f"Mit [cyan]--force[/cyan] überschreiben oder erweitern: "
                       f"[cyan]pentos scope add {host}[/cyan]")
         repo.close(); raise typer.Exit(2)
+    if not force and not dry_run:
+        reason = policy_mod.category_blocked(repo.get_engagement_policy(), spec.category)
+        if reason:
+            console.print(f"[red]{reason}[/red] Mit [cyan]--force[/cyan] überschreiben "
+                          "(nur wenn du wirklich sicher bist).")
+            repo.close(); raise typer.Exit(2)
     if shell and not dry_run:
         console.print(f"[yellow]{SYM_WARN} Shell-Modus:[/yellow] Argumente werden durch die Shell "
                       "interpretiert (Metazeichen, Quoting). Nur mit vertrauenswürdiger Eingabe verwenden.")
@@ -2224,6 +2232,14 @@ def sweep_cmd(target: str = typer.Argument(..., help="Ziel: IP oder Host"),
     if not force and repo.scope_defined() and not repo.in_scope(host):
         console.print(f"[red]'{host}' liegt nicht im Scope.[/red] "
                       f"[cyan]pentos scope add {host}[/cyan] oder --force")
+        repo.close(); raise typer.Exit(2)
+    if run and not force and policy_mod.category_blocked(repo.get_engagement_policy(), "recon"):
+        # 'recon' ist über keine echte Kategorie-Gate-Regel gesperrt -- der obige
+        # Aufruf greift hier nur, wenn automated_scanning_allowed=False gesetzt ist
+        # (sperrt dann ausnahmslos alles, siehe pentos/policy.py).
+        console.print("[red]Programm-Regeln: automatisierte Tools sind für dieses Projekt nicht erlaubt "
+                      "(nur manuelles Testen).[/red] Mit [cyan]--force[/cyan] überschreiben, "
+                      "oder ohne --run nur die Kommando-Vorschläge ansehen.")
         repo.close(); raise typer.Exit(2)
 
     console.rule(f"[bold]Sweep[/bold] · {host}")
@@ -2494,6 +2510,113 @@ def timeline_rm(entry_id: int):
     repo, _ = _repo()
     ok = repo.delete_timeline_entry(entry_id); repo.close()
     console.print("[green]Aus dem Zeitplan entfernt.[/green]" if ok else "[red]Nicht gefunden.[/red]")
+
+
+# ── Engagement-Policy (Programm-/Auftrags-Regeln, z.B. Bug-Bounty-Scope) ─────
+policy_app = typer.Typer(help="Programm-Regeln festlegen (Bug-Bounty-Scope): was ist erlaubt?")
+app.add_typer(policy_app, name="policy", rich_help_panel="Workspace")
+
+
+def _policy_table(policy: Optional[EngagementPolicy]) -> Table:
+    table = Table(title="Programm-Regeln")
+    for c in ["Regel", "Status", "Wirkung"]:
+        table.add_column(c)
+    for row in policy_mod.summary_rows(policy):
+        wirkung = "sperrt Tools" if row["enforced"] else "nur Report"
+        style = "dim" if not row["set"] else ("red" if row["value"] == "nicht erlaubt" else "green")
+        table.add_row(row["label"], f"[{style}]{row['value']}[/{style}]", wirkung)
+    return table
+
+
+@policy_app.command("setup")
+def policy_setup(
+    bruteforce: Optional[bool] = typer.Option(
+        None, "--bruteforce/--no-bruteforce", help="Brute-Force erlaubt? (sperrt hydra/medusa/nxc/kerbrute)"),
+    exploitation: Optional[bool] = typer.Option(
+        None, "--exploitation/--no-exploitation", help="Aktive Exploitation erlaubt? (sperrt sqlmap)"),
+    cracking: Optional[bool] = typer.Option(
+        None, "--cracking/--no-cracking", help="Offline-Hash-Cracking erlaubt? (sperrt john)"),
+    automated: Optional[bool] = typer.Option(
+        None, "--automated/--no-automated",
+        help="Automatisierte Tools überhaupt erlaubt? Nein = nur manuelles Testen, sperrt praktisch 'pentos run'"),
+    dos: Optional[bool] = typer.Option(
+        None, "--dos/--no-dos", help="DoS-/Rate-Limit-Tests erlaubt? (nur dokumentiert, nicht durchgesetzt)"),
+    social_engineering: Optional[bool] = typer.Option(
+        None, "--social-engineering/--no-social-engineering", help="Social Engineering erlaubt? (nur dokumentiert)"),
+    production_only: Optional[bool] = typer.Option(
+        None, "--production-only/--not-production-only",
+        help="Nur Produktivsystem im Scope, kein Staging? (nur dokumentiert)"),
+    rate_limit: Optional[str] = typer.Option(None, "--rate-limit", help="Freitext, z.B. '10 req/s'"),
+    scope_note: Optional[str] = typer.Option(None, "--scope-note", help="Freitext zu Scope-Besonderheiten"),
+    program_url: Optional[str] = typer.Option(None, "--program-url", help="Link zur Programm-Policy"),
+    interactive: bool = typer.Option(
+        True, "--interactive/--no-interactive",
+        help="Fehlende Werte interaktiv abfragen (aus, um nur die übergebenen Flags zu setzen)"),
+):
+    """Legt die Programm-/Auftrags-Regeln für dieses Projekt fest (z.B. Bug-Bounty-Scope).
+
+    Was durchsetzbar ist (Brute-Force/Exploitation/Cracking/automatisierte
+    Tools generell), sperrt 'pentos run'/'sweep --run' mit klarer Meldung
+    (Override: --force, wie beim Scope-Guard). Der Rest (DoS, Social
+    Engineering, Produktiv-only, Rate-Limit) wird nur dokumentiert und
+    erscheint im Report -- PentOS kann das technisch nicht erzwingen.
+
+    Nicht beantwortete Fragen bleiben 'nicht erfasst' und schränken nichts ein.
+    Das ist ein Gedächtnisstütze/Selbstschutz, keine Compliance-Garantie.
+    """
+    def _ask(current: Optional[bool], question: str) -> Optional[bool]:
+        if current is not None or not interactive:
+            return current
+        return typer.confirm(question, default=False)
+
+    bruteforce = _ask(bruteforce, "Ist Brute-Force erlaubt?")
+    exploitation = _ask(exploitation, "Ist aktive Exploitation erlaubt?")
+    cracking = _ask(cracking, "Ist Offline-Hash-Cracking erlaubt?")
+    automated = _ask(automated, "Sind automatisierte Tools überhaupt erlaubt (sonst nur manuelles Testen)?")
+    dos = _ask(dos, "Sind DoS-/Rate-Limit-Tests erlaubt?")
+    social_engineering = _ask(social_engineering, "Ist Social Engineering erlaubt?")
+    production_only = _ask(production_only, "Nur Produktivsystem im Scope (kein Staging)?")
+    if rate_limit is None and interactive:
+        rate_limit = typer.prompt("Rate-Limit-Hinweis (leer = keiner)", default="", show_default=False) or None
+    if scope_note is None and interactive:
+        scope_note = typer.prompt("Scope-Besonderheiten (leer = keine)", default="", show_default=False) or None
+    if program_url is None and interactive:
+        program_url = typer.prompt("Link zur Programm-Policy (leer = keiner)", default="", show_default=False) or None
+
+    repo, _ = _repo()
+    policy = repo.set_engagement_policy(EngagementPolicy(
+        bruteforce_allowed=bruteforce, exploitation_allowed=exploitation, cracking_allowed=cracking,
+        automated_scanning_allowed=automated, dos_testing_allowed=dos,
+        social_engineering_allowed=social_engineering, production_only=production_only,
+        rate_limit_note=rate_limit, scope_note=scope_note, program_url=program_url,
+    ))
+    repo.close()
+    console.print("[green]Programm-Regeln gespeichert.[/green]")
+    console.print(_policy_table(policy))
+
+
+@policy_app.command("show")
+def policy_show():
+    """Zeigt die aktuell gültigen Programm-Regeln dieses Projekts."""
+    repo, _ = _repo()
+    policy = repo.get_engagement_policy()
+    repo.close()
+    if not policy_mod.has_any_answer(policy):
+        console.print("[dim]Keine Programm-Regeln erfasst. Einrichten mit 'pentos policy setup'.[/dim]")
+        return
+    console.print(_policy_table(policy))
+
+
+@policy_app.command("clear")
+def policy_clear(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage löschen")):
+    """Entfernt alle Programm-Regeln dieses Projekts (keine Einschränkungen mehr)."""
+    if not yes and not typer.confirm("Programm-Regeln wirklich entfernen?"):
+        console.print("Abgebrochen.")
+        raise typer.Exit()
+    repo, _ = _repo()
+    ok = repo.clear_engagement_policy()
+    repo.close()
+    console.print("[green]Programm-Regeln entfernt.[/green]" if ok else "[dim]Keine Regeln vorhanden.[/dim]")
 
 
 if __name__ == "__main__":

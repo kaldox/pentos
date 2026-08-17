@@ -248,3 +248,28 @@ class TimelineEntry(BaseModel):
     end_ts: Optional[str] = None
     note: Optional[str] = None
     created_at: str = Field(default_factory=_now)
+
+
+class EngagementPolicy(BaseModel):
+    """Programm-/Auftrags-Regeln für ein Projekt (z.B. Bug-Bounty-Scope).
+
+    None = nicht gefragt/unbekannt (keine Einschränkung). True/False = explizit
+    beantwortet. bruteforce_allowed/exploitation_allowed/cracking_allowed und
+    automated_scanning_allowed werden von pentos/policy.py technisch
+    durchgesetzt (sperren Runner-Kategorien); die übrigen Felder sind reine
+    Dokumentation für den Report -- PentOS kann z.B. kein DoS-Verhalten
+    technisch verhindern, das hängt von Tool-Konfiguration/Rate ab, nicht vom
+    gewählten Tool.
+    """
+    id: Optional[int] = None
+    bruteforce_allowed: Optional[bool] = None
+    exploitation_allowed: Optional[bool] = None
+    cracking_allowed: Optional[bool] = None
+    automated_scanning_allowed: Optional[bool] = None
+    dos_testing_allowed: Optional[bool] = None
+    social_engineering_allowed: Optional[bool] = None
+    production_only: Optional[bool] = None
+    rate_limit_note: Optional[str] = None
+    scope_note: Optional[str] = None
+    program_url: Optional[str] = None
+    updated_at: str = Field(default_factory=_now)

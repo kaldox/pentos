@@ -8,6 +8,7 @@ Services und Attack-Path. Basis für spätere HTML-/PDF-Ausgabe.
 from __future__ import annotations
 
 from . import graph, knowledge
+from . import policy as policy_mod
 from .models import SEVERITY_ORDER, Severity, TaskStatus, TimelineKind, _now
 from .repository import Repository
 from .risk import compute_risk
@@ -69,6 +70,25 @@ def build_markdown(repo: Repository, project: str) -> str:
         for t in timeline_entries:
             md.append(f"| {_TIMELINE_LABEL.get(t.kind, t.kind)} | {t.title} | "
                       f"{t.start_ts or '-'} | {t.end_ts or '-'} | {t.note or '-'} |")
+        md.append("")
+
+    # Programm-/Auftrags-Regeln (z.B. Bug-Bounty-Scope) -- was war erlaubt?
+    engagement_policy = repo.get_engagement_policy()
+    if policy_mod.has_any_answer(engagement_policy):
+        md.append("## Programm-Regeln")
+        md.append("")
+        md.append("_Getestet unter folgenden vom Auftraggeber/Programm vorgegebenen Einschränkungen:_")
+        md.append("")
+        md.append("| Regel | Status |")
+        md.append("|-------|--------|")
+        for row in policy_mod.summary_rows(engagement_policy):
+            md.append(f"| {row['label']} | {row['value']} |")
+        if engagement_policy.rate_limit_note:
+            md.append(f"| Rate-Limit | {engagement_policy.rate_limit_note} |")
+        if engagement_policy.scope_note:
+            md.append(f"| Scope-Hinweis | {engagement_policy.scope_note} |")
+        if engagement_policy.program_url:
+            md.append(f"| Programm-Link | {engagement_policy.program_url} |")
         md.append("")
 
     # Findings

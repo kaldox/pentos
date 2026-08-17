@@ -14,6 +14,7 @@ from typing import Optional
 from . import db
 from .models import (
     BloodHoundImport,
+    EngagementPolicy,
     Evidence,
     Finding,
     FindingCategory,
@@ -543,6 +544,53 @@ class Repository:
             "SELECT * FROM bloodhound_imports ORDER BY id DESC LIMIT 1"
         ).fetchone()
         return BloodHoundImport(**dict(row)) if row else None
+
+    # ── Engagement-Policy (Programm-/Auftrags-Regeln, z.B. Bug-Bounty-Scope) ──
+    _POLICY_BOOL_COLS = (
+        "bruteforce_allowed", "exploitation_allowed", "cracking_allowed",
+        "automated_scanning_allowed", "dos_testing_allowed",
+        "social_engineering_allowed", "production_only",
+    )
+
+    def set_engagement_policy(self, p: EngagementPolicy) -> EngagementPolicy:
+        """Legt einen neuen Stand der Programm-Regeln an (wie bei BloodHound-
+        Importen: jeder 'policy setup'-Lauf ist ein neuer Datensatz,
+        get_engagement_policy() liefert immer den jüngsten)."""
+
+        def _b(v: Optional[bool]) -> Optional[int]:
+            return None if v is None else int(v)
+
+        cur = self.conn.execute(
+            "INSERT INTO engagement_policy (bruteforce_allowed, exploitation_allowed, "
+            "cracking_allowed, automated_scanning_allowed, dos_testing_allowed, "
+            "social_engineering_allowed, production_only, rate_limit_note, scope_note, "
+            "program_url, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (_b(p.bruteforce_allowed), _b(p.exploitation_allowed), _b(p.cracking_allowed),
+             _b(p.automated_scanning_allowed), _b(p.dos_testing_allowed),
+             _b(p.social_engineering_allowed), _b(p.production_only),
+             p.rate_limit_note, p.scope_note, p.program_url, p.updated_at),
+        )
+        self.conn.commit()
+        p.id = cur.lastrowid
+        self.log("Programm-Regeln aktualisiert", p.scope_note or "")
+        return p
+
+    def get_engagement_policy(self) -> Optional[EngagementPolicy]:
+        row = self.conn.execute(
+            "SELECT * FROM engagement_policy ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        for col in self._POLICY_BOOL_COLS:
+            if d.get(col) is not None:
+                d[col] = bool(d[col])
+        return EngagementPolicy(**d)
+
+    def clear_engagement_policy(self) -> bool:
+        cur = self.conn.execute("DELETE FROM engagement_policy")
+        self.conn.commit()
+        return cur.rowcount > 0
 
     # ── Timeline (Rules of Engagement / Meilensteine) ────────────────────────
     def add_timeline_entry(self, t: TimelineEntry) -> TimelineEntry:

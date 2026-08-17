@@ -175,6 +175,23 @@ CREATE TABLE IF NOT EXISTS timeline_entries (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS engagement_policy (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    -- Durchsetzbar (sperrt Runner-Kategorien in 'pentos run'/'sweep --run'):
+    bruteforce_allowed INTEGER,            -- NULL=nicht gefragt, 0/1
+    exploitation_allowed INTEGER,
+    cracking_allowed INTEGER,
+    automated_scanning_allowed INTEGER,    -- 0 sperrt praktisch alle Runner-Tools (nur manuell)
+    -- Nur dokumentiert (kein technischer Block, landet im Report):
+    dos_testing_allowed INTEGER,
+    social_engineering_allowed INTEGER,
+    production_only INTEGER,
+    rate_limit_note TEXT,
+    scope_note TEXT,
+    program_url TEXT,
+    updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS rag_index (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     doc_type TEXT NOT NULL,            -- finding | note | knowledge | loot | host | service
