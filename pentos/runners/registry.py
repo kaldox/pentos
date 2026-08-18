@@ -147,25 +147,29 @@ REGISTRY: dict[str, ToolSpec] = {
     "hydra": ToolSpec(
         name="hydra", binary="hydra", category="bruteforce",
         argv=["hydra", "{target}"], timeout=1800,
-        description="Login-Brute-Force. Rest via --args, z.B. \"-l admin -P <wl> ssh\"",
+        description="Login-Brute-Force. Listen: --userlist/--passlist/--proto (Default: "
+                    "Projekt-Wordlists). Einzelner User: --args z.B. \"-l admin -P <wl> ssh\"",
         parser="creds",
     ),
     "medusa": ToolSpec(
         name="medusa", binary="medusa", category="bruteforce",
         argv=["medusa", "-h", "{target}"], timeout=1800,
-        description="Login-Brute-Force. --args z.B. \"-u admin -P <wl> -M ssh\"",
+        description="Login-Brute-Force. Listen: --userlist/--passlist/--proto. "
+                    "Einzelner User: --args z.B. \"-u admin -P <wl> -M ssh\"",
         parser="creds",
     ),
     "nxc-smb": ToolSpec(
         name="nxc-smb", binary="netexec", category="bruteforce",
         argv=["netexec", "smb", "{target}"], timeout=1200,
-        description="NetExec SMB (Spray/Auth). --args z.B. \"-u users.txt -p <wl>\"",
+        description="NetExec SMB (Spray/Auth). Listen: --userlist/--passlist. "
+                    "Einzelner User: --args z.B. \"-u admin -p <pw>\"",
         parser="nxc",
     ),
     "nxc-winrm": ToolSpec(
         name="nxc-winrm", binary="netexec", category="bruteforce",
         argv=["netexec", "winrm", "{target}"], timeout=1200,
-        description="NetExec WinRM (Auth/Exec). --args z.B. \"-u admin -p <pw>\"",
+        description="NetExec WinRM (Auth/Exec). Listen: --userlist/--passlist. "
+                    "Einzelner User: --args z.B. \"-u admin -p <pw>\"",
         parser="nxc",
     ),
 

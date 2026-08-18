@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.37.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.38.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -356,4 +356,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.37.0**.
+Current version: **2.38.0**.

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from . import bruteforce
 from .models import Service, Task
 
 # Jede Regel: passt auf bestimmte Ports und/oder Service-Namen-Stichwörter.
@@ -299,14 +300,17 @@ def run_shortcuts_for(svc: Service, addr: Optional[str]) -> tuple[list[tuple[str
         if not shutil.which(spec.binary):
             missing.append(tname)
             continue
-        if spec.category == "bruteforce":
-            # hydra/medusa brauchen zwingend User-/Passwort-Liste + Protokoll-Modul
-            # als Argument -- ein blanker "pentos run hydra <ziel>" würde nur
-            # hängen bzw. nichts Sinnvolles tun. Vorlage statt fertigem Befehl,
-            # mit den Pfaden, die "pentos wordlists setup" anlegt.
-            proto = (svc.name or "").lower() or "<protokoll>"
-            cmd = (f'pentos run {tname} {tgt} --args '
-                   f'"-L wordlists/usernames.txt -P wordlists/passwords.txt {proto}"')
+        if spec.category == "bruteforce" and bruteforce.is_supported(tname):
+            # hydra/medusa/nxc brauchen User-/Passwort-Liste (+ Protokoll bei
+            # hydra/medusa) -- "pentos run" füllt das jetzt selbst über
+            # --userlist/--passlist/--proto auf, mit automatischem Rückgriff
+            # auf die Projekt-Wordlists (siehe pentos/bruteforce.py). Hier nur
+            # noch das Protokoll mitgeben, wenn das Tool eines braucht.
+            if bruteforce.needs_proto(tname):
+                proto = (svc.name or "").lower() or "<protokoll>"
+                cmd = f"pentos run {tname} {tgt} --proto {proto}"
+            else:
+                cmd = f"pentos run {tname} {tgt}"
             ready.append((tname, cmd))
         else:
             ready.append((tname, f"pentos run {tname} {tgt}"))

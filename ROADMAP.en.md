@@ -91,6 +91,12 @@ For context, what was added most recently (details in the changelog):
   guard, via `--force`), non-enforceable ones (DoS testing, social
   engineering, production-only, rate limits) land as documentation in the
   report. A memory aid/self-protection, not a compliance guarantee.
+- **Simplified brute-force wordlists** (`pentos run --userlist/--passlist/
+  --proto`): a tool-agnostic shorthand for hydra/medusa/nxc-smb/nxc-winrm
+  instead of hand-assembling `--args`, with automatic fallback to the
+  project's wordlists and a clear error when those are missing - fixes a
+  broken `recommend` suggestion (hardcoded relative path) found during
+  real-world testing.
 
 ## Next
 

@@ -7,6 +7,26 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.38.0] - 2026-08-18
+### Hinzugefügt
+- **`pentos run --userlist/--passlist/--proto` für hydra/medusa/nxc-smb/
+  nxc-winrm:** einfache, tool-übergreifende Kurzform für Brute-Force-Läufe
+  statt händisch zusammengebautem `--args` mit tool-eigener Flag-Syntax
+  (`-L`/`-P` bei hydra, `-U`/`-M` bei medusa, `-u`/`-p` bei netexec). Fehlen
+  `--userlist`/`--passlist`, greift automatisch `wordlists/usernames.txt`/
+  `passwords.txt` im Projekt (siehe `pentos wordlists setup`); fehlen auch
+  die, gibt es vorab eine klare Fehlermeldung statt eines Laufs, der nur mit
+  einem kryptischen Rückgabewert scheitert.
+
+### Behoben
+- **`pentos recommend`-Vorschläge für hydra/medusa/nxc-smb/nxc-winrm:**
+  nutzten bisher einen hartkodierten, nie zuverlässig aufgelösten relativen
+  Wordlist-Pfad (PentOS' aktives Projekt ist datenbank-, nicht
+  arbeitsverzeichnis-gebunden) - und wandten dabei fälschlich immer die
+  hydra-Flag-Syntax an, auch für netexec. Vorschläge nutzen jetzt `--proto`
+  (nur wo nötig) und verlassen sich auf die neue automatische Wordlist-
+  Auflösung.
+
 ## [2.37.0] - 2026-08-17
 ### Hinzugefügt
 - **Engagement-Policy für Bug-Bounty-Programme (`pentos policy setup`):**

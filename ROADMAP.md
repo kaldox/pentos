@@ -93,6 +93,12 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   beim Scope-Guard via `--force`), nicht durchsetzbare (DoS-Tests, Social
   Engineering, Produktiv-only, Rate-Limits) landen als Beleg im Report.
   Gedächtnisstütze/Selbstschutz, keine Compliance-Garantie.
+- **Vereinfachte Brute-Force-Wordlists** (`pentos run --userlist/--passlist/
+  --proto`): tool-übergreifende Kurzform für hydra/medusa/nxc-smb/nxc-winrm
+  statt händisch zusammengebautem `--args`, mit automatischem Rückgriff auf
+  die Projekt-Wordlists und klarer Fehlermeldung, wenn die fehlen - behebt
+  einen aus echtem Praxistest bekannten kaputten `recommend`-Vorschlag
+  (hartkodierter relativer Pfad).
 
 ## Als Nächstes
 
