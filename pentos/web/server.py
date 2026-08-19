@@ -6,10 +6,18 @@ eine JSON-API plus das statische Single-Page-Frontend ausliefert. Bindet per
 Default an 127.0.0.1 (nur lokal erreichbar) – minimale Angriffsfläche, passend
 zur Local-First-Idee.
 
-Lesend (read-only) in dieser Phase. Interaktive Schreibaktionen kommen später.
+Zugriffs-Token: jeder `pentos serve`-Start erzeugt einen Zufalls-Token, der
+NUR im Terminal ausgegeben wird (nicht über eine unauthentifizierte Route).
+Alle `/api/...`-Endpunkte (lesend UND schreibend) verlangen ihn als
+`X-Pentos-Token`-Header oder `?token=`-Query-Parameter. Grund: Loot/Credentials
+sind Teil der gelesenen Daten – ohne Token wäre bei `--host` != Loopback jeder
+im selben Netz mitlesend. Ein Token im Header ist zugleich ein vollständiger
+CSRF-Schutz (eine fremde Website kann ihn nicht kennen/mitschicken), ersetzt
+daher die frühere, laxere Origin-Header-Prüfung.
 """
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 from typing import Optional
 
@@ -22,9 +30,9 @@ from ..workspace import list_projects
 # Auf Modulebene, damit FastAPI die (durch `from __future__ import annotations`
 # verstringten) Typ-Hints der Endpunkte auflösen kann. Optional – None ohne fastapi.
 try:
-    from fastapi import Request, Body
+    from fastapi import Body
 except ModuleNotFoundError:  # pragma: no cover
-    Request = Body = None
+    Body = None
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -67,7 +75,7 @@ def _ad_graph_data(repo: Repository) -> Optional[dict]:
 
 
 def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
-               _bind_port: int = 8787):
+               _bind_port: int = 8787, _token: Optional[str] = None):
     try:
         from fastapi import FastAPI, HTTPException
         from fastapi.responses import FileResponse, JSONResponse
@@ -79,17 +87,24 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
 
     app = FastAPI(title="PentOS Dashboard", docs_url="/api/docs")
 
-    # Erlaubte Origins für Schreibzugriffe = die eigene Bind-Adresse.
-    # Schützt das lokale Dashboard vor Drive-By-Schreibzugriffen fremder Websites.
-    _allowed_origins = {
-        f"http://127.0.0.1:{_bind_port}", f"http://localhost:{_bind_port}",
-        f"http://{_bind_host}:{_bind_port}",
-    }
+    # Zufalls-Token, falls keiner übergeben wurde (z.B. bei direktem create_app()-
+    # Aufruf ohne die CLI). `pentos serve` erzeugt und übergibt immer einen
+    # expliziten Token, damit er vor dem blockierenden uvicorn.run() ausgegeben
+    # werden kann. In app.state gespeichert, damit Tests ihn auslesen können.
+    token = _token if _token is not None else secrets.token_urlsafe(24)
+    app.state.pentos_token = token
 
-    def _guard_write(request: Request):
-        origin = request.headers.get("origin")
-        if origin and origin not in _allowed_origins:
-            raise HTTPException(403, "Schreibzugriff nur vom lokalen Dashboard erlaubt.")
+    @app.middleware("http")
+    async def _require_token(request, call_next):
+        if request.url.path.startswith("/api/"):
+            supplied = request.headers.get("x-pentos-token") or request.query_params.get("token")
+            if not supplied or not secrets.compare_digest(supplied, token):
+                return JSONResponse(
+                    {"detail": "Fehlender oder ungültiger Zugriffs-Token. Dashboard über den "
+                               "beim Start ausgegebenen Link öffnen."},
+                    status_code=401,
+                )
+        return await call_next(request)
 
     _VALID_STATUS = {s.value for s in __import__("pentos.models", fromlist=["FindingStatus"]).FindingStatus}
 
@@ -308,9 +323,7 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
             repo.close()
 
     @app.post("/api/project/{name}/finding/{fid}/status")
-    def api_set_status(name: str, fid: int, request: Request,
-                       payload: dict = Body(...)):
-        _guard_write(request)
+    def api_set_status(name: str, fid: int, payload: dict = Body(...)):
         name = resolve(name)
         status = (payload or {}).get("status", "").strip()
         note = (payload or {}).get("note") or None
@@ -326,8 +339,7 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
             repo.close()
 
     @app.post("/api/project/{name}/notes")
-    def api_add_note(name: str, request: Request, payload: dict = Body(...)):
-        _guard_write(request)
+    def api_add_note(name: str, payload: dict = Body(...)):
         name = resolve(name)
         from ..models import Note
         title = (payload or {}).get("title", "").strip()
@@ -355,8 +367,7 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
         }
 
     @app.post("/api/ai/config")
-    def api_ai_config_set(request: Request, payload: dict = Body(...)):
-        _guard_write(request)
+    def api_ai_config_set(payload: dict = Body(...)):
         cfg = config.load_config()
         ai = dict(cfg.get("ai", {}))
         for key in ("language", "persona", "verbosity"):
@@ -376,8 +387,7 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
         return {"ok": True}
 
     @app.post("/api/project/{name}/ai/ask")
-    def api_ai_ask(name: str, request: Request, payload: dict = Body(...)):
-        _guard_write(request)
+    def api_ai_ask(name: str, payload: dict = Body(...)):
         name = resolve(name)
         question = (payload or {}).get("question", "").strip()
         if not question:
@@ -422,13 +432,19 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
     return app
 
 
-def serve(project: Optional[str] = None, host: str = "127.0.0.1", port: int = 8787):
-    """Startet den uvicorn-Server (blockierend)."""
+def serve(project: Optional[str] = None, host: str = "127.0.0.1", port: int = 8787,
+          token: Optional[str] = None):
+    """Startet den uvicorn-Server (blockierend).
+
+    `token` sollte vom Aufrufer (CLI) übergeben werden, der ihn VOR diesem
+    blockierenden Aufruf ausgibt -- ohne Übergabe erzeugt create_app() zwar
+    trotzdem einen, der wäre dann aber nirgends sichtbar.
+    """
     try:
         import uvicorn
     except ModuleNotFoundError as exc:  # pragma: no cover
         raise SystemExit(
             "uvicorn fehlt. Installiere die Web-Extras: pip install -e \".[web]\""
         ) from exc
-    app = create_app(project, _bind_host=host, _bind_port=port)
+    app = create_app(project, _bind_host=host, _bind_port=port, _token=token)
     uvicorn.run(app, host=host, port=port, log_level="warning")

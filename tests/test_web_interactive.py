@@ -33,7 +33,8 @@ def _client():
                           category=FindingCategory.VULN,
                           status=FindingStatus.UNVERIFIED, host_id=h.id))
     from pentos.web.server import create_app
-    return TestClient(create_app("Box", _bind_host="127.0.0.1", _bind_port=8787))
+    app = create_app("Box", _bind_host="127.0.0.1", _bind_port=8787, _token="test-token")
+    return TestClient(app, headers={"X-Pentos-Token": "test-token"})
 
 
 def test_set_status_persists():
@@ -73,13 +74,37 @@ def test_meta_returns_statuses():
     assert "Bestätigt" in st and "Geschlossen" in st
 
 
-def test_write_blocked_from_foreign_origin():
+def test_write_blocked_without_token():
+    """Kein X-Pentos-Token-Header (z.B. fremde Website, die den Token nicht
+    kennen kann) -> 401, nicht stillschweigend durchgelassen."""
+    from fastapi.testclient import TestClient
+    from pentos.web.server import create_app
+    app = create_app("Box", _bind_host="127.0.0.1", _bind_port=8787, _token="test-token")
+    anon = TestClient(app)  # keine Default-Header -> kein Token
+    r = anon.post("/api/project/Box/finding/1/status", json={"status": "Geschlossen"})
+    assert r.status_code == 401
+
+
+def test_write_blocked_with_wrong_token():
+    from fastapi.testclient import TestClient
+    from pentos.web.server import create_app
+    app = create_app("Box", _bind_host="127.0.0.1", _bind_port=8787, _token="test-token")
+    wrong = TestClient(app, headers={"X-Pentos-Token": "not-the-real-token"})
+    r = wrong.post("/api/project/Box/finding/1/status", json={"status": "Geschlossen"})
+    assert r.status_code == 401
+
+
+def test_read_blocked_without_token():
+    """Nicht nur Schreib-, auch Lesezugriffe (u.a. Loot/Credentials) brauchen
+    den Token -- sonst waeren Findings bei --host != loopback frei lesbar."""
+    from fastapi.testclient import TestClient
+    from pentos.web.server import create_app
+    app = create_app("Box", _bind_host="127.0.0.1", _bind_port=8787, _token="test-token")
+    anon = TestClient(app)
+    assert anon.get("/api/project/Box/findings").status_code == 401
+
+
+def test_write_allowed_with_correct_token():
     c = _client()
-    # fremde Website darf nicht schreiben
-    r = c.post("/api/project/Box/finding/1/status", json={"status": "Geschlossen"},
-               headers={"origin": "http://evil.example"})
-    assert r.status_code == 403
-    # eigenes Dashboard darf
-    r = c.post("/api/project/Box/finding/1/status", json={"status": "Geschlossen"},
-               headers={"origin": "http://127.0.0.1:8787"})
+    r = c.post("/api/project/Box/finding/1/status", json={"status": "Geschlossen"})
     assert r.status_code == 200

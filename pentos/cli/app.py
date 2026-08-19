@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import secrets
 import shlex
 from datetime import datetime
 from pathlib import Path
@@ -1939,38 +1940,58 @@ def ai_next(yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage
     repo2.close()
 
 
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
 @app.command("serve", rich_help_panel="KI & Integration")
 def serve_cmd(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind-Adresse (Default nur lokal)"),
     port: int = typer.Option(8787, "--port", "-p", help="Port"),
     project: Optional[str] = typer.Option(None, "--project", help="Startprojekt (sonst aktives/erstes)"),
+    yes: bool = typer.Option(False, "--yes", "-y",
+                             help="Nicht-lokale Bind-Adresse ohne Rückfrage bestätigen"),
 ):
-    """Startet das Web-Dashboard (lokal, read-only Ansicht deines Workspace).
+    """Startet das Web-Dashboard (Ansicht + Status-/Notiz-Pflege deines Workspace).
 
-    Standardmässig nur über 127.0.0.1 erreichbar – keine offene Angriffsfläche.
-    Benötigt die Web-Extras: pip install -e ".[web]"
+    Standardmässig nur über 127.0.0.1 erreichbar. Jeder Start erzeugt einen
+    Zufalls-Token (nur hier im Terminal sichtbar) - alle API-Endpunkte, auch
+    lesende (inkl. Loot/Credentials), verlangen ihn. Benötigt die Web-Extras:
+    pip install -e ".[web]"
     """
     try:
         from ..web import server as web_server
     except ModuleNotFoundError:
         console.print('[red]Web-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[web]"[/cyan]')
         raise typer.Exit(1)
+    if host not in _LOOPBACK_HOSTS and not yes:
+        console.print(
+            f"[yellow]{SYM_WARN} Nicht-lokale Bind-Adresse:[/yellow] '{host}' macht das Dashboard "
+            "für andere Geräte im selben Netz erreichbar (der Zugriffs-Token schützt weiterhin "
+            "vor Mitlesen, aber der Traffic läuft unverschlüsselt). Nur in einem vertrauenswürdigen "
+            "Netz nutzen, sonst per SSH-Tunnel/VPN auf 127.0.0.1 bleiben."
+        )
+        if not typer.confirm(f"Wirklich auf '{host}' binden?", default=False):
+            console.print("Abgebrochen."); raise typer.Exit()
     proj = project
     if proj is None:
         try:
             proj = config.get_active_project()
         except Exception:
             proj = None
-    url = f"http://{host}:{port}"
+    token = secrets.token_urlsafe(24)
+    url = f"http://{host}:{port}/?token={token}"
+    lokal = host in _LOOPBACK_HOSTS
     console.print(Panel.fit(
         f"[bold]PentOS Dashboard[/bold]\n"
         f"URL:      [cyan]{url}[/cyan]\n"
         f"Projekt:  {proj or '(erstes verfügbares)'}\n"
-        f"Bind:     {host}:{port}  ([green]nur lokal[/green])\n\n"
-        f"[dim]Stoppen mit Strg+C[/dim]",
+        f"Bind:     {host}:{port}  "
+        + ("([green]nur lokal[/green])" if lokal else "([yellow]netzwerkweit erreichbar[/yellow])")
+        + "\n\n[dim]Zugriffs-Token nur oben im Link sichtbar, nicht wiederholbar abrufbar. "
+          "Stoppen mit Strg+C[/dim]",
         title="serve"))
     try:
-        web_server.serve(project=proj, host=host, port=port)
+        web_server.serve(project=proj, host=host, port=port, token=token)
     except ModuleNotFoundError:
         console.print('[red]Web-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".[web]"[/cyan]')
         raise typer.Exit(1)

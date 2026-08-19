@@ -16,24 +16,46 @@ const el = (tag, cls, html) => {
 const esc = (s) => (s == null ? "" : String(s).replace(/[&<>"]/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])));
 
+// Zugriffs-Token: einmalig als ?token=... in der URL (von "pentos serve" beim
+// Start ausgegeben), danach in sessionStorage gemerkt und aus der sichtbaren
+// URL entfernt. Ohne gültigen Token lehnt der Server jede /api/-Anfrage mit
+// 401 ab (siehe pentos/web/server.py) -- auch lesende, wegen Loot/Credentials.
+const TOKEN = (() => {
+  const url = new URL(window.location.href);
+  const fromUrl = url.searchParams.get("token");
+  if (fromUrl) {
+    sessionStorage.setItem("pentos_token", fromUrl);
+    url.searchParams.delete("token");
+    history.replaceState({}, "", url.pathname + url.search + url.hash);
+    return fromUrl;
+  }
+  return sessionStorage.getItem("pentos_token") || "";
+})();
+
 async function api(path) {
-  const r = await fetch(path);
-  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  const r = await fetch(path, { headers: { "X-Pentos-Token": TOKEN } });
+  if (!r.ok) throw new Error(await _apiError(r, path));
   return r.json();
 }
 
 async function apiPost(path, body) {
   const r = await fetch(path, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Pentos-Token": TOKEN },
     body: JSON.stringify(body),
   });
-  if (!r.ok) {
-    let msg = `${r.status}`;
-    try { msg = (await r.json()).detail || msg; } catch (e) { /* ignore */ }
-    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
-  }
+  if (!r.ok) throw new Error(await _apiError(r, path));
   return r.json();
+}
+
+async function _apiError(r, path) {
+  if (r.status === 401) {
+    return "Kein gültiger Zugriffs-Token. Dashboard über den beim Start " +
+           "ausgegebenen Link neu öffnen (pentos serve).";
+  }
+  let msg = `${r.status} ${path}`;
+  try { msg = (await r.json()).detail || msg; } catch (e) { /* ignore */ }
+  return typeof msg === "string" ? msg : JSON.stringify(msg);
 }
 
 let STATUSES = ["Zu verifizieren", "Bestätigt", "Ausgenutzt", "False Positive", "Geschlossen"];

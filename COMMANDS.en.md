@@ -161,8 +161,9 @@ pentos ai index                      # build the index over the active project
 pentos ai ask "Where is the SSH key for kenobi?"
 
 # Web dashboard
-pentos serve                         # http://127.0.0.1:8787
+pentos serve                         # http://127.0.0.1:8787 (prints the link incl. access token)
 pentos serve --port 9000 --project myproject
+pentos serve --host 0.0.0.0 --yes    # reachable network-wide, no prompt (trusted network only!)
 
 # MCP server (for Claude Code / Cursor)
 pentos mcp                           # stdio server (read-only)

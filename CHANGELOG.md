@@ -7,6 +7,25 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.40.0] - 2026-08-19
+### Sicherheit
+- **Web-Dashboard: Zugriffs-Token für alle API-Endpunkte (auch lesende).**
+  Bisher hatte `pentos serve` keinerlei Authentifizierung - bei `--host`
+  ungleich `127.0.0.1` waren Findings, Notizen und vor allem im Klartext
+  erfasstes Loot (Credentials/Hashes/Tokens) für jeden im selben Netz lesbar.
+  Der einzige bisherige Schreibschutz (Origin-Header-Prüfung) liess sich
+  zudem trivial umgehen, indem man den Origin-Header schlicht wegliess (kein
+  Browser nötig) - betraf nur Schreibzugriffe, nicht das eigentliche Problem
+  beim Lesen. Jeder `pentos serve`-Start erzeugt jetzt einen Zufalls-Token,
+  ausschliesslich im Terminal ausgegeben (analog zu Jupyter): alle
+  `/api/...`-Endpunkte verlangen ihn als `X-Pentos-Token`-Header oder
+  `?token=`-Parameter, sonst `401`. Ein Token im Header ist zugleich
+  vollständiger CSRF-Schutz (eine fremde Website kann ihn nicht kennen),
+  ersetzt daher die alte Origin-Prüfung komplett statt sie zu ergänzen.
+  Zusätzlich: `--host` ungleich `127.0.0.1`/`localhost` löst jetzt eine
+  explizite Warnung + Rückfrage aus (`--yes` überspringt sie), analog zum
+  bestehenden `--shell`-Warnmuster bei `pentos run`.
+
 ## [2.39.0] - 2026-08-19
 ### Hinzugefügt
 - **`pentos run --proto-extra` für hydra-Module mit Zusatzparametern:**

@@ -41,7 +41,8 @@ def _client_with_data():
     r.add_loot(Loot(type=LootType.CREDENTIAL, label="ftp", value="a:b", host_id=h.id))
     r.add_note(Note(title="Plan", body="do things", category="plan"))
     from pentos.web.server import create_app
-    return TestClient(create_app("Box"))
+    return TestClient(create_app("Box", _token="test-token"),
+                      headers={"X-Pentos-Token": "test-token"})
 
 
 def test_projects_endpoint():
@@ -227,7 +228,9 @@ def _client_with_host_detail_data():
     r.add_note(Note(title="Notiz ohne Host", body="…"))
     r.add_loot(Loot(type=LootType.CREDENTIAL, label="admin:pw", host_id=h1.id))
     from pentos.web.server import create_app
-    return TestClient(create_app("Box")), h1.id, h2.id
+    client = TestClient(create_app("Box", _token="test-token"),
+                        headers={"X-Pentos-Token": "test-token"})
+    return client, h1.id, h2.id
 
 
 def test_host_detail_includes_direct_and_service_findings():

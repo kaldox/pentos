@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.39.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.40.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -308,9 +308,12 @@ pentos serve --port 9000 --project myproject
 ```
 
 In the dashboard you can **change a finding's status** and **add notes**; the changes
-go straight into the project. It binds to `127.0.0.1` only (**no open attack surface**),
-and write requests are additionally guarded by an origin check against drive-by access
-from other websites.
+go straight into the project. It binds to `127.0.0.1` only by default (**no open attack
+surface**). Every start generates a random token, printed only in the terminal - open
+exactly the printed link (with `?token=...`), otherwise every API request (including
+reads, because of loot/credentials) gets rejected with 401. Binding to a `--host` other
+than `127.0.0.1`/`localhost` triggers an explicit warning and confirmation, since the
+dashboard then becomes reachable over the network (`--yes` skips the prompt).
 
 ---
 
@@ -356,4 +359,4 @@ pentos tui                 # or: pentos tui --project myproject
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.39.0**.
+Current version: **2.40.0**.
