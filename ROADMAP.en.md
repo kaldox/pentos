@@ -97,6 +97,10 @@ For context, what was added most recently (details in the changelog):
   project's wordlists and a clear error when those are missing - fixes a
   broken `recommend` suggestion (hardcoded relative path) found during
   real-world testing.
+- **`--proto-extra` for hydra web forms** (`pentos run hydra ... --proto
+  http-post-form --proto-extra "..."`): module extra parameters for
+  `http-post-form`/`http-get-form`, combinable with `--userlist`/
+  `--passlist`/`--proto` instead of having to fall back to `--args` entirely.
 
 ## Next
 

@@ -2135,6 +2135,10 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
             proto: Optional[str] = typer.Option(
                 None, "--proto",
                 help="Protokoll-Modul für hydra/medusa, z.B. ssh, ftp, http-get"),
+            proto_extra: Optional[str] = typer.Option(
+                None, "--proto-extra",
+                help="Zusatzparameter fürs Protokoll-Modul (nur hydra), z.B. bei "
+                     "http-post-form: \"/login.php:user=^USER^&pass=^PASS^:F=Login failed\""),
             timeout: Optional[int] = typer.Option(None, "--timeout", help="Timeout in Sekunden"),
             dry_run: bool = typer.Option(False, "--dry-run", help="Nur das Kommando zeigen"),
             shell: bool = typer.Option(False, "--shell",
@@ -2171,13 +2175,19 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
             console.print("[red]--shell benötigt --args \"...\" mit dem vollständigen Tool-Aufruf.[/red]")
             repo.close(); raise typer.Exit(1)
 
-    if (userlist or passlist or proto) and args:
-        console.print("[red]--userlist/--passlist/--proto nicht zusammen mit --args nutzen[/red] -- "
-                       "entweder die Kurzform oder --args mit dem vollständigen Rest, nicht beides.")
+    if (userlist or passlist or proto or proto_extra) and args:
+        console.print("[red]--userlist/--passlist/--proto/--proto-extra nicht zusammen mit --args "
+                       "nutzen[/red] -- entweder die Kurzform oder --args mit dem vollständigen Rest, "
+                       "nicht beides.")
         repo.close(); raise typer.Exit(1)
-    if (userlist or passlist or proto) and not bruteforce_mod.is_supported(tool):
-        console.print(f"[red]'{tool}' unterstützt --userlist/--passlist/--proto nicht.[/red] "
-                      f"Unterstützte Tools: {', '.join(bruteforce_mod.SUPPORTED_TOOLS)}.")
+    if (userlist or passlist or proto or proto_extra) and not bruteforce_mod.is_supported(tool):
+        console.print(f"[red]'{tool}' unterstützt --userlist/--passlist/--proto/--proto-extra "
+                      f"nicht.[/red] Unterstützte Tools: {', '.join(bruteforce_mod.SUPPORTED_TOOLS)}.")
+        repo.close(); raise typer.Exit(1)
+    if proto_extra and not bruteforce_mod.supports_proto_extra(tool):
+        console.print(f"[red]'{tool}' unterstützt --proto-extra nicht.[/red] "
+                      f"Unterstützte Tools: {', '.join(bruteforce_mod.PROTO_EXTRA_SUPPORTED)}. "
+                      "Für andere Module-Optionen --args verwenden.")
         repo.close(); raise typer.Exit(1)
 
     if bruteforce_mod.is_supported(tool) and not args and not shell:
@@ -2196,7 +2206,7 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
                           "Einrichten mit [cyan]pentos wordlists setup[/cyan], "
                           "oder eigene Dateien mit [cyan]--userlist[/cyan]/[cyan]--passlist[/cyan] angeben.")
             repo.close(); raise typer.Exit(1)
-        extra = bruteforce_mod.build_args(tool, ul, pl, proto)
+        extra = bruteforce_mod.build_args(tool, ul, pl, proto, proto_extra)
     else:
         extra = shlex.split(args) if (args and not shell) else None
     scans_dir = config.project_path(name) / "scans"

@@ -7,6 +7,17 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.39.0] - 2026-08-19
+### Added
+- **`pentos run --proto-extra` for hydra modules with extra parameters:**
+  `http-post-form`/`http-get-form` (and similar hydra modules) need their own
+  module-specific parameter string besides the module name itself (path,
+  form fields, failure detection) - `--proto-extra` passes it through
+  unchanged as a single token, combinable with `--userlist`/`--passlist`/
+  `--proto`. Deliberately hydra-only: medusa's module options (`-m`,
+  repeatable, structured differently per module) don't fit this simple
+  scheme - `--args` remains the right tool there.
+
 ## [2.38.0] - 2026-08-18
 ### Added
 - **`pentos run --userlist/--passlist/--proto` for hydra/medusa/nxc-smb/

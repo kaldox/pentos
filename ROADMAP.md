@@ -99,6 +99,10 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   die Projekt-Wordlists und klarer Fehlermeldung, wenn die fehlen - behebt
   einen aus echtem Praxistest bekannten kaputten `recommend`-Vorschlag
   (hartkodierter relativer Pfad).
+- **`--proto-extra` für hydra-Web-Formulare** (`pentos run hydra ... --proto
+  http-post-form --proto-extra "..."`): Modul-Zusatzparameter für
+  `http-post-form`/`http-get-form` kombinierbar mit `--userlist`/
+  `--passlist`/`--proto`, statt komplett auf `--args` zurückfallen zu müssen.
 
 ## Als Nächstes
 

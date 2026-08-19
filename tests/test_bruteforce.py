@@ -62,3 +62,32 @@ def test_build_args_medusa_without_proto_raises():
 def test_build_args_unsupported_tool_raises():
     with pytest.raises(ValueError, match="unterst"):
         bruteforce.build_args("kerbrute", "/p/users.txt", "/p/pass.txt", None)
+
+
+# ── --proto-extra (Module mit Zusatzparametern, z.B. hydra http-post-form) ──
+def test_supports_proto_extra_hydra_only():
+    assert bruteforce.supports_proto_extra("hydra")
+    assert not bruteforce.supports_proto_extra("medusa")
+    assert not bruteforce.supports_proto_extra("nxc-smb")
+    assert not bruteforce.supports_proto_extra("nxc-winrm")
+
+
+def test_build_args_hydra_appends_proto_extra_as_one_token():
+    form = "/login.php:user=^USER^&pass=^PASS^:F=Login failed"
+    argv = bruteforce.build_args("hydra", "/p/users.txt", "/p/pass.txt", "http-post-form", form)
+    assert argv == ["-L", "/p/users.txt", "-P", "/p/pass.txt", "http-post-form", form]
+
+
+def test_build_args_hydra_without_proto_extra_unchanged():
+    argv = bruteforce.build_args("hydra", "/p/users.txt", "/p/pass.txt", "ssh", None)
+    assert argv == ["-L", "/p/users.txt", "-P", "/p/pass.txt", "ssh"]
+
+
+def test_build_args_medusa_with_proto_extra_raises():
+    with pytest.raises(ValueError, match="proto-extra"):
+        bruteforce.build_args("medusa", "/p/users.txt", "/p/pass.txt", "ssh", "irrelevant")
+
+
+def test_build_args_nxc_with_proto_extra_raises():
+    with pytest.raises(ValueError, match="proto-extra"):
+        bruteforce.build_args("nxc-smb", "/p/users.txt", "/p/pass.txt", None, "irrelevant")

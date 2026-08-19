@@ -114,6 +114,39 @@ def test_userlist_flag_conflicts_with_args():
     assert "--args" in r.output
 
 
+def test_hydra_proto_extra_dry_run_shows_form_string():
+    """http-post-form/-get-form brauchen zusaetzlich zum Modulnamen einen
+    eigenen Parameter-String (Pfad, Formularfelder, Fehlererkennung) --
+    --proto-extra haengt den unveraendert als ein Token an."""
+    app, _proj_dir = _project()
+    form = "/login.php:user=^USER^&pass=^PASS^:F=Login failed"
+    r = CliRunner().invoke(app, [
+        "run", "hydra", "10.0.0.1", "--proto", "http-post-form", "--proto-extra", form,
+        "--dry-run",
+    ])
+    assert r.exit_code == 0, r.output
+    assert "http-post-form" in r.output
+    assert "user=^USER^&pass=^PASS^" in r.output
+
+
+def test_proto_extra_rejected_for_medusa():
+    app, _proj_dir = _project()
+    r = CliRunner().invoke(app, [
+        "run", "medusa", "10.0.0.1", "--proto", "ssh", "--proto-extra", "irrelevant", "--dry-run",
+    ])
+    assert r.exit_code == 1, r.output
+    assert "proto-extra" in r.output
+
+
+def test_proto_extra_conflicts_with_args():
+    app, _proj_dir = _project()
+    r = CliRunner().invoke(app, [
+        "run", "hydra", "10.0.0.1", "--proto-extra", "x", "--args", "-l admin", "--dry-run",
+    ])
+    assert r.exit_code == 1, r.output
+    assert "--args" in r.output
+
+
 def test_args_escape_hatch_still_works_unaffected(monkeypatch):
     """Alter --args-Weg bleibt unverändert funktionsfähig (Regressionsschutz),
     auch ohne eingerichtete Projekt-Wordlists."""
