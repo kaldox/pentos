@@ -7,6 +7,24 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.40.0] - 2026-08-19
+### Security
+- **Web dashboard: access token for all API endpoints (including reads).**
+  Previously `pentos serve` had no authentication at all - with `--host`
+  other than `127.0.0.1`, findings, notes, and above all loot captured in
+  plaintext (credentials/hashes/tokens) were readable by anyone on the same
+  network. The only prior write guard (an Origin-header check) was also
+  trivially bypassed by simply omitting the Origin header (no browser
+  needed) - and that only covered writes, not the actual read-exposure
+  problem. Every `pentos serve` start now generates a random token, printed
+  only in the terminal (Jupyter-style): all `/api/...` endpoints require it
+  as an `X-Pentos-Token` header or `?token=` parameter, otherwise `401`. A
+  header-based token is itself complete CSRF protection (a foreign website
+  can't know it), so it replaces the old Origin check entirely rather than
+  supplementing it. Additionally: `--host` other than `127.0.0.1`/`localhost`
+  now triggers an explicit warning + confirmation (`--yes` skips it),
+  matching the existing `--shell` warning pattern on `pentos run`.
+
 ## [2.39.0] - 2026-08-19
 ### Added
 - **`pentos run --proto-extra` for hydra modules with extra parameters:**

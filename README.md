@@ -2,7 +2,7 @@
 
 **🇩🇪 Deutsch** · [🇬🇧 English](README.en.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.39.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.40.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -316,8 +316,11 @@ pentos serve --port 9000 --project meinprojekt
 
 Im Dashboard kannst du den **Status von Findings ändern** und **Notizen anlegen**;
 die Änderungen landen direkt im Projekt. Es bindet standardmässig nur an `127.0.0.1`
-(**keine offene Angriffsfläche**); Schreibzugriffe sind zusätzlich per Origin-Prüfung
-gegen Drive-By-Zugriffe fremder Websites geschützt.
+(**keine offene Angriffsfläche**). Jeder Start erzeugt einen Zufalls-Token, der nur im
+Terminal ausgegeben wird - öffne genau den ausgegebenen Link (mit `?token=...`), sonst
+lehnt jede API-Anfrage (auch lesende, wegen Loot/Credentials) mit 401 ab. Bei
+`--host` != `127.0.0.1`/`localhost` warnt PentOS explizit und fragt nach, weil das
+Dashboard dann im Netz erreichbar wird (`--yes` überspringt die Rückfrage).
 
 ---
 
@@ -364,4 +367,4 @@ pentos tui                 # oder: pentos tui --project meinprojekt
 ## Changelog
 
 Alle Versionen und Änderungen sind in [`CHANGELOG.md`](CHANGELOG.md) dokumentiert.
-Aktuelle Version: **2.39.0**.
+Aktuelle Version: **2.40.0**.
