@@ -7,6 +7,17 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.39.0] - 2026-08-19
+### Hinzugefügt
+- **`pentos run --proto-extra` für hydra-Module mit Zusatzparametern:**
+  `http-post-form`/`http-get-form` (und ähnliche hydra-Module) brauchen neben
+  dem Modulnamen selbst noch einen eigenen, modulspezifischen Parameter-
+  String (Pfad, Formularfelder, Fehlererkennung) - `--proto-extra` gibt den
+  unverändert als ein Token mit, kombinierbar mit `--userlist`/`--passlist`/
+  `--proto`. Bewusst nur für hydra: medusas Modul-Optionen (`-m`, mehrfach,
+  je nach Modul unterschiedlich aufgebaut) passen nicht in dieses einfache
+  Schema - dafür bleibt `--args` der richtige Weg.
+
 ## [2.38.0] - 2026-08-18
 ### Hinzugefügt
 - **`pentos run --userlist/--passlist/--proto` für hydra/medusa/nxc-smb/

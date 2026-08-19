@@ -148,7 +148,8 @@ REGISTRY: dict[str, ToolSpec] = {
         name="hydra", binary="hydra", category="bruteforce",
         argv=["hydra", "{target}"], timeout=1800,
         description="Login-Brute-Force. Listen: --userlist/--passlist/--proto (Default: "
-                    "Projekt-Wordlists). Einzelner User: --args z.B. \"-l admin -P <wl> ssh\"",
+                    "Projekt-Wordlists), für http-post-form/-get-form zusätzlich "
+                    "--proto-extra. Einzelner User: --args z.B. \"-l admin -P <wl> ssh\"",
         parser="creds",
     ),
     "medusa": ToolSpec(
