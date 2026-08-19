@@ -24,6 +24,7 @@ from rich.table import Table
 
 from .. import archive as archive_mod
 from .. import attack_navigator as attack_navigator_mod
+from .. import bruteforce as bruteforce_mod
 from .. import config
 from ..ai import AIClient
 from .. import epss as epss_mod
@@ -2043,8 +2044,8 @@ def wordlists_setup(
     else:
         console.print("[dim]Keine Passwort-Liste eingerichtet.[/dim]")
     console.print(
-        "\n[dim]Beispiel:[/dim] pentos run hydra <ziel> --args "
-        f'"-L {wl_dir / "usernames.txt"} -P {wl_dir / "passwords.txt"} ssh"'
+        "\n[dim]Beispiel:[/dim] pentos run hydra <ziel> --proto ssh   "
+        "[dim](nutzt automatisch diese Wordlists)[/dim]"
     )
 
 
@@ -2123,6 +2124,17 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
                                                    help="Profil (z.B. nmap: basic|standard|full|custom)"),
             args: Optional[str] = typer.Option(None, "--args", help="Zusätzliche Tool-Argumente"),
             wordlist: Optional[str] = typer.Option(None, "--wordlist", help="Wordlist überschreiben"),
+            userlist: Optional[str] = typer.Option(
+                None, "--userlist",
+                help="Username-Liste für hydra/medusa/nxc-smb/nxc-winrm "
+                     "(Default: wordlists/usernames.txt im Projekt)"),
+            passlist: Optional[str] = typer.Option(
+                None, "--passlist",
+                help="Passwort-Liste für hydra/medusa/nxc-smb/nxc-winrm "
+                     "(Default: wordlists/passwords.txt im Projekt)"),
+            proto: Optional[str] = typer.Option(
+                None, "--proto",
+                help="Protokoll-Modul für hydra/medusa, z.B. ssh, ftp, http-get"),
             timeout: Optional[int] = typer.Option(None, "--timeout", help="Timeout in Sekunden"),
             dry_run: bool = typer.Option(False, "--dry-run", help="Nur das Kommando zeigen"),
             shell: bool = typer.Option(False, "--shell",
@@ -2158,7 +2170,35 @@ def run_cmd(tool: str = typer.Argument(..., help="Tool-Name (siehe: pentos tools
         if not args:
             console.print("[red]--shell benötigt --args \"...\" mit dem vollständigen Tool-Aufruf.[/red]")
             repo.close(); raise typer.Exit(1)
-    extra = shlex.split(args) if (args and not shell) else None
+
+    if (userlist or passlist or proto) and args:
+        console.print("[red]--userlist/--passlist/--proto nicht zusammen mit --args nutzen[/red] -- "
+                       "entweder die Kurzform oder --args mit dem vollständigen Rest, nicht beides.")
+        repo.close(); raise typer.Exit(1)
+    if (userlist or passlist or proto) and not bruteforce_mod.is_supported(tool):
+        console.print(f"[red]'{tool}' unterstützt --userlist/--passlist/--proto nicht.[/red] "
+                      f"Unterstützte Tools: {', '.join(bruteforce_mod.SUPPORTED_TOOLS)}.")
+        repo.close(); raise typer.Exit(1)
+
+    if bruteforce_mod.is_supported(tool) and not args and not shell:
+        # hydra/medusa/nxc brauchen zwingend User-/Passwort-Liste (+ Protokoll
+        # bei hydra/medusa) -- ohne diesen Zweig würde ein blanker
+        # "pentos run hydra <ziel>" nur hängen bzw. nichts Sinnvolles tun.
+        wl_dir = config.project_path(name) / "wordlists"
+        ul = userlist or str(wl_dir / "usernames.txt")
+        pl = passlist or str(wl_dir / "passwords.txt")
+        if bruteforce_mod.needs_proto(tool) and not proto:
+            console.print(f"[red]'{tool}' braucht --proto (z.B. ssh, ftp, http-get).[/red]")
+            repo.close(); raise typer.Exit(1)
+        fehlend = [p for p in (ul, pl) if not Path(p).exists()]
+        if fehlend and not dry_run:
+            console.print(f"[red]Wordlist(en) nicht gefunden:[/red] {', '.join(fehlend)}\n"
+                          "Einrichten mit [cyan]pentos wordlists setup[/cyan], "
+                          "oder eigene Dateien mit [cyan]--userlist[/cyan]/[cyan]--passlist[/cyan] angeben.")
+            repo.close(); raise typer.Exit(1)
+        extra = bruteforce_mod.build_args(tool, ul, pl, proto)
+    else:
+        extra = shlex.split(args) if (args and not shell) else None
     scans_dir = config.project_path(name) / "scans"
     try:
         result = runner_base.run_tool(spec, target, scans_dir, extra_args=extra,

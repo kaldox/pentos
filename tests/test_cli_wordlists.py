@@ -104,7 +104,7 @@ def test_wordlists_setup_shows_hydra_example_command():
     r = CliRunner().invoke(app_mod.app, ["wordlists", "setup", "--no-passwords"])
     assert r.exit_code == 0, r.output
     assert "pentos run hydra" in r.output
-    assert "-L " in r.output and "-P " in r.output
+    assert "--proto" in r.output
 
 
 # ── wordlists catalog / wordlists add ────────────────────────────────────────

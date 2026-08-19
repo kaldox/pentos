@@ -97,7 +97,9 @@ def test_run_blocked_when_bruteforce_forbidden(monkeypatch):
     app_mod = _project()
     runner = CliRunner()
     runner.invoke(app_mod.app, ["policy", "setup", "--no-interactive", "--no-bruteforce"])
-    r = runner.invoke(app_mod.app, ["run", "hydra", "10.10.10.5", "--dry-run"])
+    # --proto: hydra braucht das zwingend (siehe pentos/bruteforce.py), unabhängig
+    # von der Policy-Frage hier.
+    r = runner.invoke(app_mod.app, ["run", "hydra", "10.10.10.5", "--proto", "ssh", "--dry-run"])
     # dry-run wird wie beim Scope-Guard nicht blockiert (zeigt nur das Kommando)
     assert r.exit_code == 0, r.output
 
@@ -116,7 +118,7 @@ def test_run_force_overrides_policy_block():
     app_mod = _project()
     runner = CliRunner()
     runner.invoke(app_mod.app, ["policy", "setup", "--no-interactive", "--no-bruteforce"])
-    r = runner.invoke(app_mod.app, ["run", "hydra", "10.10.10.5", "--force", "--dry-run"])
+    r = runner.invoke(app_mod.app, ["run", "hydra", "10.10.10.5", "--proto", "ssh", "--force", "--dry-run"])
     assert r.exit_code == 0, r.output
 
 

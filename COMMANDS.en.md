@@ -58,6 +58,9 @@ pentos run nmap 10.10.10.10 --args "-p- -T4"   # pass extra arguments through
 pentos run nmap 10.10.10.10 --dry-run          # only show the command
 pentos run nmap 10.10.10.10 --shell            # shell mode (only with trusted input!)
 pentos run nikto 10.10.10.10 --proxy "proxychains4 -q"   # SOCKS pivot after a foothold
+pentos run hydra 10.10.10.10 --proto ssh             # wordlists auto-resolved from the project
+pentos run hydra 10.10.10.10 --proto ssh --userlist own_users.txt --passlist own_pass.txt
+pentos run nxc-smb 10.10.10.10       # netexec SMB, also uses project wordlists (no --proto needed)
 pentos run gitleaks /path/to/repo-dump    # secret scan against a reconstructed .git dump
 pentos runs                          # history of all runs
 
