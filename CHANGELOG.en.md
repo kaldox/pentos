@@ -7,6 +7,31 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.43.0] - 2026-08-20
+### Changed
+- **Split `cli/app.py` into five modules** (pure structure, no behavior
+  changed): the file had grown to 2,554 lines - hard to keep an overview
+  of, every change to one command touched a file with 18 other,
+  unrelated command groups. Split along the `--help` categories that
+  already existed (Workspace, Recon & Import, Findings & Docs, Reporting
+  & Overview, AI & Integration):
+  - `cli/_shared.py`: console, status symbols, the `_repo()` helper (48 lines)
+  - `cli/workspace.py`: project/host/service/scope/timeline/policy (401 lines)
+  - `cli/findings.py`: task/finding/template/note/loot/evidence/journal/graph (639 lines)
+  - `cli/recon_extra.py`: scan-import/wordlists/playbook (435 lines)
+  - `cli/ai_cmds.py`: the entire AI-mentor command tree (477 lines)
+  - `cli/app.py`: only the main `app` object plus the commands that
+    deliberately hang directly off it instead of a sub-group (`recommend`,
+    `report`, `dashboard`, `serve`, `mcp`, `tools`, `run`, `sweep`, `runs`) -
+    these stay standalone on purpose, otherwise e.g. `pentos run` would
+    become a nested `pentos recon run` and break existing scripts/muscle
+    memory. Now 645 lines instead of 2,554.
+
+  `--help` output (command names, grouping, options) is identical to
+  before, as is every individual command's behavior - verified via the
+  full test suite (394 tests, unchanged in count) plus a manual check of
+  `pentos --help`/`pentos run --help`/`pentos ai --help`.
+
 ## [2.42.0] - 2026-08-20
 ### Security
 - **`defusedxml` instead of `xml.etree.ElementTree` for XML parsing** (nmap

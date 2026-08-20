@@ -55,33 +55,48 @@ def _project(name: str, active: bool = True):
         config.set_active_project(name)
     import importlib as il
     from pentos.cli import app as app_mod
+    from pentos.cli import findings as findings_mod
+    from pentos.cli import recon_extra as recon_extra_mod
+    from pentos.cli import workspace as workspace_mod
     il.reload(app_mod)
-    return app_mod, Repository(config.db_path(name))
+    return app_mod, findings_mod, recon_extra_mod, workspace_mod, Repository(config.db_path(name))
 
 
-def test_project_list_survives_non_utf8_console():
+def test_project_list_survives_non_utf8_console(monkeypatch):
     """Exakter Repro-Fall aus dem Bugreport: `pentos project list` darf auf
-    einer cp1252-Konsole nicht crashen (war: '●'-Marker fürs aktive Projekt)."""
-    app_mod, repo = _project("alpha")
+    einer cp1252-Konsole nicht crashen (war: '●'-Marker fürs aktive Projekt).
+
+    project_list() lebt in cli/workspace.py -- das Modul importiert `console`
+    per `from ._shared import console` und braucht deshalb seine eigene,
+    lokale Umleitung (app_mod.console umzusetzen reicht nicht, das ist eine
+    andere Namensbindung). monkeypatch statt Direktzuweisung, sonst bliebe
+    die auf BytesIO umgeleitete Konsole für den Rest der Testsession stehen
+    und alle späteren Tests, die workspace.py-Befehle aufrufen, würden
+    stillschweigend ins Leere schreiben (leerer CliRunner-Output)."""
+    app_mod, _findings_mod, _recon_extra_mod, workspace_mod, repo = _project("alpha")
     repo.close()
     from pentos import config
     config.project_path("beta").mkdir(parents=True, exist_ok=True)  # zweites, inaktives Projekt
 
     console, buf = _cp1252_console()
-    app_mod.console = console
-    app_mod.project_list()  # löste vor dem Fix UnicodeEncodeError aus
+    monkeypatch.setattr(workspace_mod, "console", console)
+    workspace_mod.project_list()  # löste vor dem Fix UnicodeEncodeError aus
 
     out = buf.getvalue().decode("cp1252")
     assert "alpha" in out and "beta" in out
-    assert app_mod.SYM_BULLET in out
-    assert app_mod.SYM_BULLET.isascii()
+    assert workspace_mod.SYM_BULLET in out
+    assert workspace_mod.SYM_BULLET.isascii()
 
 
-def test_dashboard_tools_and_findings_survive_non_utf8_console():
+def test_dashboard_tools_and_findings_survive_non_utf8_console(monkeypatch):
     """Weitere Befehle, die vormals Unicode-only-Glyphen ausgaben: ●/⚠ im
     Dashboard-Prioritätspanel, ✓/✗ in der Tools-Tabelle, ✓ in der
-    Findings-Tabelle, Fortschrittsbalken (█/░)."""
-    app_mod, repo = _project("gamma")
+    Findings-Tabelle, Fortschrittsbalken (█/░).
+
+    dashboard_cmd/tools_cmd bleiben in app.py, finding_list lebt in
+    cli/findings.py -- jedes der beiden Module braucht seine eigene
+    Konsolen-Umleitung (monkeypatch, siehe Begründung oben)."""
+    app_mod, findings_mod, _recon_extra_mod, _workspace_mod, repo = _project("gamma")
     from pentos.models import Finding, Severity, Host, Task
     repo.add_host(Host(address="10.0.0.5"))
     repo.add_finding(Finding(title="Kritischer Fund", severity=Severity.CRITICAL, auto=True))
@@ -89,26 +104,28 @@ def test_dashboard_tools_and_findings_survive_non_utf8_console():
     repo.close()
 
     console, buf = _cp1252_console()
-    app_mod.console = console
+    monkeypatch.setattr(app_mod, "console", console)
+    monkeypatch.setattr(findings_mod, "console", console)
     app_mod.dashboard_cmd()
     app_mod.tools_cmd()
-    app_mod.finding_list()
+    findings_mod.finding_list()
 
     out = buf.getvalue().decode("cp1252")
     assert "Kritischer Fund" in out
 
 
-def test_playbook_show_check_status_survive_non_utf8_console():
+def test_playbook_show_check_status_survive_non_utf8_console(monkeypatch):
     """playbook show/check/status: vormals ✓/»/○-Marker, (P)/(E)/(M)-Icons
-    (früher Emoji) und Fortschrittsbalken."""
-    app_mod, repo = _project("delta")
+    (früher Emoji) und Fortschrittsbalken. Leben in cli/recon_extra.py
+    (monkeypatch, siehe Begründung oben)."""
+    app_mod, _findings_mod, recon_extra_mod, _workspace_mod, repo = _project("delta")
     repo.close()
 
     console, buf = _cp1252_console()
-    app_mod.console = console
-    app_mod.playbook_show("web", target=None)
-    app_mod.playbook_check("web", "ports", note=None, skip=False)
-    app_mod.playbook_status()
+    monkeypatch.setattr(recon_extra_mod, "console", console)
+    recon_extra_mod.playbook_show("web", target=None)
+    recon_extra_mod.playbook_check("web", "ports", note=None, skip=False)
+    recon_extra_mod.playbook_status()
 
     out = buf.getvalue().decode("cp1252")
     assert "Web" in out
@@ -116,12 +133,18 @@ def test_playbook_show_check_status_survive_non_utf8_console():
 
 def test_no_non_ascii_status_glyphs_in_console_output_sources():
     """Statischer Wächter gegen Regressionen: In den console.print()/Table/
-    Panel-Strings von app.py und runners/base.py dürfen keine Zeichen
+    Panel-Strings der CLI-Module und runners/base.py dürfen keine Zeichen
     ausserhalb von cp1252 auftauchen (Kommentare mit Box-Drawing-Trennern
-    wie '# ── Foo ──' sind ausgenommen, die landen nie auf stdout)."""
+    wie '# ── Foo ──' sind ausgenommen, die landen nie auf stdout).
+
+    Die CLI war ursprünglich eine einzelne app.py -- seit der Aufteilung in
+    cli/workspace.py, cli/findings.py, cli/recon_extra.py, cli/ai_cmds.py und
+    cli/_shared.py deckt der Wächter alle fünf ab, nicht nur app.py."""
     repo_root = pathlib.Path(__file__).resolve().parents[1]
     offenders: list[str] = []
-    for rel in ("pentos/cli/app.py", "pentos/runners/base.py"):
+    for rel in ("pentos/cli/app.py", "pentos/cli/workspace.py", "pentos/cli/findings.py",
+               "pentos/cli/recon_extra.py", "pentos/cli/ai_cmds.py", "pentos/cli/_shared.py",
+               "pentos/runners/base.py"):
         path = repo_root / rel
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if line.lstrip().startswith("#"):

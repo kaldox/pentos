@@ -1,8 +1,14 @@
-"""CLI-Tests für 'pentos finding epss' (EPSS-Anreicherung, opt-in wie KI-Cloud-Aufrufe)."""
+"""CLI-Tests für 'pentos finding epss' (EPSS-Anreicherung, opt-in wie KI-Cloud-Aufrufe).
+
+epss_mod lebt seit der cli/app.py-Aufteilung in cli/findings.py (wo der
+finding-Befehlsbaum jetzt zuhause ist), nicht mehr in cli/app.py selbst.
+"""
 import os
 import tempfile
 
 from typer.testing import CliRunner
+
+from pentos.cli import findings as findings_mod
 
 
 def _project(with_cve=True):
@@ -48,7 +54,7 @@ def test_finding_epss_yes_flag_skips_confirmation_and_updates_findings(monkeypat
         assert cve_ids == ["CVE-2014-0160"]
         return {"CVE-2014-0160": {"epss": 0.94123, "percentile": 0.99001}}
 
-    monkeypatch.setattr(app_mod.epss_mod, "fetch_epss", fake_fetch)
+    monkeypatch.setattr(findings_mod.epss_mod, "fetch_epss", fake_fetch)
     r = CliRunner().invoke(app_mod.app, ["finding", "epss", "--yes"])
     assert r.exit_code == 0, r.output
     assert "CVE-2014-0160" in r.output
@@ -72,7 +78,7 @@ def test_finding_epss_without_yes_asks_and_aborts_on_no(monkeypatch):
         called["n"] += 1
         return {}
 
-    monkeypatch.setattr(app_mod.epss_mod, "fetch_epss", fake_fetch)
+    monkeypatch.setattr(findings_mod.epss_mod, "fetch_epss", fake_fetch)
     r = CliRunner().invoke(app_mod.app, ["finding", "epss"], input="n\n")
     assert r.exit_code == 0, r.output
     assert "Achtung" in r.output
@@ -93,7 +99,7 @@ def test_finding_epss_without_yes_proceeds_on_yes_confirmation(monkeypatch):
     def fake_fetch(cve_ids, timeout=10):
         return {"CVE-2014-0160": {"epss": 0.5, "percentile": 0.6}}
 
-    monkeypatch.setattr(app_mod.epss_mod, "fetch_epss", fake_fetch)
+    monkeypatch.setattr(findings_mod.epss_mod, "fetch_epss", fake_fetch)
     r = CliRunner().invoke(app_mod.app, ["finding", "epss"], input="y\n")
     assert r.exit_code == 0, r.output
     assert "1 Finding(s) aktualisiert" in r.output
@@ -103,9 +109,9 @@ def test_finding_epss_handles_api_error_gracefully(monkeypatch):
     app_mod = _project(with_cve=True)
 
     def fake_fetch(cve_ids, timeout=10):
-        raise app_mod.epss_mod.EpssError("EPSS-API nicht erreichbar: timeout")
+        raise findings_mod.epss_mod.EpssError("EPSS-API nicht erreichbar: timeout")
 
-    monkeypatch.setattr(app_mod.epss_mod, "fetch_epss", fake_fetch)
+    monkeypatch.setattr(findings_mod.epss_mod, "fetch_epss", fake_fetch)
     r = CliRunner().invoke(app_mod.app, ["finding", "epss", "--yes"])
     assert r.exit_code == 1
     assert "EPSS-API nicht erreichbar" in r.output
@@ -117,7 +123,7 @@ def test_finding_epss_missing_cve_score_shown_as_dash(monkeypatch):
     def fake_fetch(cve_ids, timeout=10):
         return {}  # CVE unbekannt bei EPSS -> kein Eintrag
 
-    monkeypatch.setattr(app_mod.epss_mod, "fetch_epss", fake_fetch)
+    monkeypatch.setattr(findings_mod.epss_mod, "fetch_epss", fake_fetch)
     r = CliRunner().invoke(app_mod.app, ["finding", "epss", "--yes"])
     assert r.exit_code == 0, r.output
     assert "0 Finding(s) aktualisiert" in r.output

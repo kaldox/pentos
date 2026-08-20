@@ -7,6 +7,31 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.43.0] - 2026-08-20
+### Geändert
+- **`cli/app.py` in fünf Module aufgeteilt** (reine Struktur, kein Verhalten
+  geändert): die Datei war auf 2.554 Zeilen gewachsen -- schwer zu
+  überblicken, jede Änderung an einem Befehl betraf eine Datei mit 18
+  anderen, unabhängigen Befehlsgruppen. Aufgeteilt entlang der schon
+  bestehenden `--help`-Kategorien (Workspace, Recon & Import, Befunde &
+  Doku, Reporting & Übersicht, KI & Integration):
+  - `cli/_shared.py`: Console, Status-Symbole, `_repo()`-Helfer (48 Zeilen)
+  - `cli/workspace.py`: project/host/service/scope/timeline/policy (401 Zeilen)
+  - `cli/findings.py`: task/finding/template/note/loot/evidence/journal/graph (639 Zeilen)
+  - `cli/recon_extra.py`: scan-import/wordlists/playbook (435 Zeilen)
+  - `cli/ai_cmds.py`: der komplette KI-Mentor-Befehlsbaum (477 Zeilen)
+  - `cli/app.py`: nur noch das Haupt-`app`-Objekt plus die Befehle, die
+    bewusst direkt daran hängen statt in einer Untergruppe (`recommend`,
+    `report`, `dashboard`, `serve`, `mcp`, `tools`, `run`, `sweep`, `runs`) --
+    diese bleiben absichtlich standalone, sonst würde z.B. aus `pentos run`
+    ein verschachteltes `pentos recon run` und bestehende Skripte/Muster
+    würden brechen. Jetzt 645 statt 2.554 Zeilen.
+
+  `--help`-Ausgabe (Befehlsnamen, Gruppierung, Optionen) ist identisch zu
+  vorher, ebenso jedes einzelne Befehlsverhalten -- verifiziert über die
+  komplette Testsuite (394 Tests, unverändert in Anzahl) plus manuellem
+  Abgleich von `pentos --help`/`pentos run --help`/`pentos ai --help`.
+
 ## [2.42.0] - 2026-08-20
 ### Sicherheit
 - **`defusedxml` statt `xml.etree.ElementTree` beim XML-Parsen** (nmap-Import,
