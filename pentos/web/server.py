@@ -362,7 +362,6 @@ def create_app(project: Optional[str] = None, _bind_host: str = "127.0.0.1",
             "language": ai.get("language", "de"), "auto_model": bool(ai.get("auto_model")),
             "persona": ai.get("persona", ""), "temperature": ai.get("temperature", 0.3),
             "verbosity": ai.get("verbosity", "normal"),
-            "vision_model": ai.get("vision_model", ""),
             "available": ai.get("provider") not in (None, "none"),
         }
 

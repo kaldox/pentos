@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.40.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.41.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -25,9 +25,9 @@ Everything below is already shipped (✅) - open items are further down in the r
 | 🗂️ | **Workspace & docs** | Full project structure, automatic notes (`notes/nmap.md` etc.), timestamped pentest journal, task system, engagement timeline (milestones/windows/blackouts), bug-bounty scope policy (`policy setup`, blocks e.g. brute-force/exploitation per program rules), intelligent next steps (suggestions only) |
 | 🔎 | **Recon & import** | nmap XML, scanner reports (Nessus/OpenVAS/Burp), BloodHound (SharpHound, on-prem AD) · automatic findings + structured parsers (enum4linux-ng, nuclei, gobuster/ffuf/feroxbuster, nikto, testssl.sh, httpx/naabu/dnsx, gitleaks) · guided chain `sweep`, scan diff · opt-in runner layer (28 tools, no shell eval, scope guard, optional proxychains pivot) |
 | 🎯 | **Findings & attack path** | Severity/CVSS/EPSS (exploit likelihood, opt-in), MITRE ATT&CK technique tags + Navigator export, finding templates, status history/retest tracking, visual attack-path graph incl. BloodHound AD paths (Mermaid/Graphviz/SVG), loot/credential matching |
-| 📊 | **Reporting & interfaces** | Markdown/branded HTML/PDF with risk score & chart · web dashboard (overview, finding/host detail view, command palette `Ctrl+K`) · terminal UI · Obsidian vault export · MCP server for Claude Code/Cursor (read-only) |
-| 🤖 | **AI mentor** | Advisor mode (optional `--act`: AI proposes a `pentos run` command, you pick and confirm each step yourself), "ask your project" (RAG, local embeddings), vision (screenshot analysis), free language choice + auto model selection, offline fallback with no backend |
-| 🧰 | **Around it** | Project export/import as a single file, default wordlists plus a curated SecLists catalog (`wordlists setup`/`catalog`/`add`), shell completion, evidence management, CTF/THM knowledge base, methodology/playbook library |
+| 📊 | **Reporting & interfaces** | Markdown/branded HTML/PDF with risk score & chart · web dashboard (overview, finding/host detail view, command palette `Ctrl+K`) · MCP server for Claude Code/Cursor (read-only) |
+| 🤖 | **AI mentor** | Advisor mode (optional `--act`: AI proposes a `pentos run` command, you pick and confirm each step yourself), "ask your project" (RAG, local embeddings), free language choice + auto model selection, offline fallback with no backend |
+| 🧰 | **Around it** | Project export/import as a single file, default wordlists (`wordlists setup`), shell completion, evidence management, methodology/playbook library |
 
 **Roadmap (open):**
 - AzureHound support for the BloodHound import (schema research underway, see ROADMAP.en.md)
@@ -67,8 +67,8 @@ actually install into the isolated environment instead of system-wide.
 
 **3) Install:**
 ```bash
-pip install -e ".[pdf,web,mcp,tui]"   # recommended: with all extras
-# lean, core CLI only, no PDF/web/MCP/TUI:
+pip install -e ".[pdf,web,mcp]"   # recommended: with all extras
+# lean, core CLI only, no PDF/web/MCP:
 #   pip install -e .
 ```
 
@@ -100,7 +100,7 @@ On first start, `~/.config/pentos/config.yaml` is created automatically
 | `error: externally-managed-environment` | Step 2 (venv) skipped, or the venv isn't active (no `(.venv)` in the prompt) | `python3 -m venv .venv && source .venv/bin/activate`, then repeat step 3. **Don't** force it with `--break-system-packages`. |
 | `ModuleNotFoundError: No module named 'pentos'` on `python -m pentos` | Wrong folder. With "Download ZIP" instead of `git clone`, the extracted folder is called `pentos-main`, and **inside it** there's also a `pentos/` subfolder (the Python source) - easy to mix up | Run `ls`: the correct folder contains `pyproject.toml` directly. If you're inside the inner `pentos/` subfolder: `cd ..` |
 | `pentos: command not found` after restarting the terminal | The venv isn't active in the new session | Run `source .venv/bin/activate` in the project folder again (step 2) |
-| `pip install -r requirements.txt` can't find the file | Wrong folder (see above) - also: `pip install -e ".[pdf,web,mcp,tui]"` from step 3 fully replaces `requirements.txt` and is the recommended path | Switch to the correct folder, then step 3 as above |
+| `pip install -r requirements.txt` can't find the file | Wrong folder (see above) - also: `pip install -e ".[pdf,web,mcp]"` from step 3 fully replaces `requirements.txt` and is the recommended path | Switch to the correct folder, then step 3 as above |
 
 ---
 
@@ -212,7 +212,6 @@ flowchart LR
     subgraph face["Interfaces"]
         CLI["CLI"]
         WEB["Web dashboard"]
-        TUI["TUI"]
         MCP["MCP server\n(read-only)"]
     end
     subgraph input["Data intake"]
@@ -224,7 +223,6 @@ flowchart LR
     IMP --> REPO
     CLI --> REPO
     WEB --> REPO
-    TUI --> REPO
     MCP -.-> REPO
     REPO[("Repository\n+ journal")] --> DB[("SQLite\nper project")]
     REPO --> AI["AI mentor\n(local/cloud, optional)"]
@@ -246,7 +244,6 @@ pentos/
 │   ├── registry.py    #   declarative tool definitions
 │   └── parsers.py     #   ingest: output -> findings/tasks/evidence/notes
 ├── graph.py           # attack path -> Mermaid / Graphviz DOT
-├── obsidian.py        # vault export with wikilinks
 ├── report.py          # Markdown report
 ├── ai.py              # AI mentor (Ollama/LM Studio/OpenAI + offline fallback)
 └── cli/app.py         # Typer CLI (Rich output)
@@ -299,7 +296,7 @@ itself? Please [report it privately](SECURITY.md), not as an issue.
 A local situational overview of your workspace in the browser: severity distribution,
 findings, hosts/services, loot and notes at a glance.
 
-Already installed if you followed the recommended `pip install -e ".[pdf,web,mcp,tui]"`
+Already installed if you followed the recommended `pip install -e ".[pdf,web,mcp]"`
 above - otherwise add it:
 ```bash
 pip install -e ".[web]"          # FastAPI + uvicorn
@@ -340,23 +337,7 @@ Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 
 ---
 
-## TUI - terminal interface (optional)
-
-`pentos tui` opens a keyboard-driven dashboard of the active project right in the
-terminal. Tabs for overview, hosts, services, findings, tasks, loot and journal;
-navigate with arrow keys and Tab. Press `s` to cycle the status of the selected
-finding or task (written back to the project), `r` refreshes, `q` quits. View and
-status editing only, nothing is executed.
-
-Already installed if you used all extras above - otherwise add it:
-```bash
-pip install -e ".[tui]"
-pentos tui                 # or: pentos tui --project myproject
-```
-
----
-
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.40.0**.
+Current version: **2.41.0**.

@@ -83,7 +83,6 @@ TASK_PREFS = {
     "explain": ["gemma3:12b", "gemma3", "llama3.1", "qwen3:8b", "deepseek-r1:8b"],
     "enum":    ["llama3.1", "qwen3:8b", "gemma3:12b", "deepseek-r1:8b"],
     "ask":     ["llama3.1:8b", "llama3.1", "qwen3:8b", "gemma3:12b"],
-    "vision":  ["qwen3-vl", "llava", "bakllava", "minicpm-v", "llama3.2-vision"],
 }
 
 
@@ -124,7 +123,6 @@ class AIClient:
         self.keep_terms = bool(ai_config.get("keep_terms", True))
         self.auto_model = bool(ai_config.get("auto_model", False))
         self.models = ai_config.get("models") or {}
-        self.vision_model = ai_config.get("vision_model") or ""
         self.persona = (ai_config.get("persona") or "").strip()
         self.temperature = float(ai_config.get("temperature", 0.3))
         self.verbosity = (ai_config.get("verbosity") or "normal").lower()
@@ -142,8 +140,6 @@ class AIClient:
         explicit = self.models.get(task) if task else None
         if explicit:
             out.append(explicit)
-        if task == "vision" and self.vision_model:
-            out.append(self.vision_model)
         if self.auto_model and task in TASK_PREFS:
             installed = self._installed()
             for pref in TASK_PREFS[task]:
@@ -217,10 +213,9 @@ class AIClient:
         return info
 
     def _chat(self, system_base: str, user_prompt: str, *, task: Optional[str] = None,
-              images: Optional[list[str]] = None, stream: bool = False,
-              on_token=None) -> Optional[str]:
+              stream: bool = False, on_token=None) -> Optional[str]:
         """Zentraler Chat-Pfad: Modellwahl + Fallback-Kette, Sprache/Persona/Temperatur,
-        optionales Streaming und Vision (images = Liste base64). Gibt None bei Fehler."""
+        optionales Streaming. Gibt None bei Fehler."""
         if self.provider == "none":
             return None
         system = self._system(system_base)
@@ -228,18 +223,16 @@ class AIClient:
         for model in self.candidates(task):
             try:
                 if self.provider == "ollama":
-                    return self._chat_ollama(model, system, user_prompt, images, stream, on_token)
+                    return self._chat_ollama(model, system, user_prompt, stream, on_token)
                 if self.provider in ("lmstudio", "openai"):
-                    return self._chat_openai(model, system, user_prompt, images)
+                    return self._chat_openai(model, system, user_prompt)
             except Exception as e:        # nächstes Modell aus der Kette versuchen
                 last_err = e
                 continue
         return None
 
-    def _chat_ollama(self, model, system, user, images, stream, on_token):
+    def _chat_ollama(self, model, system, user, stream, on_token):
         msg = {"role": "user", "content": user}
-        if images:
-            msg["images"] = images
         body = {"model": model,
                 "messages": [{"role": "system", "content": system}, msg],
                 "stream": bool(stream),
@@ -269,22 +262,17 @@ class AIClient:
                         on_token(vis)
         return _strip_think("".join(full))
 
-    def _chat_openai(self, model, system, user, images):
+    def _chat_openai(self, model, system, user):
         headers = {}
         if self.provider == "openai":
             key = os.environ.get(self.api_key_env)
             if key:
                 headers["Authorization"] = f"Bearer {key}"
-        content = user
-        if images:   # OpenAI-Vision-Format
-            content = [{"type": "text", "text": user}] + [
-                {"type": "image_url",
-                 "image_url": {"url": f"data:image/png;base64,{b}"}} for b in images]
         r = requests.post(
             f"{self.base_url}/v1/chat/completions", headers=headers,
             json={"model": model,
                   "messages": [{"role": "system", "content": system},
-                               {"role": "user", "content": content}],
+                               {"role": "user", "content": user}],
                   "temperature": self.temperature},
             timeout=self.timeout)
         r.raise_for_status()
@@ -346,20 +334,6 @@ class AIClient:
                     task: Optional[str] = None) -> Optional[str]:
         """Frage mit explizitem Basis-System-Prompt (Sprache/Persona kommen oben drauf)."""
         return self._chat(system, user_prompt, task=task)
-
-    def analyze_image(self, image_b64: str, question: Optional[str] = None) -> Optional[str]:
-        """Wertet ein Bild (Screenshot, Dashboard, Diagramm) mit einem Vision-Modell aus."""
-        if self.provider == "none":
-            return None
-        q = question or ("Beschreibe, was auf diesem Screenshot aus einem autorisierten "
-                         "Pentest-Kontext zu sehen ist, und nenne sicherheitsrelevante "
-                         "Auffälligkeiten und sinnvolle nächste Schritte.")
-        system = (
-            "Du bist ein Analyseassistent für autorisiertes Penetration-Testing. Du "
-            "betrachtest Screenshots/Bilder, beschreibst Relevantes und schlägst Schritte "
-            "vor. Du führst nichts aus."
-        )
-        return self._chat(system, q, task="vision", images=[image_b64])
 
     def explain_finding(self, f: Finding) -> str:
         prompt = (

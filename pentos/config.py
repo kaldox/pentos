@@ -28,8 +28,6 @@ WORKSPACE_DIRS = [
     "attack_paths",
     "timelines",
     "tasks",
-    "knowledge",
-    "obsidian",
     "database",
 ]
 
@@ -53,7 +51,6 @@ DEFAULT_CONFIG = {
         # auto_model: bestes installiertes Modell je Aufgabe wählen
         "auto_model": False,
         "models": {},             # explizit pro Task: {"analyze": "deepseek-r1:14b", ...}
-        "vision_model": "",       # optionales Vision-Modell (z.B. qwen3-vl:4b)
         "persona": "",            # zusätzlicher System-Prompt-Vorsatz
         "temperature": 0.3,
         "verbosity": "normal",    # concise | normal | detailed

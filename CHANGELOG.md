@@ -7,6 +7,37 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.41.0] - 2026-08-20
+### Entfernt
+- **TUI (`pentos tui`):** dritte Oberfläche für dieselben Daten wie CLI und
+  Web-Dashboard, ohne eigenen Workflow-Vorteil. `pentos/tui/` inkl. `textual`-
+  Abhängigkeit/Extra entfernt.
+- **Obsidian-Vault-Export (`pentos obsidian`):** Nischen-Export für ein
+  Drittprodukt, löste kein Kern-Pentest-Problem. `pentos/obsidian.py` entfernt.
+- **Vision/Bildanalyse (`pentos ai analyze-image`, `--vision-model`):** eigene
+  Modell-Pipeline für einen Randfall, den ein Screenshot per `evidence add`
+  plus kurze Notiz ebenso löst. `AIClient.analyze_image()` und die
+  Bild-Übertragung im Chat-Pfad entfernt.
+- **Wissensdatenbank-CRUD (`pentos knowledge add/list`):** duplizierte
+  `note add` 1:1. Das `KnowledgeEntry`-Datenmodell samt DB-Tabelle entfernt.
+  Unberührt: die statischen Tool-/Finding-Erklärungen in `pentos/knowledge.py`
+  für den Lern-Report und den MCP-Server (`pentos_knowledge`) - ein
+  komplett anderes "Wissen" trotz ähnlichem Namen.
+- **Wordlist-Katalog-Downloader (`pentos wordlists catalog`/`add`):** machte
+  PentOS zum (unvollständigen) SecLists-Mirror-Client, kein Kern-Workflow.
+  `pentos wordlists setup` (Standard-Listen fürs Bruteforcing) bleibt
+  unverändert.
+
+Ergebnis eines vollständigen kritischen Architektur-/Produkt-Audits dieses
+Repositories: PentOS hatte mehr Subsysteme, als sein eigentlicher Kern (Scope
+→ Recon → Finding → Evidence → Retest → Report) trägt - jedes zusätzliche
+Feature ist ein Ort, der bei jedem künftigen Refactor mitgezogen werden muss,
+ohne den Kern-Workflow besser zu machen. Bewusst NICHT entfernt: das
+Engagement-Zeitplan-Subsystem (`timeline`) - anders als die fünf oben hat es
+echten operativen Bezug zum Kern (Blackout-Zeiten sind Teil der Programm-
+Regeln, nicht kosmetisch) und wurde erst kürzlich gezielt für Bug-Bounty-
+Engagements gebaut.
+
 ## [2.40.0] - 2026-08-19
 ### Sicherheit
 - **Web-Dashboard: Zugriffs-Token für alle API-Endpunkte (auch lesende).**

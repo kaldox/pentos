@@ -20,11 +20,10 @@ For context, what was added most recently (details in the changelog):
 - Scan diff: compare an nmap scan against the project state (`scan diff`)
 - Loot/credential matching: suggest loot against matching services (`loot match`)
 - Project-wide follow-up tool suggestions after import and via `recommend` without an argument
-- Terminal UI (`pentos tui`): keyboard-driven dashboard with status editing
 - Status history / retest tracking for findings (`finding history`, `--note`)
 - Dashboard detail view per finding with a status timeline
 - Attack-path graph rendered visually in the web dashboard ("Attack path" tab)
-- AI overhaul: output language, auto model-per-task/fallback, persona, streaming, temperature/verbosity, vision (analyze-image) and an AI panel in the dashboard
+- AI overhaul: output language, auto model-per-task/fallback, persona, streaming, temperature/verbosity and an AI panel in the dashboard
 - Structured web parsers for gobuster/ffuf/feroxbuster: security-relevant paths
   (VCS directories, secrets, backups, admin interfaces) automatically become
   findings instead of just a raw note
@@ -70,10 +69,6 @@ For context, what was added most recently (details in the changelog):
   scanned for executable `pentos run …` suggestions, which you pick from and
   confirm individually - speeds up manual work without the AI ever starting
   anything itself
-- **Wordlist catalog** (`pentos wordlists catalog`/`add`): a curated catalog
-  of 12 further SecLists lists across four categories (usernames, password
-  lists in several sizes, directories, subdomains), each searchable and
-  loadable into the project by name
 - **gitleaks integration**: secret scanning against a local repo dump
   (`pentos run gitleaks <path>`), a thematic follow-up to the `.git`
   exposure detector - hits become findings (with a masked secret preview)
@@ -101,6 +96,13 @@ For context, what was added most recently (details in the changelog):
   http-post-form --proto-extra "..."`): module extra parameters for
   `http-post-form`/`http-get-form`, combinable with `--userlist`/
   `--passlist`/`--proto` instead of having to fall back to `--args` entirely.
+- **Deliberate downsizing after a critical architecture audit:** removed the
+  TUI, Obsidian export, vision/image analysis, the knowledge base as its own
+  CRUD subsystem (duplicated `note add`), and the wordlist catalog
+  downloader - none of them carried the actual core (Scope → Recon → Finding
+  → Evidence → Retest → Report), each was extra upkeep without proportional
+  value. Goal: less surface area, so the core gets better instead of
+  everything staying merely "fine".
 
 ## Next
 

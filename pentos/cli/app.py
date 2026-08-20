@@ -2,8 +2,8 @@
 PentOS – Kommandozeile (Typer + Rich).
 
 Bindet sämtliche Subsysteme: Projekte/Workspace, Hosts, Services, Scan-Import,
-Empfehlungen, Aufgaben, Findings, Notizen, Loot, Evidence, Wissen, Journal,
-Attack-Path-Graph, Obsidian-Export, Reporting und KI-Mentor.
+Empfehlungen, Aufgaben, Findings, Notizen, Loot, Evidence, Journal,
+Attack-Path-Graph, Reporting und KI-Mentor.
 
 """
 from __future__ import annotations
@@ -30,7 +30,7 @@ from .. import config
 from ..ai import AIClient
 from .. import epss as epss_mod
 from .. import policy as policy_mod
-from .. import findings_rules, graph as graph_mod, obsidian as obsidian_mod, recommend, report as report_mod
+from .. import findings_rules, graph as graph_mod, recommend, report as report_mod
 from .. import export as export_mod
 from .. import playbooks as playbooks_mod
 from .. import diff as diff_mod
@@ -49,7 +49,6 @@ from ..models import (
     FindingTemplate,
     FindingStatus,
     Host,
-    KnowledgeEntry,
     Loot,
     LootType,
     Note,
@@ -1193,30 +1192,6 @@ def evidence_rm(evidence_id: int,
     console.print(f"[green]Evidence #{evidence_id} gelöscht.[/green]" if ok else "[red]Nicht gefunden.[/red]")
 
 
-# ── Wissensdatenbank ─────────────────────────────────────────────────────────
-knowledge_app = typer.Typer(help="CTF/THM-Wissensdatenbank")
-app.add_typer(knowledge_app, name="knowledge", rich_help_panel="Befunde & Doku")
-
-
-@knowledge_app.command("add")
-def knowledge_add(tag: str, title: str, body: str = typer.Option("", "--body")):
-    repo, _ = _repo()
-    k = repo.add_knowledge(KnowledgeEntry(tag=tag, title=title, body=body)); repo.close()
-    console.print(f"[green]Wissen #{k.id}:[/green] [{k.tag}] {k.title}")
-
-
-@knowledge_app.command("list")
-def knowledge_list(tag: Optional[str] = typer.Option(None, "--tag")):
-    repo, _ = _repo()
-    items = repo.list_knowledge(tag); repo.close()
-    table = Table(title="Wissensdatenbank")
-    for c in ["ID", "Tag", "Titel"]:
-        table.add_column(c)
-    for k in items:
-        table.add_row(str(k.id), k.tag, k.title)
-    console.print(table)
-
-
 # ── Journal ──────────────────────────────────────────────────────────────────
 journal_app = typer.Typer(help="Journal / Timeline")
 app.add_typer(journal_app, name="journal", rich_help_panel="Befunde & Doku")
@@ -1260,17 +1235,6 @@ def graph_dot(out: Optional[Path] = typer.Option(None, "--out", help="Datei stat
                       f"([dim]Render: dot -Tpng {out} -o graph.png[/dim])")
     else:
         console.print(text, markup=False)
-
-
-# ── Obsidian ─────────────────────────────────────────────────────────────────
-@app.command("obsidian", rich_help_panel="Reporting & Übersicht")
-def obsidian_export(out: Optional[Path] = typer.Option(None, "--out",
-                                                       help="Vault-Verzeichnis (Default: <projekt>/obsidian)")):
-    """Exportiert die Projektdaten als verlinkten Obsidian-Vault."""
-    repo, name = _repo()
-    vault = out or (config.project_path(name) / "obsidian")
-    obsidian_mod.export_vault(repo, vault, name); repo.close()
-    console.print(f"[green]Obsidian-Vault exportiert:[/green] {vault}")
 
 
 # ── Reporting ────────────────────────────────────────────────────────────────
@@ -1430,26 +1394,6 @@ def dashboard_cmd():
         console.print(table)
 
 
-@app.command("tui", rich_help_panel="Reporting & Übersicht")
-def tui_cmd(project: Optional[str] = typer.Option(None, "--project", "-p",
-                                                  help="Projekt (sonst aktives)")):
-    """Interaktives Terminal-Lagebild (Textual).
-
-    Durch Hosts, Dienste, Findings, Tasks, Loot und Journal blättern;
-    Finding- und Task-Status per Taste durchschalten. Es wird nichts
-    ausgeführt - reine Ansicht und Status-Pflege.
-
-    Benötigt die TUI-Extras: pip install -e ".\\[tui]"
-    """
-    proj = project or _active_or_exit()
-    try:
-        from ..tui import app as tui_app
-    except ModuleNotFoundError:
-        console.print('[red]TUI-Extras fehlen.[/red] Installiere: [cyan]pip install -e ".\\[tui]"[/cyan]')
-        raise typer.Exit(1)
-    tui_app.run(proj)
-
-
 
 # ── KI-Mentor ────────────────────────────────────────────────────────────────
 ai_app = typer.Typer(help="KI-Mentor (lokal, nur Analyse)")
@@ -1477,8 +1421,6 @@ def ai_status():
     ]
     if aicfg.get("persona"):
         lines.append(f"Persona:   {aicfg['persona']}")
-    if aicfg.get("vision_model"):
-        lines.append(f"Vision:    {aicfg['vision_model']}")
     if aicfg.get("models"):
         pairs = ", ".join(f"{t}={m}" for t, m in aicfg["models"].items())
         lines.append(f"Pro-Task:  {pairs}")
@@ -1521,8 +1463,6 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
               temperature: Optional[float] = typer.Option(None, "--temperature", help="0.0-1.0"),
               verbosity: Optional[str] = typer.Option(None, "--verbosity",
                                                       help="concise | normal | detailed"),
-              vision_model: Optional[str] = typer.Option(None, "--vision-model",
-                                                         help="Modell für Bildanalyse, z.B. qwen3-vl:4b"),
               keep_terms: Optional[bool] = typer.Option(None, "--keep-terms/--no-keep-terms",
                                                         help="Fachbegriffe/CVEs im Original lassen"),
               model_for: list[str] = typer.Option(None, "--model-for",
@@ -1551,7 +1491,6 @@ def ai_config(provider: Optional[str] = typer.Option(None, "--provider",
     if persona is not None: ai["persona"] = persona
     if temperature is not None: ai["temperature"] = max(0.0, min(1.0, temperature))
     if verbosity: ai["verbosity"] = verbosity
-    if vision_model is not None: ai["vision_model"] = vision_model
     if keep_terms is not None: ai["keep_terms"] = keep_terms
     if model_for:
         models = dict(ai.get("models") or {})
@@ -1601,34 +1540,6 @@ def ai_enum(service_id: int,
         console.print("Abgebrochen."); raise typer.Exit()
     console.print(Panel(client.enumeration_ideas(svc),
                         title=f"KI-Mentor · Enumeration {svc.port}/{svc.protocol}"))
-
-
-@ai_app.command("analyze-image")
-def ai_analyze_image(
-    image: Path = typer.Argument(..., exists=True, readable=True, help="Bild/Screenshot (PNG/JPG)"),
-    question: Optional[str] = typer.Option(None, "--q", help="Konkrete Frage zum Bild"),
-    lang: Optional[str] = typer.Option(None, "--lang", help="Ausgabesprache"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage senden"),
-):
-    """Wertet einen Screenshot/ein Bild mit einem Vision-Modell aus (z.B. qwen3-vl).
-
-    Nutzt das in der Config gesetzte vision_model bzw. die Auto-Wahl.
-    """
-    import base64
-    _ensure_language()
-    client = _ai_client(lang)
-    if not _confirm_ai_send(client, f"das Bild '{image.name}'", yes):
-        console.print("Abgebrochen."); raise typer.Exit()
-    b64 = base64.b64encode(image.read_bytes()).decode()
-    model = client.select_model("vision")
-    with console.status(f"[cyan]Vision-Modell ({model}) analysiert das Bild…[/cyan]"):
-        answer = client.analyze_image(b64, question)
-    if not answer:
-        console.print("[red]Keine Antwort.[/red] Vision-Modell installiert/erreichbar? "
-                      "([cyan]ollama pull qwen3-vl[/cyan], dann "
-                      "[cyan]pentos ai config --vision-model qwen3-vl:4b[/cyan])")
-        raise typer.Exit(1)
-    console.print(Panel(answer, title=f"KI · Bildanalyse ({image.name}, {model})"))
 
 
 def _ai_client(lang: Optional[str] = None) -> AIClient:
@@ -2069,56 +1980,6 @@ def wordlists_setup(
         "[dim](nutzt automatisch diese Wordlists)[/dim]"
     )
 
-
-@wordlists_app.command("catalog")
-def wordlists_catalog(
-    category: Optional[str] = typer.Option(
-        None, "--category", help="Nur eine Kategorie: usernames|passwords|directories|subdomains"),
-    filter_: Optional[str] = typer.Option(None, "--filter", help="Name/Beschreibung durchsuchen"),
-):
-    """Durchsucht den kuratierten SecLists-Katalog (Browse/Filter, kein Download)."""
-    entries = wordlists_mod.catalog_list(category=category, query=filter_)
-    if not entries:
-        console.print("[dim]Keine Treffer.[/dim]")
-        return
-    table = Table(title="Wordlist-Katalog")
-    for c in ["Name", "Kategorie", "Beschreibung"]:
-        table.add_column(c)
-    for e in entries:
-        table.add_row(e.name, e.category, e.description)
-    console.print(table)
-    console.print("[dim]Laden mit:[/dim] pentos wordlists add <name>")
-
-
-@wordlists_app.command("add")
-def wordlists_add(
-    name: str = typer.Argument(..., help="Katalog-Name, siehe 'pentos wordlists catalog'"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Ohne Rückfrage herunterladen"),
-):
-    """Lädt eine einzelne, namentlich gewählte Liste aus dem Katalog ins Projekt."""
-    entry = wordlists_mod.catalog_get(name)
-    if not entry:
-        console.print(f"[red]Unbekannter Katalog-Eintrag '{name}'.[/red] "
-                      f"Übersicht: [cyan]pentos wordlists catalog[/cyan]")
-        raise typer.Exit(1)
-    repo, proj = _repo()
-    repo.close()
-    wl_dir = config.project_path(proj) / "wordlists"
-    out_path = wl_dir / f"{entry.name}.txt"
-    if not yes:
-        console.print(f"[yellow]Lädt '{entry.name}' ({entry.url}) herunter.[/yellow] "
-                      "Keine eigenen Daten werden gesendet, nur ein öffentliches Textfile geholt.")
-        if not typer.confirm("Herunterladen?", default=True):
-            console.print("Abgebrochen.")
-            raise typer.Exit()
-    try:
-        text = wordlists_mod.fetch_catalog_entry(entry)
-    except wordlists_mod.WordlistError as exc:
-        console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(1)
-    wl_dir.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(text, encoding="utf-8")
-    console.print(f"[green]{entry.name}[/green] ({entry.category}) {SYM_ARROW} {out_path}")
 
 
 # ── Runner-Layer (Opt-in Tool-Ausführung) ────────────────────────────────────

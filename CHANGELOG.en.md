@@ -7,6 +7,36 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.41.0] - 2026-08-20
+### Removed
+- **TUI (`pentos tui`):** a third interface for the same data as the CLI and
+  web dashboard, with no workflow advantage of its own. `pentos/tui/`
+  including the `textual` dependency/extra removed.
+- **Obsidian vault export (`pentos obsidian`):** a niche export for a
+  third-party product, solved no core pentest problem. `pentos/obsidian.py`
+  removed.
+- **Vision/image analysis (`pentos ai analyze-image`, `--vision-model`):** a
+  dedicated model pipeline for an edge case that a screenshot via
+  `evidence add` plus a short note solves just as well. `AIClient.
+  analyze_image()` and the image-transport plumbing in the chat path removed.
+- **Knowledge base CRUD (`pentos knowledge add/list`):** duplicated
+  `note add` 1:1. The `KnowledgeEntry` data model and its DB table removed.
+  Untouched: the static tool/finding explanations in `pentos/knowledge.py`
+  used by the learning report and the MCP server (`pentos_knowledge`) - a
+  completely different "knowledge" despite the similar name.
+- **Wordlist catalog downloader (`pentos wordlists catalog`/`add`):** turned
+  PentOS into an (incomplete) SecLists mirror client, not a core workflow.
+  `pentos wordlists setup` (default bruteforce wordlists) is unchanged.
+
+Result of a full critical architecture/product audit of this repository:
+PentOS carried more subsystems than its actual core (Scope → Recon → Finding
+→ Evidence → Retest → Report) needs - every extra feature is a place that
+has to be dragged along through every future refactor without making the
+core workflow better. Deliberately NOT removed: the engagement timeline
+subsystem (`timeline`) - unlike the five above, it has real operational ties
+to the core (blackout windows are part of program rules, not cosmetic) and
+was built specifically for bug-bounty engagements only recently.
+
 ## [2.40.0] - 2026-08-19
 ### Security
 - **Web dashboard: access token for all API endpoints (including reads).**
