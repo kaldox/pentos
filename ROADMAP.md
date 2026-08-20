@@ -20,11 +20,10 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
 - Scan-Diff: einen nmap-Scan gegen den Projektstand vergleichen (`scan diff`)
 - Loot-/Credential-Matching: Loot gegen passende Dienste vorschlagen (`loot match`)
 - Projektweite Folge-Tool-Vorschläge nach Import und via `recommend` ohne Argument
-- Terminal-UI (`pentos tui`): tastaturgesteuertes Lagebild mit Status-Pflege
 - Status-Historie / Retest-Tracking für Findings (`finding history`, `--note`)
 - Dashboard-Detailansicht pro Finding mit Status-Zeitleiste
 - Attack-Path-Graph visuell im Web-Dashboard (Reiter „Angriffspfad")
-- KI-Ausbau: Ausgabesprache, Auto-Modellwahl/Fallback, Persona, Streaming, Temperatur/Verbosity, Vision (analyze-image) und KI-Panel im Dashboard
+- KI-Ausbau: Ausgabesprache, Auto-Modellwahl/Fallback, Persona, Streaming, Temperatur/Verbosity und KI-Panel im Dashboard
 - Strukturierte Web-Parser für gobuster/ffuf/feroxbuster: sicherheitsrelevante
   Pfade (VCS-Verzeichnisse, Secrets, Backups, Admin-Interfaces) werden
   automatisch zu Findings statt nur als Rohnotiz abgelegt
@@ -72,10 +71,6 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   wird nach ausführbaren `pentos run …`-Vorschlägen durchsucht, die du
   auswählst und einzeln bestätigst - beschleunigt die manuelle Arbeit, ohne
   dass die KI selbst etwas startet
-- **Wordlists-Katalog** (`pentos wordlists catalog`/`add`): kuratierter
-  Katalog mit 12 weiteren SecLists-Listen über vier Kategorien (Usernames,
-  Passwörter in mehreren Grössen, Verzeichnisse, Subdomains), einzeln per
-  Namen durchsuchbar und ins Projekt ladbar
 - **gitleaks-Integration**: Secret-Scan gegen einen lokalen Repo-Dump
   (`pentos run gitleaks <pfad>`), thematischer Anschluss an den
   `.git`-Exposure-Detector - Treffer werden Findings (mit maskierter
@@ -103,6 +98,13 @@ Zur Einordnung, was zuletzt dazugekommen ist (Details im Changelog):
   http-post-form --proto-extra "..."`): Modul-Zusatzparameter für
   `http-post-form`/`http-get-form` kombinierbar mit `--userlist`/
   `--passlist`/`--proto`, statt komplett auf `--args` zurückfallen zu müssen.
+- **Bewusste Verkleinerung nach einem kritischen Architektur-Audit:** TUI,
+  Obsidian-Export, Vision-/Bildanalyse, die Wissensdatenbank als eigenes
+  CRUD-Subsystem (dupliziert `note add`) und der Wordlist-Katalog-Downloader
+  wurden entfernt - keins davon trug den eigentlichen Kern (Scope → Recon →
+  Finding → Evidence → Retest → Report), jedes davon war zusätzlicher
+  Pflegeaufwand ohne proportionalen Nutzen. Ziel: weniger Fläche, damit der
+  Kern besser wird statt dass alles nur „ganz okay" ist.
 
 ## Als Nächstes
 

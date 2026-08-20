@@ -18,7 +18,7 @@ lot.
 git clone https://github.com/kaldox/pentos.git
 cd pentos
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[pdf,web,mcp,tui]"
+pip install -e ".[pdf,web,mcp]"
 python -m pytest -q
 ```
 
@@ -94,7 +94,7 @@ minimale Reproduktion sehr.
 git clone https://github.com/kaldox/pentos.git
 cd pentos
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[pdf,web,mcp,tui]"
+pip install -e ".[pdf,web,mcp]"
 python -m pytest -q
 ```
 

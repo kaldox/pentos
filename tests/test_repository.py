@@ -1,7 +1,7 @@
 """Regression: add_host()/add_service() müssen die Transaktion sauber
 zurückrollen, wenn der UNIQUE-Constraint anspricht (Dublette) -- sonst
 bleibt die SQLite-Transaktion offen und blockiert eine zweite, gleichzeitig
-laufende Verbindung auf derselben Projekt-DB (z.B. `pentos serve`/TUI neben
+laufende Verbindung auf derselben Projekt-DB (z.B. `pentos serve` neben
 einem laufenden `pentos scan import-nmap`).
 """
 import os

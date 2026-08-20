@@ -8,7 +8,7 @@ def _client(**ai):
     base.update(ai)
     c = AIClient(base)
     c._installed_cache = ai.pop("_installed", ["deepseek-r1:14b", "gemma3:12b",
-                                              "llama3.1:8b", "qwen3-vl:4b", "qwen3:8b"])
+                                              "llama3.1:8b", "qwen3:8b"])
     return c
 
 
@@ -21,11 +21,6 @@ def test_auto_model_picks_first_installed():
     c = _client(auto_model=True)
     # explain bevorzugt gemma3:12b (installiert)
     assert c.select_model("explain") == "gemma3:12b"
-
-
-def test_vision_model_used_for_vision_task():
-    c = _client(vision_model="qwen3-vl:4b")
-    assert c.select_model("vision") == "qwen3-vl:4b"
 
 
 def test_fallback_chain_order():

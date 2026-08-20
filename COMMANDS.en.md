@@ -30,9 +30,6 @@ pentos timeline list                 # the project's milestones/windows/blackout
 pentos timeline rm 1
 pentos wordlists setup               # set up default wordlists (usernames immediately, passwords opt-in)
 pentos wordlists setup --no-passwords  # usernames only, no download
-pentos wordlists catalog             # browse the curated SecLists catalog
-pentos wordlists catalog --category directories --filter raft
-pentos wordlists add subdomains-20k  # load a single catalog list into the project
 ```
 
 ## Recon & Import
@@ -105,14 +102,13 @@ pentos template show pwn3d           # detail (description, remediation, CVSS)
 pentos template apply pwn3d --host 10.10.10.5 --suffix "(10.10.10.5)"  # template -> finding
 pentos template add ...              # add your own template
 
-# Loot, evidence, notes, knowledge
+# Loot, evidence, notes
 pentos loot add "admin:Passw0rd" --type cred --host 1 --source smb
 pentos loot list
 pentos loot match                    # suggest all loot entries against matching services
 pentos loot match 1                  # only loot #1 (spray / pass-the-hash / key login)
 pentos evidence add ./shot.png --kind screenshot --finding 4
 pentos note show <id>                # show note content
-pentos knowledge add Jenkins "Script Console RCE" --body "Groovy under /script"
 
 # Tasks
 pentos task list
@@ -124,7 +120,6 @@ pentos task done 12
 
 ```bash
 pentos dashboard                     # compact CLI overview of the project
-pentos tui                           # interactive terminal dashboard (Textual); s=status, r=refresh, q=quit
 pentos report                        # Markdown report under <project>/reports
 pentos report --html                 # branded HTML (printable in the browser)
 pentos report --pdf                  # branded PDF (needs reportlab)
@@ -132,7 +127,6 @@ pentos report --explain              # learning report: explains each step didac
 pentos report --attack-navigator     # ATT&CK Navigator layer JSON from tagged findings
 pentos graph mermaid --out attack_paths/ap.mmd
 pentos graph dot --out attack_paths/ap.dot       # dot -Tpng ap.dot -o ap.png
-pentos obsidian                      # Obsidian vault under <project>/obsidian
 ```
 
 ## AI & Integration
@@ -147,12 +141,11 @@ pentos ai analyze scan.txt --as nmap # interpret a scan/log (--text, stdin, --sa
 pentos ai next                       # suggestions based on project state
 pentos ai next --act                 # + offer executable suggestions, you pick and confirm
 pentos ai analyze scan.txt --as nmap --stream   # stream the answer live
-pentos ai analyze-image shot.png --q "Anything notable?"   # vision (qwen3-vl)
 
 # AI behaviour (language, auto-model, persona, temperature)
 pentos ai config --language en --auto-model --persona "concise OSCP mentor"
 pentos ai config --temperature 0.5 --verbosity concise
-pentos ai config --model-for analyze=deepseek-r1:14b --vision-model qwen3-vl:4b
+pentos ai config --model-for analyze=deepseek-r1:14b
 pentos ai next --lang de             # output language for this call only
 
 # "Ask your project" (RAG over your own data)

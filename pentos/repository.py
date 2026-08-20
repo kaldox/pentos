@@ -22,7 +22,6 @@ from .models import (
     FindingTemplate,
     Host,
     JournalEntry,
-    KnowledgeEntry,
     Loot,
     Note,
     RunRecord,
@@ -450,26 +449,6 @@ class Repository:
         if cur.rowcount:
             self.log("Evidence gelöscht", f"id={evidence_id}")
         return cur.rowcount > 0
-
-    # ── Knowledge ──────────────────────────────────────────────────────────
-    def add_knowledge(self, k: KnowledgeEntry) -> KnowledgeEntry:
-        cur = self.conn.execute(
-            "INSERT INTO knowledge (tag, title, body, created_at) VALUES (?, ?, ?, ?)",
-            (k.tag, k.title, k.body, k.created_at),
-        )
-        self.conn.commit()
-        k.id = cur.lastrowid
-        self.log("Wissens-Eintrag", f"[{k.tag}] {k.title} (id={k.id})")
-        return k
-
-    def list_knowledge(self, tag: Optional[str] = None) -> list[KnowledgeEntry]:
-        if tag:
-            rows = self.conn.execute(
-                "SELECT * FROM knowledge WHERE tag = ? ORDER BY id", (tag,)
-            ).fetchall()
-        else:
-            rows = self.conn.execute("SELECT * FROM knowledge ORDER BY tag, id").fetchall()
-        return [KnowledgeEntry(**dict(r)) for r in rows]
 
     # ── Scope ──────────────────────────────────────────────────────────────
     def add_scope(self, value: str, kind: str = "host") -> ScopeEntry:

@@ -116,12 +116,12 @@ def test_playbook_show_check_status_survive_non_utf8_console():
 
 def test_no_non_ascii_status_glyphs_in_console_output_sources():
     """Statischer Wächter gegen Regressionen: In den console.print()/Table/
-    Panel-Strings von app.py, runners/base.py und tui/app.py dürfen keine
-    Zeichen ausserhalb von cp1252 auftauchen (Kommentare mit Box-Drawing-
-    Trennern wie '# ── Foo ──' sind ausgenommen, die landen nie auf stdout)."""
+    Panel-Strings von app.py und runners/base.py dürfen keine Zeichen
+    ausserhalb von cp1252 auftauchen (Kommentare mit Box-Drawing-Trennern
+    wie '# ── Foo ──' sind ausgenommen, die landen nie auf stdout)."""
     repo_root = pathlib.Path(__file__).resolve().parents[1]
     offenders: list[str] = []
-    for rel in ("pentos/cli/app.py", "pentos/runners/base.py", "pentos/tui/app.py"):
+    for rel in ("pentos/cli/app.py", "pentos/runners/base.py"):
         path = repo_root / rel
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if line.lstrip().startswith("#"):

@@ -178,14 +178,6 @@ class Evidence(BaseModel):
     created_at: str = Field(default_factory=_now)
 
 
-class KnowledgeEntry(BaseModel):
-    id: Optional[int] = None
-    tag: str                            # z.B. Jenkins, SMB, Linux-PrivEsc
-    title: str
-    body: str = ""
-    created_at: str = Field(default_factory=_now)
-
-
 class FindingTemplate(BaseModel):
     """Wiederverwendbare, geprüfte Finding-Vorlage (pro Projekt-DB).
 

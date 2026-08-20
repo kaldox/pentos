@@ -1,7 +1,7 @@
 """
 RAG „Frag dein Projekt" für PentOS.
 
-Baut aus den Projektdaten (Findings, Notizen, Wissen, Loot, Hosts, Services) einen
+Baut aus den Projektdaten (Findings, Notizen, Loot, Hosts, Services) einen
 Korpus, erzeugt lokale Embeddings (über den AIClient -> Ollama/LM Studio/OpenAI)
 und legt sie als Vektor-Index in der per-Projekt-SQLite ab. Eine Frage wird
 eingebettet, per Cosine-Ähnlichkeit gegen den Index gesucht und die besten Treffer
@@ -54,10 +54,6 @@ def build_corpus(repo: Repository) -> list[Doc]:
 
     for n in repo.list_notes():
         docs.append(Doc("note", n.id, n.title, f"Notiz: {n.title}. {n.body or ''}".strip()))
-
-    for k in repo.list_knowledge():
-        docs.append(Doc("knowledge", k.id, k.title,
-                         f"Wissen [{k.tag}]: {k.title}. {k.body or ''}".strip()))
 
     for l in repo.list_loot():
         docs.append(Doc("loot", l.id, l.label,
