@@ -2,7 +2,7 @@
 
 [🇩🇪 Deutsch](README.md) · **🇬🇧 English**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.42.0-informational)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Version](https://img.shields.io/badge/version-2.43.0-informational)
 
 **Knowledge-Driven Offensive Security Workspace**
 
@@ -246,7 +246,12 @@ pentos/
 ├── graph.py           # attack path -> Mermaid / Graphviz DOT
 ├── report.py          # Markdown report
 ├── ai.py              # AI mentor (Ollama/LM Studio/OpenAI + offline fallback)
-└── cli/app.py         # Typer CLI (Rich output)
+└── cli/                # Typer CLI (Rich output), split up by topic
+    ├── app.py          #   main `app` + commands with no sub-group of their own
+    ├── workspace.py    #   project/host/service/scope/timeline/policy
+    ├── findings.py     #   task/finding/template/note/loot/evidence/journal/graph
+    ├── recon_extra.py  #   scan-import/wordlists/playbook
+    └── ai_cmds.py      #   the AI-mentor command tree
 ```
 
 Data model: one SQLite DB per project under `<project>/database/pentos.db`.
@@ -340,4 +345,4 @@ Provided tools: `pentos_list_projects`, `pentos_summary`, `pentos_findings`,
 ## Changelog
 
 All versions and changes are documented in [`CHANGELOG.en.md`](CHANGELOG.en.md).
-Current version: **2.42.0**.
+Current version: **2.43.0**.

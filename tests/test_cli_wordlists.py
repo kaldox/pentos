@@ -4,6 +4,8 @@ import tempfile
 
 from typer.testing import CliRunner
 
+from pentos.cli import recon_extra as recon_extra_mod
+
 
 def _project():
     cfg = tempfile.mkdtemp()
@@ -51,7 +53,7 @@ def test_wordlists_setup_yes_flag_downloads_without_prompt(monkeypatch):
                 pass
         return R()
 
-    monkeypatch.setattr(app_mod.wordlists_mod.requests, "get", fake_get)
+    monkeypatch.setattr(recon_extra_mod.wordlists_mod.requests, "get", fake_get)
     r = CliRunner().invoke(app_mod.app, ["wordlists", "setup", "--yes"])
     assert r.exit_code == 0, r.output
     assert "Passwords:" in r.output
@@ -78,7 +80,7 @@ def test_wordlists_setup_without_yes_asks_and_respects_no(monkeypatch):
                 pass
         return R()
 
-    monkeypatch.setattr(app_mod.wordlists_mod.requests, "get", fake_get)
+    monkeypatch.setattr(recon_extra_mod.wordlists_mod.requests, "get", fake_get)
     r = CliRunner().invoke(app_mod.app, ["wordlists", "setup"], input="n\n")
     assert r.exit_code == 0, r.output
     assert called["n"] == 0
@@ -89,11 +91,11 @@ def test_wordlists_setup_handles_download_error_gracefully(monkeypatch):
     app_mod = _project()
 
     def fake_get(url, timeout=None):
-        raise app_mod.wordlists_mod.WordlistError("Passwort-Liste nicht erreichbar: timeout")
+        raise recon_extra_mod.wordlists_mod.WordlistError("Passwort-Liste nicht erreichbar: timeout")
 
-    monkeypatch.setattr(app_mod.wordlists_mod, "fetch_password_list",
+    monkeypatch.setattr(recon_extra_mod.wordlists_mod, "fetch_password_list",
                         lambda timeout=15: (_ for _ in ()).throw(
-                            app_mod.wordlists_mod.WordlistError("Passwort-Liste nicht erreichbar: timeout")))
+                            recon_extra_mod.wordlists_mod.WordlistError("Passwort-Liste nicht erreichbar: timeout")))
     r = CliRunner().invoke(app_mod.app, ["wordlists", "setup", "--yes"])
     assert r.exit_code == 1
     assert "nicht erreichbar" in r.output
