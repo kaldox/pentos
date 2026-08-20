@@ -7,6 +7,32 @@ die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 > English version: [`CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## [2.42.0] - 2026-08-20
+### Sicherheit
+- **`defusedxml` statt `xml.etree.ElementTree` beim XML-Parsen** (nmap-Import,
+  Nessus/OpenVAS/Burp-Import, nikto-Parser): `xml.etree.ElementTree` ist laut
+  Python-eigener Dokumentation anfällig für Entity-Expansion-DoS (billion
+  laughs/quadratic blowup) - relevant, weil Scanner-Exporte typischerweise
+  nicht aus eigenen Scans stammen, sondern von Kollegen/anderen Systemen
+  (echte Vertrauensgrenze). `defusedxml.ElementTree` ist ein API-kompatibler
+  Drop-in-Ersatz (`parse`/`fromstring`/`iterparse`/`ParseError` unverändert)
+  und lehnt präparierte Dateien mit einem klaren Fehler ab, statt Speicher/
+  CPU zu erschöpfen. `pentos/importers/scanners.py::detect_format()` und
+  `pentos/runners/parsers.py::_parse_nikto_xml()` fangen die Ablehnung ab
+  und fallen auf ihre bestehenden Fallback-Pfade zurück (Text-Heuristik
+  bzw. leere Trefferliste), statt den ganzen Import abzubrechen.
+- **Restriktive Dateiberechtigungen für Projektordner, SQLite-DB und
+  Config-Datei** (`pentos.config.harden()`, nur POSIX/Linux/macOS): Loot/
+  Credentials landen im Klartext in der Projekt-DB - auf Mehrbenutzer-
+  Systemen mit permissivem umask waren Projektordner, `pentos.db` und
+  `config.yaml` bisher ohne explizite Rechte angelegt, potenziell für
+  andere lokale Nutzer lesbar. Projektordner jetzt `0700` (schon das
+  Durchqueren des Wurzelordners wird verweigert, unabhängig von den
+  Rechten einzelner Unterordner/Dateien), `pentos.db` und `config.yaml`
+  `0600`. Auf Windows bewusst ein No-op (keine POSIX-Owner/Group/Other-
+  Semantik vorhanden, ein wirkungsloses `chmod` würde nur falsche
+  Sicherheit vortäuschen).
+
 ## [2.41.0] - 2026-08-20
 ### Entfernt
 - **TUI (`pentos tui`):** dritte Oberfläche für dieselben Daten wie CLI und

@@ -7,7 +7,10 @@ Service-Objekte. Empfohlen: `nmap -sC -sV -oX scan.xml <ziel>`.
 """
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
+# defusedxml statt xml.etree.ElementTree: schützt vor Entity-Expansion-DoS
+# (billion laughs/quadratic blowup) und externen Entities beim Import
+# fremder nmap-XML-Dateien -- API-kompatibel zu ET (siehe SECURITY.md).
+import defusedxml.ElementTree as ET
 from pathlib import Path
 
 from ..models import Host, Service

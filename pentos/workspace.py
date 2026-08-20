@@ -13,6 +13,11 @@ def create_workspace(name: str) -> Path:
     """Legt den vollständigen Workspace für ein Projekt an und gibt den Pfad zurück."""
     root = config.project_path(name)
     root.mkdir(parents=True, exist_ok=True)
+    # Nur der Owner darf den Projektordner überhaupt betreten (rwx für den
+    # Rest ist irrelevant, wenn schon das Durchqueren des Wurzelordners
+    # verweigert wird) -- schützt Loot/Credentials/DB vor anderen lokalen
+    # Nutzern auf Mehrbenutzer-Systemen. Siehe config.harden().
+    config.harden(root, 0o700)
     for sub in config.WORKSPACE_DIRS:
         (root / sub).mkdir(parents=True, exist_ok=True)
     # README im Projekt für den Menschen

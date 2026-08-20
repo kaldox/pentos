@@ -59,6 +59,18 @@ def test_parse_nikto_xml_handles_garbage():
     assert _parse_nikto_xml("") == []
 
 
+def test_parse_nikto_xml_rejects_entity_expansion_gracefully():
+    """defusedxml lehnt Entity-Expansion (billion laughs) ab -- wie bei
+    kaputtem/leerem XML gibt es dafuer [] statt eines Crashs/Hangs (siehe
+    defusedxml-Migration, SECURITY.md)."""
+    from pentos.runners.parsers import _parse_nikto_xml
+    evil = ('<?xml version="1.0"?>'
+            '<!DOCTYPE lolz [<!ENTITY lol "lol">'
+            '<!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">]>'
+            '<niktoscan>&lol1;</niktoscan>')
+    assert _parse_nikto_xml(evil) == []
+
+
 def test_nikto_header_noise_becomes_info_not_findings():
     from pentos.runners.parsers import _parse_nikto
     repo, h = _repo_with_host()

@@ -14,6 +14,25 @@ from typing import Optional
 
 import yaml
 
+
+def harden(path: Path, mode: int) -> None:
+    """Setzt restriktive Dateiberechtigungen (nur Owner) -- Loot/Credentials
+    landen im Klartext in der Projekt-DB, auf Mehrbenutzer-Systemen sonst
+    potenziell für andere lokale Nutzer lesbar.
+
+    Nur POSIX (Linux/macOS): Windows kennt keine chmod-Owner/Group/Other-
+    Semantik, os.chmod() dort ist praktisch wirkungslos für diesen Zweck --
+    lieber sauber überspringen als eine falsche Sicherheit vortäuschen.
+    Best effort: schlägt nie hart fehl (z.B. auf Netzwerk-Dateisystemen
+    ohne chmod-Unterstützung).
+    """
+    if os.name != "posix":
+        return
+    try:
+        path.chmod(mode)
+    except OSError:
+        pass
+
 # Unterordner, die jeder Projekt-Workspace bekommt
 WORKSPACE_DIRS = [
     "scans",
@@ -83,6 +102,7 @@ def load_config() -> dict:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", encoding="utf-8") as fh:
             yaml.safe_dump(DEFAULT_CONFIG, fh, allow_unicode=True, sort_keys=False)
+        harden(path, 0o600)
         return dict(DEFAULT_CONFIG)
     with path.open("r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}
@@ -99,6 +119,7 @@ def save_config(cfg: dict) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as fh:
         yaml.safe_dump(cfg, fh, allow_unicode=True, sort_keys=False)
+    harden(path, 0o600)
     return path
 
 

@@ -9,6 +9,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from . import config
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS hosts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -201,6 +203,10 @@ def connect(db_file: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(str(db_file))
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
+    # Enthält Loot/Credentials im Klartext -- nur Owner darf lesen (defense
+    # in depth zusätzlich zur Projektordner-Härtung in workspace.py).
+    if db_file.exists():
+        config.harden(db_file, 0o600)
     return conn
 
 
