@@ -1,16 +1,49 @@
 """Tests für den Scanner-Import (Nessus, OpenVAS, Burp)."""
 import pathlib
 
+import defusedxml.common
+import pytest
+
 from pentos.importers import scanners
 from pentos.models import Severity
 
 FIX = pathlib.Path(__file__).parent / "fixtures"
+
+# Billion-laughs-Payload: Nessus-/OpenVAS-/Burp-Exporte stammen typischerweise
+# NICHT aus eigenen Scans, sondern von Kollegen/anderen Systemen -- eine
+# praeparierte Datei darf detect_format() nicht zum Haengen/Abstuerzen bringen
+# (siehe defusedxml-Migration, SECURITY.md).
+_BILLION_LAUGHS = """<?xml version="1.0"?>
+<!DOCTYPE lolz [
+ <!ENTITY lol "lol">
+ <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+]>
+<NessusClientData_v2>&lol1;</NessusClientData_v2>"""
 
 
 def test_detect_formats():
     assert scanners.detect_format(FIX / "scan_nessus.nessus") == "nessus"
     assert scanners.detect_format(FIX / "scan_openvas.xml") == "openvas"
     assert scanners.detect_format(FIX / "scan_burp.xml") == "burp"
+
+
+def test_detect_format_rejects_entity_expansion_without_crashing(tmp_path):
+    """defusedxml lehnt die Entities ab; detect_format() faengt das ab und
+    faellt auf die Text-Heuristik zurueck (Format bleibt trotzdem erkennbar,
+    da der Tag-Name im Rohtext sichtbar ist) -- kein DoS, kein Crash."""
+    evil = tmp_path / "evil.nessus"
+    evil.write_text(_BILLION_LAUGHS, encoding="utf-8")
+    assert scanners.detect_format(evil) == "nessus"
+
+
+def test_parse_nessus_raises_cleanly_on_entity_expansion(tmp_path):
+    """Der eigentliche Voll-Parse verweigert die Entities explizit statt sie
+    stillschweigend zu expandieren -- ein klarer Fehler ist hier das
+    gewuenschte Verhalten, kein Hang/Crash durch Speicher-/CPU-Erschoepfung."""
+    evil = tmp_path / "evil.nessus"
+    evil.write_text(_BILLION_LAUGHS, encoding="utf-8")
+    with pytest.raises(defusedxml.common.EntitiesForbidden):
+        scanners.parse_nessus(evil)
 
 
 def test_nessus_parsing():

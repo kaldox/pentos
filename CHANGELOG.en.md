@@ -7,6 +7,32 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.42.0] - 2026-08-20
+### Security
+- **`defusedxml` instead of `xml.etree.ElementTree` for XML parsing** (nmap
+  import, Nessus/OpenVAS/Burp import, nikto parser): Python's own docs list
+  `xml.etree.ElementTree` as vulnerable to entity-expansion DoS (billion
+  laughs/quadratic blowup) - relevant because scanner exports typically
+  don't come from your own scans but from colleagues/other systems (a real
+  trust boundary). `defusedxml.ElementTree` is an API-compatible drop-in
+  replacement (`parse`/`fromstring`/`iterparse`/`ParseError` unchanged) and
+  rejects crafted files with a clear error instead of exhausting memory/CPU.
+  `pentos/importers/scanners.py::detect_format()` and `pentos/runners/
+  parsers.py::_parse_nikto_xml()` catch the rejection and fall back to their
+  existing fallback paths (text heuristic / empty hit list) instead of
+  aborting the whole import.
+- **Restrictive file permissions for project folders, the SQLite DB, and
+  the config file** (`pentos.config.harden()`, POSIX/Linux/macOS only):
+  loot/credentials land in plaintext in the project DB - on multi-user
+  systems with a permissive umask, project folders, `pentos.db`, and
+  `config.yaml` were previously created without explicit permissions,
+  potentially readable by other local users. Project folders are now
+  `0700` (traversing the root folder itself is already denied, regardless
+  of individual subfolder/file permissions), `pentos.db` and `config.yaml`
+  are `0600`. Deliberately a no-op on Windows (no POSIX owner/group/other
+  semantics there - a no-op `chmod` would just fake a security property
+  that isn't actually there).
+
 ## [2.41.0] - 2026-08-20
 ### Removed
 - **TUI (`pentos tui`):** a third interface for the same data as the CLI and

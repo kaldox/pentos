@@ -153,6 +153,7 @@ def import_project(archive: Path, name: Optional[str] = None, force: bool = Fals
             if dest.exists() and force:
                 shutil.rmtree(dest)
             dest.mkdir(parents=True, exist_ok=True)
+            config.harden(dest, 0o700)  # enthält importiertes Loot/Credentials, siehe workspace.py
             for member in members:
                 zf.extract(member, path=dest)
     except zipfile.BadZipFile as exc:

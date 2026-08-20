@@ -17,7 +17,12 @@ from __future__ import annotations
 
 import json
 import re
-import xml.etree.ElementTree as ET
+# defusedxml statt xml.etree.ElementTree: nikto-XML-Reports könnten von
+# jemand anderem stammen (z.B. geteilter Scan) -- defusedxml blockt
+# Entity-Expansion-DoS (billion laughs/quadratic blowup) und externe
+# Entities, API-kompatibel zu ET (siehe SECURITY.md).
+import defusedxml.common
+import defusedxml.ElementTree as ET
 from pathlib import Path
 from typing import Optional
 
@@ -363,7 +368,7 @@ def _parse_nikto_xml(text: str) -> list[dict]:
     """
     try:
         root = ET.fromstring(text)
-    except ET.ParseError:
+    except (ET.ParseError, defusedxml.common.DefusedXmlException):
         return []
     hits = []
     for item in root.iter("item"):

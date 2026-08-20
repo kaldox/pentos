@@ -14,7 +14,12 @@ NICHT auto-erkannt im Sinne der Heuristik, sondern stammen aus dem Scanner.
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as ET
+# defusedxml statt xml.etree.ElementTree: Nessus-/OpenVAS-/Burp-Exporte
+# stammen typischerweise NICHT aus eigenen Scans, sondern von Kollegen/
+# anderen Systemen -- echte Vertrauensgrenze. Schützt vor Entity-Expansion-
+# DoS und externen Entities, API-kompatibel zu ET (siehe SECURITY.md).
+import defusedxml.common
+import defusedxml.ElementTree as ET
 from dataclasses import dataclass, field
 from html import unescape
 from pathlib import Path
@@ -109,7 +114,7 @@ def detect_format(path: Path) -> str:
                 return "openvas"
             # erstes Element reicht zur Entscheidung in den meisten Fällen
             break
-    except ET.ParseError:
+    except (ET.ParseError, defusedxml.common.DefusedXmlException):
         pass
     # Fallback: Inhalt schnüffeln
     head = path.read_text(encoding="utf-8", errors="ignore")[:4000].lower()
