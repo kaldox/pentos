@@ -16,9 +16,9 @@ import mimetypes
 from pathlib import Path
 
 from . import policy as policy_mod
-from .models import SEVERITY_ORDER, Severity, TaskStatus, TimelineKind, _now
+from . import report_data
+from .models import Severity, TimelineKind, _now
 from .repository import Repository
-from .risk import compute_risk
 
 _IMG_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 _SEV_COLOR_MAP = {
@@ -100,15 +100,6 @@ def _is_image(ev) -> bool:
     return Path(ev.path or "").suffix.lower() in _IMG_EXT
 
 
-def _evidence_by_finding(repo: Repository) -> dict[int, list]:
-    """Gruppiert Evidence nach finding_id (nur das, was einem Finding zugeordnet ist)."""
-    out: dict[int, list] = {}
-    for ev in repo.list_evidence():
-        if ev.finding_id:
-            out.setdefault(ev.finding_id, []).append(ev)
-    return out
-
-
 def _img_data_uri(path: str) -> str | None:
     """Liest ein Bild und gibt es als base64 data:-URI zurück (self-contained HTML)."""
     p = Path(path)
@@ -142,57 +133,10 @@ def _branding(cfg: dict | None) -> dict:
     }
 
 
-def _collect(repo: Repository) -> dict:
-    hosts = repo.list_hosts()
-    services = repo.list_services()
-    findings = sorted(repo.list_findings(), key=lambda f: SEVERITY_ORDER.get(f.severity, 9))
-    tasks = repo.list_tasks()
-    loot = repo.list_loot()
-    sev_count = {s: 0 for s in Severity}
-    for f in findings:
-        sev_count[f.severity] += 1
-    done = sum(1 for t in tasks if t.status == TaskStatus.DONE)
-    return {
-        "hosts": hosts, "services": services, "findings": findings,
-        "tasks": tasks, "loot": loot, "sev_count": sev_count, "done": done,
-        "evidence_by_finding": _evidence_by_finding(repo),
-        "history_by_finding": _history_by_finding(repo, findings),
-        "risk": compute_risk(findings),
-        "timeline": repo.list_timeline_entries(),
-        "policy": repo.get_engagement_policy(),
-    }
-
-
-def _history_by_finding(repo: Repository, findings: list) -> dict[int, list]:
-    """Status-Verlauf je Finding, nur echte Wechsel (Ersteintrag mit
-    old_status=None wird wie im Markdown-Report nicht mit ausgegeben)."""
-    out: dict[int, list] = {}
-    for f in findings:
-        if not f.id:
-            continue
-        changes = [h for h in repo.finding_history(f.id) if h.old_status is not None]
-        if changes:
-            out[f.id] = changes
-    return out
-
-
-def _loc(repo: Repository, f) -> str:
-    if f.service_id:
-        s = repo.get_service(f.service_id)
-        if s:
-            h = repo.get_host(s.host_id)
-            return f"{h.address if h else ''}:{s.port}/{s.protocol}"
-    if f.host_id:
-        h = repo.get_host(f.host_id)
-        if h:
-            return h.address
-    return ""
-
-
 # ── HTML ──────────────────────────────────────────────────────────────────────
 def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
     b = _branding(cfg)
-    d = _collect(repo)
+    d = report_data.collect(repo)
     e = _html.escape
 
     sev_chips = " ".join(
@@ -202,7 +146,7 @@ def build_html(repo: Repository, project: str, cfg: dict | None = None) -> str:
 
     rows_find = []
     for f in d["findings"]:
-        loc = _loc(repo, f)
+        loc = report_data.location_of(repo, f)
         cvss = ""
         if f.cvss_score is not None:
             vec = f" · {e(f.cvss_vector)}" if f.cvss_vector else ""
@@ -418,7 +362,7 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
         ) from exc
 
     b = _branding(cfg)
-    d = _collect(repo)
+    d = report_data.collect(repo)
     brand = colors.HexColor(b["color"])
     e = _html.escape
 
@@ -485,7 +429,7 @@ def build_pdf(repo: Repository, project: str, out_path, cfg: dict | None = None)
     if not d["findings"]:
         story.append(Paragraph("Keine Findings erfasst.", styles["Meta"]))
     for f in d["findings"]:
-        loc = _loc(repo, f)
+        loc = report_data.location_of(repo, f)
         sevcol = colors.HexColor(_SEV_COLOR[f.severity])
         head = (f'<font color="{sevcol.hexval()}"><b>[{e(f.severity.value)}]</b></font> '
                 f'<b>{e(f.title)}</b>')

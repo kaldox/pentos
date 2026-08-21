@@ -7,6 +7,34 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+## [2.44.0] - 2026-08-21
+### Changed
+- **Consolidated the data collection behind the severity-based reports
+  (Markdown/HTML/PDF)**: `report.py::build_markdown` gathered the same
+  aggregates (severity counts, evidence grouped by finding, status
+  history, a finding's host/service location) completely independently
+  from `export.py`'s `build_html`/`build_pdf`. Every new finding field
+  (e.g. ATT&CK/EPSS, added in an earlier session) therefore had to be
+  wired up in several places separately. New: `pentos/report_data.py`
+  collects the shared data once (`collect()`, `location_of()`), and all
+  three reports now use the same source. Deliberately NOT unified: the
+  actual rendering (Markdown lines/HTML tags/ReportLab flowables are too
+  different for one shared template) and the learning report
+  (`build_learning_markdown` - structurally a different report, a
+  chronological run history instead of a severity overview, no shared
+  basis).
+  - Side effect: a finding's host/service location now also shows up in
+    the Markdown report when a finding is only linked to a host (rather
+    than a specific service) - previously only the HTML/PDF report
+    handled that case, the Markdown report showed no location at all. No
+    test relied on the old, inconsistent behavior.
+  - Verified via the full test suite (394 tests, unchanged in count)
+    including all report-specific tests (`test_evidence_reports.py`,
+    `test_risk_in_reports.py`, `test_epss_in_reports.py`,
+    `test_timeline_in_reports.py`, `test_policy_in_reports.py`,
+    `test_attack_in_reports.py`, `test_learning_report.py`,
+    `test_templates.py`).
+
 ## [2.43.0] - 2026-08-20
 ### Changed
 - **Split `cli/app.py` into five modules** (pure structure, no behavior

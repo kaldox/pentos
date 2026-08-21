@@ -6,4 +6,4 @@ Methodik, Dokumentation, Evidence-Collection, Attack-Path-Tracking, lokale
 KI-Unterstützung und Reporting in einer Plattform.
 
 """
-__version__ = "2.43.0"
+__version__ = "2.44.0"
