@@ -7,11 +7,10 @@ Services und Attack-Path. Basis für spätere HTML-/PDF-Ausgabe.
 """
 from __future__ import annotations
 
-from . import graph, knowledge
+from . import graph, knowledge, report_data
 from . import policy as policy_mod
 from .models import SEVERITY_ORDER, Severity, TaskStatus, TimelineKind, _now
 from .repository import Repository
-from .risk import compute_risk
 from .runners import registry as tool_registry
 
 _TIMELINE_LABEL = {
@@ -20,22 +19,13 @@ _TIMELINE_LABEL = {
 
 
 def build_markdown(repo: Repository, project: str) -> str:
-    hosts = repo.list_hosts()
-    services = repo.list_services()
-    findings = sorted(repo.list_findings(), key=lambda f: SEVERITY_ORDER.get(f.severity, 9))
-    tasks = repo.list_tasks()
-    loot = repo.list_loot()
+    d = report_data.collect(repo)
+    hosts, services, findings = d["hosts"], d["services"], d["findings"]
+    tasks, loot = d["tasks"], d["loot"]
     journal = repo.journal()
-    ev_by_finding: dict[int, list] = {}
-    for ev in repo.list_evidence():
-        if ev.finding_id:
-            ev_by_finding.setdefault(ev.finding_id, []).append(ev)
-
-    sev_count = {s: 0 for s in Severity}
-    for f in findings:
-        sev_count[f.severity] += 1
-
-    done = sum(1 for t in tasks if t.status == TaskStatus.DONE)
+    ev_by_finding = d["evidence_by_finding"]
+    sev_count = d["sev_count"]
+    done = d["done"]
 
     md: list[str] = []
     md.append(f"# Pentest-Report: {project}")
@@ -44,7 +34,7 @@ def build_markdown(repo: Repository, project: str) -> str:
     md.append("")
 
     # Management Summary
-    risk = compute_risk(findings)
+    risk = d["risk"]
     md.append("## Zusammenfassung")
     md.append("")
     md.append(f"- **Risk-Score: {risk['score']} ({risk['level']})** "
@@ -61,7 +51,7 @@ def build_markdown(repo: Repository, project: str) -> str:
     md.append("")
 
     # Engagement-Zeitplan (Rules-of-Engagement-Zeitfenster, Blackout-Zeiten, Meilensteine)
-    timeline_entries = repo.list_timeline_entries()
+    timeline_entries = d["timeline"]
     if timeline_entries:
         md.append("## Engagement-Zeitplan")
         md.append("")
@@ -73,7 +63,7 @@ def build_markdown(repo: Repository, project: str) -> str:
         md.append("")
 
     # Programm-/Auftrags-Regeln (z.B. Bug-Bounty-Scope) -- was war erlaubt?
-    engagement_policy = repo.get_engagement_policy()
+    engagement_policy = d["policy"]
     if policy_mod.has_any_answer(engagement_policy):
         md.append("## Programm-Regeln")
         md.append("")
@@ -97,12 +87,8 @@ def build_markdown(repo: Repository, project: str) -> str:
     if not findings:
         md.append("_Keine Findings erfasst._")
     for f in findings:
-        loc = ""
-        if f.service_id:
-            s = repo.get_service(f.service_id)
-            if s:
-                h = repo.get_host(s.host_id)
-                loc = f" — {h.address if h else ''}:{s.port}/{s.protocol}"
+        loc = report_data.location_of(repo, f)
+        loc = f" — {loc}" if loc else ""
         md.append(f"### [{f.severity.value}] {f.title}{loc}")
         md.append("")
         md.append(f"- **Kategorie:** {f.category.value}")
@@ -122,8 +108,7 @@ def build_markdown(repo: Repository, project: str) -> str:
         if f.remediation:
             md.append(f"**Remediation:** {f.remediation}")
             md.append("")
-        hist = repo.finding_history(f.id) if f.id else []
-        changes = [h for h in hist if h.old_status is not None]
+        changes = d["history_by_finding"].get(f.id, [])
         if changes:
             md.append("**Status-Verlauf:**")
             md.append("")
