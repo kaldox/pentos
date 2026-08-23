@@ -48,11 +48,21 @@ def test_harden_sets_exact_mode_on_directory():
 
 def test_harden_is_noop_on_non_posix(monkeypatch):
     """Auf 'nicht-POSIX' (simuliert) darf chmod() gar nicht erst aufgerufen
-    werden -- keine falsche Sicherheit vortäuschen."""
-    monkeypatch.setattr(config.os, "name", "nt")
-    calls = []
+    werden -- keine falsche Sicherheit vortäuschen.
+
+    Wichtig: Path(...) muss VOR dem os.name-Patch gebaut werden. pathlib
+    (< 3.12) entscheidet bei jedem Path(...)-Aufruf anhand von os.name
+    zwischen WindowsPath/PosixPath -- auf einem echten POSIX-Runner (z.B.
+    CI unter Linux) würde ein Path(...) mit os.name="nt" sofort
+    'NotImplementedError: cannot instantiate WindowsPath' werfen, weit
+    bevor harden() selbst überhaupt läuft. Auf Windows-Entwicklungsmaschinen
+    fiel das nie auf, weil os.name dort ohnehin schon "nt" ist -- der Patch
+    also keinen echten Flavour-Wechsel simuliert.
+    """
     p = Path(tempfile.mkstemp()[1])
+    calls = []
     monkeypatch.setattr(Path, "chmod", lambda self, mode: calls.append(mode))
+    monkeypatch.setattr(config.os, "name", "nt")
     config.harden(p, 0o600)
     assert calls == []
 
