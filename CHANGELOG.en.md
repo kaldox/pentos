@@ -7,6 +7,17 @@ and the versioning follows [Semantic Versioning](https://semver.org/).
 
 > German version: [`CHANGELOG.md`](CHANGELOG.md)
 
+Every version from 2.17.0 on has a git tag (`v2.44.0` etc.). 2.12.0–2.16.0 predate the
+public repository and are included in the first public state (v2.17.0); 2.25.0 shipped
+together with 2.25.1, 2.28.1 together with 2.29.0.
+
+## [Unreleased]
+### Fixed
+- CI: since PR #6 the test run on Python 3.10/3.11 aborted about halfway through
+  (INTERNALERROR in `test_permissions`: patched `os.name` vs. the pathlib flavour); the CI
+  also installed a `tui` extra that no longer exists. Only the test suite was affected,
+  not PentOS itself.
+
 ## [2.44.0] - 2026-08-21
 ### Changed
 - **Consolidated the data collection behind the severity-based reports
@@ -674,8 +685,43 @@ findings covered with a regression test, 173/173 tests green.
 - nmap XML import, local AI mentor (Ollama) with offline fallback, RAG over your
   own project data.
 
-[2.22.0]: https://github.com/kaldox/pentos/releases
-[2.21.0]: https://github.com/kaldox/pentos/releases
-[2.20.0]: https://github.com/kaldox/pentos/releases
-[2.19.0]: https://github.com/kaldox/pentos/releases
-[2.18.0]: https://github.com/kaldox/pentos/releases
+[Unreleased]: https://github.com/kaldox/pentos/compare/v2.44.0...HEAD
+[2.44.0]: https://github.com/kaldox/pentos/compare/v2.43.0...v2.44.0
+[2.43.0]: https://github.com/kaldox/pentos/compare/v2.42.0...v2.43.0
+[2.42.0]: https://github.com/kaldox/pentos/compare/v2.41.0...v2.42.0
+[2.41.0]: https://github.com/kaldox/pentos/compare/v2.40.0...v2.41.0
+[2.40.0]: https://github.com/kaldox/pentos/compare/v2.39.0...v2.40.0
+[2.39.0]: https://github.com/kaldox/pentos/compare/v2.38.0...v2.39.0
+[2.38.0]: https://github.com/kaldox/pentos/compare/v2.37.0...v2.38.0
+[2.37.0]: https://github.com/kaldox/pentos/compare/v2.36.0...v2.37.0
+[2.36.0]: https://github.com/kaldox/pentos/compare/v2.35.0...v2.36.0
+[2.35.0]: https://github.com/kaldox/pentos/compare/v2.34.0...v2.35.0
+[2.34.0]: https://github.com/kaldox/pentos/compare/v2.33.0...v2.34.0
+[2.33.0]: https://github.com/kaldox/pentos/compare/v2.32.0...v2.33.0
+[2.32.0]: https://github.com/kaldox/pentos/compare/v2.31.1...v2.32.0
+[2.31.1]: https://github.com/kaldox/pentos/compare/v2.31.0...v2.31.1
+[2.31.0]: https://github.com/kaldox/pentos/compare/v2.30.0...v2.31.0
+[2.30.0]: https://github.com/kaldox/pentos/compare/v2.29.0...v2.30.0
+[2.29.0]: https://github.com/kaldox/pentos/compare/v2.28.0...v2.29.0
+[2.28.1]: https://github.com/kaldox/pentos/compare/v2.28.0...v2.29.0
+[2.28.0]: https://github.com/kaldox/pentos/compare/v2.27.2...v2.28.0
+[2.27.2]: https://github.com/kaldox/pentos/compare/v2.27.1...v2.27.2
+[2.27.1]: https://github.com/kaldox/pentos/compare/v2.27.0...v2.27.1
+[2.27.0]: https://github.com/kaldox/pentos/compare/v2.26.0...v2.27.0
+[2.26.0]: https://github.com/kaldox/pentos/compare/v2.25.2...v2.26.0
+[2.25.2]: https://github.com/kaldox/pentos/compare/v2.25.1...v2.25.2
+[2.25.1]: https://github.com/kaldox/pentos/compare/v2.24.0...v2.25.1
+[2.25.0]: https://github.com/kaldox/pentos/compare/v2.24.0...v2.25.1
+[2.24.0]: https://github.com/kaldox/pentos/compare/v2.23.0...v2.24.0
+[2.23.0]: https://github.com/kaldox/pentos/compare/v2.22.0...v2.23.0
+[2.22.0]: https://github.com/kaldox/pentos/compare/v2.21.0...v2.22.0
+[2.21.0]: https://github.com/kaldox/pentos/compare/v2.20.0...v2.21.0
+[2.20.0]: https://github.com/kaldox/pentos/compare/v2.19.0...v2.20.0
+[2.19.0]: https://github.com/kaldox/pentos/compare/v2.18.0...v2.19.0
+[2.18.0]: https://github.com/kaldox/pentos/compare/v2.17.0...v2.18.0
+[2.17.0]: https://github.com/kaldox/pentos/releases/tag/v2.17.0
+[2.16.0]: https://github.com/kaldox/pentos/releases/tag/v2.17.0
+[2.15.0]: https://github.com/kaldox/pentos/releases/tag/v2.17.0
+[2.14.0]: https://github.com/kaldox/pentos/releases/tag/v2.17.0
+[2.13.0]: https://github.com/kaldox/pentos/releases/tag/v2.17.0
+[2.12.0]: https://github.com/kaldox/pentos/releases/tag/v2.17.0
